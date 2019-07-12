@@ -3,7 +3,7 @@
 
 # install.packages("pacman")
 # install.packages("devtools")
-# devtools::install_github("kmcconeghy/fl)
+# devtools::install_github("kmcconeghy/flumodelr)
 pacman::p_load(flumodelr, magrittr, stringr, viridis, ggthemes, broom, rvest,
                gridExtra)
 
