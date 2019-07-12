@@ -1,0 +1,161 @@
+Medical Conditions Breakdown by Season (data downloaded on 6/25/2019)
+SEASON,MEDICAL CONDITION,CHILDREN-COUNT,CHILDREN-PERCENT(%),ADULTS-COUNT,ADULTS-PERCENT(%),FEMALES (15-44 YR)-COUNT,FEMALES (15-44 YR)-PERCENT(%)
+2018-19,Asthma,XX,27.0,XX,21.0,XX,N/A
+2018-19,Cardiovascular disease,XX,7.0,XX,45.3,XX,N/A
+2018-19,Chronic lung disease,XX,6.0,XX,29.9,XX,N/A
+2018-19,Immune suppression,XX,8.1,XX,17.5,XX,N/A
+2018-19,Metabolic disorder,XX,4.0,XX,43.2,XX,N/A
+2018-19,Neurologic disorder,XX,15.1,XX,16.2,XX,N/A
+2018-19,Neuromuscular disorder,XX,3.1,XX,4.1,XX,N/A
+2018-19,Obesity,XX,11.6,XX,39.5,XX,N/A
+2018-19,Pregnancy,XX,N/A,XX,N/A,XX,28.8
+2018-19,Renal disease,XX,2.4,XX,20.0,XX,N/A
+2018-19,No known condition,XX,44.5,XX,7.2,XX,N/A
+2017-18,Asthma,XX,27.1,XX,19.0,XX,N/A
+2017-18,Cardiovascular disease,XX,8.4,XX,51.6,XX,N/A
+2017-18,Chronic lung disease,XX,6.5,XX,29.7,XX,N/A
+2017-18,Immune suppression,XX,8.2,XX,17.7,XX,N/A
+2017-18,Metabolic disorder,XX,4.7,XX,44.7,XX,N/A
+2017-18,Neurologic disorder,XX,17.2,XX,20.6,XX,N/A
+2017-18,Neuromuscular disorder,XX,3.6,XX,5.0,XX,N/A
+2017-18,Obesity,XX,10.4,XX,35.6,XX,N/A
+2017-18,Pregnancy,XX,N/A,XX,N/A,XX,28.1
+2017-18,Renal disease,XX,2.2,XX,22.0,XX,N/A
+2017-18,No known condition,XX,42.2,XX,6.7,XX,N/A
+2016-17,Asthma,388,29.2,3152,20.0,N/A,N/A
+2016-17,Cardiovascular disease,116,8.7,8322,52.7,N/A,N/A
+2016-17,Chronic lung disease,108,8.1,4714,29.9,N/A,N/A
+2016-17,Immune suppression,136,10.2,2750,17.4,N/A,N/A
+2016-17,Metabolic disorder,80,6.0,7060,44.7,N/A,N/A
+2016-17,Neurologic disorder,274,20.6,3850,24.4,N/A,N/A
+2016-17,Neuromuscular disorder,49,3.7,1243,7.9,N/A,N/A
+2016-17,Obesity,139,9.7,5440,33.9,N/A,N/A
+2016-17,Pregnancy,N/A,N/A,N/A,N/A,320,29.4
+2016-17,Renal disease,32,2.4,3698,23.4,N/A,N/A
+2016-17,No known condition,589,41.1,1006,6.3,N/A,N/A
+2015-16,Asthma,260,21.8,1598,21.0,N/A,N/A
+2015-16,Cardiovascular disease,104,8.7,3097,40.8,N/A,N/A
+2015-16,Chronic lung disease,83,7.0,2297,30.2,N/A,N/A
+2015-16,Immune suppression,94,7.9,1356,17.8,N/A,N/A
+2015-16,Metabolic disorder,46,3.9,2964,39.0,N/A,N/A
+2015-16,Neurologic disorder,179,15.0,1413,18.6,N/A,N/A
+2015-16,Neuromuscular disorder,33,2.8,423,5.6,N/A,N/A
+2015-16,Obesity,98,8.2,3089,40.7,N/A,N/A
+2015-16,Pregnancy,N/A,N/A,N/A,N/A,244,25.5
+2015-16,Renal disease,25,2.1,1347,17.7,N/A,N/A
+2015-16,No known condition,588,49.3,620,8.2,N/A,N/A
+2014-15,Asthma,458,25.9,2774,17.4,N/A,N/A
+2014-15,Cardiovascular disease,136,7.7,8220,51.4,N/A,N/A
+2014-15,Chronic lung disease,108,6.1,4655,29.1,N/A,N/A
+2014-15,Immune suppression,140,7.9,2560,16.0,N/A,N/A
+2014-15,Metabolic disorder,83,4.7,7154,44.8,N/A,N/A
+2014-15,Neurologic disorder,260,14.7,3871,24.2,N/A,N/A
+2014-15,Neuromuscular disorder,54,3.1,1044,6.5,N/A,N/A
+2014-15,Obesity,166,9.4,5238,32.8,N/A,N/A
+2014-15,Pregnancy,N/A,N/A,N/A,N/A,337,29.7
+2014-15,Renal disease,40,2.3,3433,21.5,N/A,N/A
+2014-15,No known condition,814,46.1,1056,6.6,N/A,N/A
+2013-14,Asthma,329,26.2,1891,22.6,N/A,N/A
+2013-14,Cardiovascular disease,99,7.9,3106,37.2,N/A,N/A
+2013-14,Chronic lung disease,92,7.3,2476,29.6,N/A,N/A
+2013-14,Immune suppression,98,7.8,1591,19.0,N/A,N/A
+2013-14,Metabolic disorder,47,3.7,3110,37.2,N/A,N/A
+2013-14,Neurologic disorder,171,13.6,1402,16.8,N/A,N/A
+2013-14,Neuromuscular disorder,40,3.2,439,5.3,N/A,N/A
+2013-14,Obesity,96,7.7,3535,42.3,N/A,N/A
+2013-14,Pregnancy,N/A,N/A,N/A,N/A,279,23.9
+2013-14,Renal disease,23,1.8,1351,16.2,N/A,N/A
+2013-14,No known condition,631,50.3,752,9.0,N/A,N/A
+2012-13,Asthma,432,22.5,1952,18.6,N/A,N/A
+2012-13,Cardiovascular disease,127,6.6,4862,46.3,N/A,N/A
+2012-13,Chronic lung disease,107,5.6,2926,27.9,N/A,N/A
+2012-13,Immune suppression,156,8.1,1735,16.5,N/A,N/A
+2012-13,Metabolic disorder,70,3.6,4234,40.3,N/A,N/A
+2012-13,Neurologic disorder,298,15.5,2085,19.8,N/A,N/A
+2012-13,Neuromuscular disorder,46,2.4,463,4.4,N/A,N/A
+2012-13,Obesity,152,7.9,3362,32.0,N/A,N/A
+2012-13,Pregnancy,N/A,N/A,N/A,N/A,313,28.5
+2012-13,Renal disease,44,2.3,1931,18.4,N/A,N/A
+2012-13,No known condition,1031,53.7,836,8.0,N/A,N/A
+2011-12,Asthma,95,19.7,412,21.3,N/A,N/A
+2011-12,Cardiovascular disease,24,5.0,716,37.0,N/A,N/A
+2011-12,Chronic lung disease,30,6.2,505,26.1,N/A,N/A
+2011-12,Immune suppression,19,3.9,354,18.3,N/A,N/A
+2011-12,Metabolic disorder,17,3.5,689,35.6,N/A,N/A
+2011-12,Neurologic disorder,62,12.9,354,18.3,N/A,N/A
+2011-12,Neuromuscular disorder,3,0.6,63,3.3,N/A,N/A
+2011-12,Obesity,38,7.9,683,35.3,N/A,N/A
+2011-12,Pregnancy,N/A,N/A,N/A,N/A,84,33.5
+2011-12,Renal disease,11,2.3,323,16.7,N/A,N/A
+2011-12,No known condition,272,56.4,176,9.1,N/A,N/A
+2010-11,Asthma,267,18.9,943,19.3,N/A,N/A
+2010-11,Cardiovascular disease,64,4.5,1801,36.8,N/A,N/A
+2010-11,Chronic lung disease,67,4.8,1133,23.1,N/A,N/A
+2010-11,Immune suppression,70,5.0,605,12.4,N/A,N/A
+2010-11,Metabolic disorder,53,3.8,1748,35.7,N/A,N/A
+2010-11,Neuromuscular disorder,58,4.1,339,6.9,N/A,N/A
+2010-11,Obesity,N/A,N/A,N/A,N/A,N/A,N/A
+2010-11,Pregnancy,N/A,N/A,N/A,N/A,241,30.3
+2010-11,Renal disease,20,1.4,749,15.3,N/A,N/A
+2010-11,No known condition,925,65.6,894,18.3,N/A,N/A
+2009-10,Asthma,759,30.0,1448,29.0,N/A,N/A
+2009-10,Cardiovascular disease,103,4.1,1012,20.3,N/A,N/A
+2009-10,Chronic lung disease,97,3.8,937,18.8,N/A,N/A
+2009-10,Immune suppression,109,4.3,612,12.3,N/A,N/A
+2009-10,Metabolic disorder,79,3.1,1397,28.0,N/A,N/A
+2009-10,Neuromuscular disorder,114,4.5,216,4.3,N/A,N/A
+2009-10,Obesity,N/A,N/A,N/A,N/A,N/A,N/A
+2009-10,Pregnancy,N/A,N/A,N/A,N/A,438,30.1
+2009-10,Renal disease,32,1.3,489,9.8,N/A,N/A
+2009-10,No known condition,1437,56.8,1144,22.9,N/A,N/A
+2008-09,Asthma,159,20.1,198,21.9,N/A,N/A
+2008-09,Cardiovascular disease,32,4.0,243,26.9,N/A,N/A
+2008-09,Chronic lung disease,27,3.4,209,23.1,N/A,N/A
+2008-09,Immune suppression,35,4.4,135,14.9,N/A,N/A
+2008-09,Metabolic disorder,27,3.4,267,29.5,N/A,N/A
+2008-09,Neuromuscular disorder,43,5.4,43,4.8,N/A,N/A
+2008-09,Pregnancy,N/A,N/A,N/A,N/A,42,20.2
+2008-09,Renal disease,15,1.9,118,13.0,N/A,N/A
+2008-09,No known condition,524,66.1,205,22.7,N/A,N/A
+2007-08,Asthma,165,19.2,479,15.6,N/A,N/A
+2007-08,Cardiovascular disease,28,3.3,1350,44.0,N/A,N/A
+2007-08,Chronic lung disease,19,2.2,753,24.5,N/A,N/A
+2007-08,Immune suppression,41,4.8,326,10.6,N/A,N/A
+2007-08,Metabolic disorder,23,2.7,1090,35.5,N/A,N/A
+2007-08,Neuromuscular disorder,18,2.1,160,5.2,N/A,N/A
+2007-08,Pregnancy,N/A,N/A,N/A,N/A,91,25.1
+2007-08,Renal disease,13,1.5,484,15.8,N/A,N/A
+2007-08,No known condition,601,70.0,600,19.5,N/A,N/A
+2006-07,Asthma,81,15.5,130,17.2,N/A,N/A
+2006-07,Cardiovascular disease,20,3.8,291,38.5,N/A,N/A
+2006-07,Chronic lung disease,31,5.9,163,21.6,N/A,N/A
+2006-07,Immune suppression,25,4.8,95,12.6,N/A,N/A
+2006-07,Metabolic disorder,25,4.8,254,33.6,N/A,N/A
+2006-07,Neuromuscular disorder,26,5.0,37,4.9,N/A,N/A
+2006-07,Pregnancy,N/A,N/A,N/A,N/A,22,19.5
+2006-07,Renal disease,10,1.9,110,14.6,N/A,N/A
+2006-07,No known condition,363,69.4,163,21.6,N/A,N/A
+2005-06,Asthma,131,18.6,199,16.2,N/A,N/A
+2005-06,Cardiovascular disease,19,2.7,534,43.5,N/A,N/A
+2005-06,Chronic lung disease,26,3.7,321,26.1,N/A,N/A
+2005-06,Immune suppression,33,4.7,130,10.6,N/A,N/A
+2005-06,Metabolic disorder,19,2.7,357,29.1,N/A,N/A
+2005-06,Neuromuscular disorder,36,5.1,56,4.6,N/A,N/A
+2005-06,Pregnancy,N/A,N/A,N/A,N/A,36,24.3
+2005-06,Renal disease,17,2.4,147,12.0,N/A,N/A
+2005-06,No known condition,482,68.3,244,19.9,N/A,N/A
+2004-05,Asthma,117,19.0,N/A,N/A,N/A,N/A
+2004-05,Cardiovascular disease,23,3.7,N/A,N/A,N/A,N/A
+2004-05,Chronic lung disease,17,2.8,N/A,N/A,N/A,N/A
+2004-05,Immune suppression,28,4.6,N/A,N/A,N/A,N/A
+2004-05,Metabolic disorder,11,1.8,N/A,N/A,N/A,N/A
+2004-05,Neuromuscular disorder,30,4.9,N/A,N/A,N/A,N/A
+2004-05,Renal disease,11,1.8,N/A,N/A,N/A,N/A
+2004-05,No known condition,415,67.5,N/A,N/A,N/A,N/A
+2003-04,Asthma,231,17.7,N/A,N/A,N/A,N/A
+2003-04,Cardiovascular disease,27,2.1,N/A,N/A,N/A,N/A
+2003-04,Chronic lung disease,29,2.2,N/A,N/A,N/A,N/A
+2003-04,Immune suppression,25,1.9,N/A,N/A,N/A,N/A
+2003-04,Metabolic disorder,14,1.1,N/A,N/A,N/A,N/A
+2003-04,Renal disease,6,0.5,N/A,N/A,N/A,N/A
+2003-04,No known condition,1004,76.9,N/A,N/A,N/A,N/A

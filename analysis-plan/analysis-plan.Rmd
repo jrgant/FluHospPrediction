@@ -1,0 +1,144 @@
+---
+title: "Predicting Seasonal Influenza Hospitalizations using Simple Statistical Models"
+author: "Kevin W. McConeghy, Jason R. Gantenberg, Andrew R. Zullo, Chanelle J. Howe, ..."
+date: "Compiled: `r Sys.Date()`"
+output: tint::tintPdf
+bibliography: flurefs.bib
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+library(tint)
+# invalidate cache when the package version changes
+knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tint'))
+options(htmltools.dir.version = FALSE)
+```
+
+# Purpose
+
+To determine which of a set of simple candidate statistical models (CSM) most closely fits a series of hypothetical influenza hospitalization curves (HIHC), stratified by season severity [@Centers_for_Disease_Control_and_Prevention2016-nr].
+
+Which of these simple CSMs would provide the best severity forecast at the beginning of the flu season (i.e., epiweek 40) based purely on fit to the HIHCs described below?
+  
+_Subquestion:_ Which model best predicts the proportion of flu-attributable hospitalizations?
+
+# General approach
+
+
+1. Fit a quadratic trend filter model [@Brooks2015-fl] to FluSurv-NET hospitalization data for the seasons 2003–2004 through 2017–2018, based in part on the approach described by Brooks et al. [@Brooks2015-fl].
+
+1. Simulate 3,000 HIHCs using the empirical Bayes model as a "generative model".  
+
+1. Stratify these HIHCs into groups representing High, Moderate, and Mild severity sets of HIHCs, based on the CDC's categorization [@Biggerstaff2018-ns; @Centers_for_Disease_Control_and_Prevention2018-mf].
+
+1. Fit each CSM to each severity set and test for goodness of fit. Systematically alter the functional form of epiweek independent predictors as in Wang et al.’s study of influenza mortality [@Wang2012-am].
+
+
+# Forecasting targets
+
+All weeks will be specified using the _MMWR_ Week convention [@Centers_for_Disease_Control_and_Prevention_undated-pu]:
+
+1. Season onset week
+1. Peak week
+1. Peak count
+1. Total hospitalization counts
+
+These targets follow from [@Brooks2015-fl].
+
+# Curve fitting and simulation
+
+We will simulate HIHCs using a modified version of the curve-fitting approach described by Brooks et al. [@Brooks2015-fl].
+
+First, we fit a quadratic trend filter to historical hospitalization curves as released by the CDC (beginning with the 2003--2004 season), using the R package `glmgen` [@Brooks2015-fl; @Centers_for_Disease_Control_and_Prevention2016-nr]. This model is fit within flu severity group (Low, High/Moderate).
+
+For each season $s$ and each week $i$, Brook et al. conceptualize a seasonal influenza curve as some function plus noise:
+
+$$y^s_i = f^s (i) + \epsilon^s_i, \epsilon \sim N(0, \tau^s),$$
+
+where 
+
+$$f^s (i) = b + \frac{\theta - b}{max_j f(j) - b} \left[ f \left( \frac{i - u}{v} + \genfrac{}{}{0pt}{}{arg\text{ }max}{j} f (j) \right) - b \right]$$
+
+and $b$ represents a seasonal "baseline" increase in cases which is used to designate officially the week of season onset. To account for natural variation in $b$ across flu seasons, we will sweep a plausible range of values (to be determined) during curve simulation. ^[In Brook et al., the authors use their framework to forecast a current flu season, where $b$ represents the current season's epidemic threshold. Because we are interested in model fitting, we will sample from a range of plausible "hospitalization thresholds" to account for seasonal variation.]
+
+Based on fitting the quadratic trend filtering model to empirical data (i.e., historical CDC flu hospitalization data), we estimate error $\tau^s$:
+
+$$\left( \hat{\tau}^s \right)^2 = \genfrac{}{}{0pt}{}{avg}{i} \left[ y^s_i - \hat{f}^s (i) \right]^2$$
+
+and then sample from the model, introducing noise for each weekly observation based this estimate of $\tau^2$.
+
+
+# Candidate models
+
+## Incidence-rate difference models
+
+- Generate a set of predicted flu-related hospitalizations based on a standard incidence rate difference model typically used to model flu cases. Implement in flumodelr based on [@Izurieta2000-sl; @Thompson2009-wt].
+
+- Thresholds: 0.1 and 0.15 as in [@Thompson2009-wt].
+
+
+## Serfling model (least squares)
+
+As presented in [@McConeghy_undated-ps]:
+
+$$Y = \beta_0 \alpha + \beta_1 t + \beta_6 cos \left( \frac{2 \pi t}{52} \right) + \beta_7 sin \left( \frac{2 \pi t}{52} \right)$$
+
+## Modified Serfling model
+
+As presented in [@McConeghy_undated-ps]:
+
+$$y = \alpha_0 + \beta_1 t + \beta_2 Flu_t + sin \left( \frac{2 \pi t}{period} \right) + cos \left( \frac{2 \pi t}{period} \right) + u$$
+
+## Generalized additive model (Prophet)
+
+This model will be implemented using Facebook's R package _prophet_ [@Taylor2017-ta]. Exact specifications TBD.
+
+
+## Seasonal - ARIMA (?)
+
+## Neural net (?) See _Forecast_ package.
+
+
+## Model terms
+
+a) Cyclical terms (Serfling, Fourier, etc.)
+
+b) Historical (empirical) flu hospitalizations
+
+- Historical data on viral activity (NREVSS), outpatient surveillance (ILI-Net)
+
+- Average weekly temperature
+
+- Climate factors (e.g., prior summer temperatures)
+
+- Lags and leads of c or d
+
+- Indicators for weeks of Thanksgiving and/or Christmas [@Brooks2015-fl; @Taylor2017-ta]
+
+
+# Goodness of fit
+
+- Root mean squared error (RMSE)
+
+- Bayesian information criterion (BIC)
+
+- Relative bias
+
+- Cross-validation, sample-splitting?
+
+
+## Sensitivity analysis
+
+_Challenge_
+
+The composition of institutions reflected in the FluSurv-NET has changed over time [@Centers_for_Disease_Control_and_Prevention_undated-vt; @Kandula2019-tg], meaning the FluSurv-NET estimates for influenza-related hospitalizations may not be comparable across time.
+
+_Response_
+
+Redo the analysis three times: one for each set of years in which the same participating institutions reported flu data to CDC. See [@Centers_for_Disease_Control_and_Prevention_undated-vt] for more information.
+
+## Limitations
+
+Brooks et al. showed that their empirical Bayes model improved upon standard lagged CDC predictions for several forecasting targets of the overall influenza curves (season onset, peak week, peak rate/count, duration of season). In adapting their approach to hospitalizations, we should ensure we can achieve similar accuracy.
+
+\footnotesize
