@@ -1,0 +1,268 @@
+Characteristics of Influenza-Associated Hospitalizations (data downloaded on 6/25/2019)
+SEASON,CHARACTERTISTIC,GROUP,COUNT,PERCENT
+2003-04,Age Group,0-4 yr,1046,80.1
+2003-04,Age Group,5-17 yr,260,19.9
+2003-04,Sex,Male,748,57.3
+2003-04,Sex,Female,558,42.7
+2003-04,ICU Admission,Yes       ,148,11.3
+2003-04,ICU Admission,No        ,1158,88.7
+2003-04,Mechanical Ventilation,No        ,1261,96.6
+2003-04,Mechanical Ventilation,Yes       ,45,3.4
+2003-04,Pneumonia Diagnosis,Yes       ,299,22.9
+2003-04,Pneumonia Diagnosis,No        ,1007,77.1
+2003-04,Deaths,Yes       ,5,0.4
+2003-04,Deaths,No        ,1301,99.6
+2003-04,Antiviral Treatments,No        ,980,75.0
+2003-04,Antiviral Treatments,Yes       ,326,25.0
+2004-05,Age Group,5-17 yr,194,31.5
+2004-05,Age Group,0-4 yr,421,68.5
+2004-05,Sex,Male,350,56.9
+2004-05,Sex,Female,265,43.1
+2004-05,ICU Admission,Yes       ,76,12.4
+2004-05,ICU Admission,No        ,539,87.6
+2004-05,Mechanical Ventilation,Yes       ,34,5.5
+2004-05,Mechanical Ventilation,No        ,581,94.5
+2004-05,Pneumonia Diagnosis,No        ,511,83.1
+2004-05,Pneumonia Diagnosis,Yes       ,104,16.9
+2004-05,Deaths,Yes       ,4,0.7
+2004-05,Deaths,No        ,611,99.3
+2004-05,Antiviral Treatments,Yes       ,142,23.1
+2004-05,Antiviral Treatments,No        ,473,76.9
+2005-06,Age Group,65+ yr,724,37.4
+2005-06,Age Group,18-49 yr,285,14.7
+2005-06,Age Group,50-64 yr,219,11.3
+2005-06,Age Group,5-17 yr,184,9.5
+2005-06,Age Group,0-4 yr,522,27.0
+2005-06,Sex,Male,925,47.8
+2005-06,Sex,Female,1009,52.2
+2005-06,ICU Admission,Yes       ,285,14.7
+2005-06,ICU Admission,No        ,1649,85.3
+2005-06,Mechanical Ventilation,Yes       ,173,8.9
+2005-06,Mechanical Ventilation,No        ,1761,91.1
+2005-06,Pneumonia Diagnosis,No        ,1402,72.5
+2005-06,Pneumonia Diagnosis,Yes       ,532,27.5
+2005-06,Deaths,Yes       ,58,3.0
+2005-06,Deaths,No        ,1876,97.0
+2005-06,Antiviral Treatments,Yes       ,862,44.6
+2005-06,Antiviral Treatments,No        ,1072,55.4
+2006-07,Age Group,65+ yr,355,27.8
+2006-07,Age Group,50-64 yr,155,12.1
+2006-07,Age Group,18-49 yr,246,19.2
+2006-07,Age Group,5-17 yr,130,10.2
+2006-07,Age Group,0-4 yr,393,30.7
+2006-07,Sex,Male,631,49.3
+2006-07,Sex,Female,648,50.7
+2006-07,ICU Admission,Yes       ,198,15.5
+2006-07,ICU Admission,No        ,1081,84.5
+2006-07,Mechanical Ventilation,No        ,1168,91.3
+2006-07,Mechanical Ventilation,Yes       ,111,8.7
+2006-07,Pneumonia Diagnosis,Yes       ,404,31.6
+2006-07,Pneumonia Diagnosis,No        ,875,68.4
+2006-07,Deaths,Yes       ,24,1.9
+2006-07,Deaths,No        ,1255,98.1
+2006-07,Antiviral Treatments,Yes       ,488,38.2
+2006-07,Antiviral Treatments,No        ,791,61.8
+2007-08,Age Group,65+ yr,1749,44.5
+2007-08,Age Group,18-49 yr,736,18.7
+2007-08,Age Group,50-64 yr,585,14.9
+2007-08,Age Group,5-17 yr,221,5.6
+2007-08,Age Group,0-4 yr,639,16.3
+2007-08,Sex,Male,1825,46.4
+2007-08,Sex,Female,2104,53.5
+2007-08,ICU Admission,Yes       ,495,12.6
+2007-08,ICU Admission,No        ,3435,87.4
+2007-08,Mechanical Ventilation,No        ,3678,93.6
+2007-08,Mechanical Ventilation,Yes       ,252,6.4
+2007-08,Pneumonia Diagnosis,Yes       ,1220,31.0
+2007-08,Pneumonia Diagnosis,No        ,2710,69.0
+2007-08,Deaths,Yes       ,104,2.6
+2007-08,Deaths,No        ,3826,97.4
+2007-08,Antiviral Treatments,Yes       ,1830,46.6
+2007-08,Antiviral Treatments,No        ,2100,53.4
+2008-09,Age Group,65+ yr,329,19.4
+2008-09,Age Group,50-64 yr,201,11.8
+2008-09,Age Group,18-49 yr,374,22.0
+2008-09,Age Group,5-17 yr,244,14.4
+2008-09,Age Group,0-4 yr,550,32.4
+2008-09,Sex,Male,832,49.0
+2008-09,Sex,Female,866,51.0
+2008-09,ICU Admission,Yes       ,298,17.6
+2008-09,ICU Admission,No        ,1400,82.4
+2008-09,Mechanical Ventilation,Yes       ,157,9.2
+2008-09,Mechanical Ventilation,No        ,1541,90.8
+2008-09,Pneumonia Diagnosis,No        ,1291,76.0
+2008-09,Pneumonia Diagnosis,Yes       ,407,24.0
+2008-09,Deaths,Yes       ,49,2.9
+2008-09,Deaths,No        ,1649,97.1
+2008-09,Antiviral Treatments,Yes       ,610,35.9
+2008-09,Antiviral Treatments,No        ,1088,64.1
+2009-10,Age Group,65+ yr,750,10.0
+2009-10,Age Group,50-64 yr,1458,19.4
+2009-10,Age Group,18-49 yr,2778,37.0
+2009-10,Age Group,5-17 yr,1204,16.0
+2009-10,Age Group,0-4 yr,1325,17.6
+2009-10,Sex,Male,3516,46.8
+2009-10,Sex,Female,3999,53.2
+2009-10,ICU Admission,Yes       ,1560,20.8
+2009-10,ICU Admission,No        ,5955,79.2
+2009-10,Mechanical Ventilation,Yes       ,758,10.1
+2009-10,Mechanical Ventilation,No        ,6757,89.9
+2009-10,Pneumonia Diagnosis,No        ,4713,62.7
+2009-10,Pneumonia Diagnosis,Yes       ,2802,37.3
+2009-10,Deaths,Yes       ,222,3.0
+2009-10,Deaths,No        ,7293,97.0
+2009-10,Antiviral Treatments,Yes       ,6105,81.2
+2009-10,Antiviral Treatments,No        ,1410,18.8
+2010-11,Age Group,65+ yr,2161,34.3
+2010-11,Age Group,50-64 yr,1205,19.1
+2010-11,Age Group,5-17 yr,456,7.2
+2010-11,Age Group,0-4 yr,954,15.1
+2010-11,Age Group,18-49 yr,1531,24.3
+2010-11,Sex,Male,2953,46.8
+2010-11,Sex,Female,3354,53.2
+2010-11,ICU Admission,No        ,5179,82.1
+2010-11,ICU Admission,Yes       ,1128,17.9
+2010-11,Mechanical Ventilation,No        ,5774,91.5
+2010-11,Mechanical Ventilation,Yes       ,533,8.5
+2010-11,Pneumonia Diagnosis,Yes       ,1963,31.1
+2010-11,Pneumonia Diagnosis,No        ,4344,68.9
+2010-11,Deaths,Yes       ,197,3.1
+2010-11,Deaths,No        ,6110,96.9
+2010-11,Antiviral Treatments,Yes       ,4532,71.9
+2010-11,Antiviral Treatments,No        ,1775,28.1
+2011-12,Age Group,65+ yr,975,40.4
+2011-12,Age Group,50-64 yr,432,17.9
+2011-12,Age Group,18-49 yr,526,21.8
+2011-12,Age Group,5-17 yr,192,8.0
+2011-12,Age Group,0-4 yr,290,12.0
+2011-12,Sex,Male,1158,48.0
+2011-12,Sex,Female,1257,52.0
+2011-12,ICU Admission,Yes       ,399,16.5
+2011-12,ICU Admission,No        ,2016,83.5
+2011-12,Mechanical Ventilation,No        ,2269,94.0
+2011-12,Mechanical Ventilation,Yes       ,146,6.0
+2011-12,Pneumonia Diagnosis,Yes       ,733,30.4
+2011-12,Pneumonia Diagnosis,No        ,1682,69.6
+2011-12,Deaths,Yes       ,58,2.4
+2011-12,Deaths,No        ,2357,97.6
+2011-12,Antiviral Treatments,Yes       ,1750,72.5
+2011-12,Antiviral Treatments,No        ,665,27.5
+2012-13,Age Group,65+ yr,6221,50.1
+2012-13,Age Group,50-64 yr,2223,17.9
+2012-13,Age Group,18-49 yr,2062,16.6
+2012-13,Age Group,5-17 yr,700,5.6
+2012-13,Age Group,0-4 yr,1219,9.8
+2012-13,Sex,Male,5786,46.6
+2012-13,Sex,Female,6639,53.4
+2012-13,ICU Admission,Yes       ,1956,15.7
+2012-13,ICU Admission,No        ,10469,84.3
+2012-13,Mechanical Ventilation,No        ,11682,94.0
+2012-13,Mechanical Ventilation,Yes       ,743,6.0
+2012-13,Pneumonia Diagnosis,Yes       ,3498,28.2
+2012-13,Pneumonia Diagnosis,No        ,8927,71.8
+2012-13,Deaths,Yes       ,313,2.5
+2012-13,Deaths,No        ,12112,97.5
+2012-13,Antiviral Treatments,Yes       ,9945,80.0
+2012-13,Antiviral Treatments,No        ,2480,20.0
+2013-14,Age Group,65+ yr,2866,29.8
+2013-14,Age Group,50-64 yr,2845,29.6
+2013-14,Age Group,18-49 yr,2643,27.5
+2013-14,Age Group,5-17 yr,433,4.5
+2013-14,Age Group,0-4 yr,821,8.5
+2013-14,Sex,Male,4584,47.7
+2013-14,Sex,Female,5024,52.3
+2013-14,ICU Admission,Yes       ,2141,22.3
+2013-14,ICU Admission,No        ,7467,77.7
+2013-14,Mechanical Ventilation,No        ,8540,88.9
+2013-14,Mechanical Ventilation,Yes       ,1068,11.1
+2013-14,Pneumonia Diagnosis,Yes       ,3391,35.3
+2013-14,Pneumonia Diagnosis,No        ,6217,64.7
+2013-14,Deaths,Yes       ,336,3.5
+2013-14,Deaths,No        ,9272,96.5
+2013-14,Antiviral Treatments,Yes       ,8144,84.8
+2013-14,Antiviral Treatments,No        ,1464,15.2
+2014-15,Age Group,65+ yr,10862,61.2
+2014-15,Age Group,50-64 yr,2870,16.2
+2014-15,Age Group,18-49 yr,2245,12.7
+2014-15,Age Group,5-17 yr,769,4.3
+2014-15,Age Group,0-4 yr,997,5.6
+2014-15,Sex,Male,8010,45.1
+2014-15,Sex,Female,9733,54.9
+2014-15,ICU Admission,Yes       ,2661,15.0
+2014-15,ICU Admission,No        ,15082,85.0
+2014-15,Mechanical Ventilation,No        ,16668,93.9
+2014-15,Mechanical Ventilation,Yes       ,1075,6.1
+2014-15,Pneumonia Diagnosis,Yes       ,4735,26.7
+2014-15,Pneumonia Diagnosis,No        ,13008,73.3
+2014-15,Deaths,Yes       ,535,3.0
+2014-15,Deaths,No        ,17208,97.0
+2014-15,Antiviral Treatments,Yes       ,15330,86.4
+2014-15,Antiviral Treatments,No        ,2413,13.6
+2015-16,Age Group,65+ yr,3095,35.2
+2015-16,Age Group,50-64 yr,2452,27.9
+2015-16,Age Group,5-17 yr,451,5.1
+2015-16,Age Group,18-49 yr,2051,23.3
+2015-16,Age Group,0-4 yr,741,8.4
+2015-16,Sex,Male,4126,46.9
+2015-16,Sex,Female,4664,53.1
+2015-16,ICU Admission,Yes       ,1663,18.9
+2015-16,ICU Admission,No        ,7127,81.1
+2015-16,Mechanical Ventilation,Yes       ,696,7.9
+2015-16,Mechanical Ventilation,No        ,8094,92.1
+2015-16,Pneumonia Diagnosis,No        ,6049,68.8
+2015-16,Pneumonia Diagnosis,Yes       ,2741,31.2
+2015-16,Deaths,Yes       ,246,2.8
+2015-16,Deaths,No        ,8544,97.2
+2015-16,Antiviral Treatments,Yes       ,7498,85.3
+2015-16,Antiviral Treatments,No        ,1292,14.7
+2016-17,Age Group,65+ yr,10399,59.5
+2016-17,Age Group,50-64 yr,3413,19.5
+2016-17,Age Group,18-49 yr,2245,12.8
+2016-17,Age Group,5-17 yr,720,4.1
+2016-17,Age Group,0-4 yr,712,4.1
+2016-17,Sex,Male,7971,45.6
+2016-17,Sex,Female,9518,54.4
+2016-17,ICU Admission,Yes       ,2749,15.8
+2016-17,ICU Admission,No        ,14684,84.2
+2016-17,Mechanical Ventilation,No        ,16478,94.5
+2016-17,Mechanical Ventilation,Yes       ,951,5.5
+2016-17,Pneumonia Diagnosis,Yes       ,4522,26.3
+2016-17,Pneumonia Diagnosis,No        ,12646,73.7
+2016-17,Deaths,Yes       ,529,3.0
+2016-17,Deaths,No        ,16904,97.0
+2016-17,Antiviral Treatments,Yes       ,15569,89.2
+2016-17,Antiviral Treatments,No        ,1883,10.8
+2017-18,Age Group,5-17 yr,XX,3.1
+2017-18,Age Group,65+ yr,XX,58.7
+2017-18,Age Group,50-64 yr,XX,20.9
+2017-18,Age Group,0-4 yr,XX,4.2
+2017-18,Age Group,18-49 yr,XX,13.0
+2017-18,Sex,Male,XX,45.8
+2017-18,Sex,Female,XX,54.2
+2017-18,ICU Admission,Yes       ,XX,17.2
+2017-18,ICU Admission,No        ,XX,82.8
+2017-18,Mechanical Ventilation,Yes       ,XX,6.8
+2017-18,Mechanical Ventilation,No        ,XX,93.2
+2017-18,Pneumonia Diagnosis,Yes       ,XX,27.6
+2017-18,Pneumonia Diagnosis,No        ,XX,72.4
+2017-18,Deaths,Yes       ,XX,2.9
+2017-18,Deaths,No        ,XX,97.1
+2017-18,Antiviral Treatments,No        ,XX,7.8
+2017-18,Antiviral Treatments,Yes       ,XX,92.2
+2018-19,Age Group,65+ yr,XX,46.9
+2018-19,Age Group,50-64 yr,XX,23.6
+2018-19,Age Group,0-4 yr,XX,6.7
+2018-19,Age Group,5-17 yr,XX,5.1
+2018-19,Age Group,18-49 yr,XX,17.6
+2018-19,Sex,Male,XX,46.6
+2018-19,Sex,Female,XX,53.4
+2018-19,ICU Admission,Yes       ,XX,18.1
+2018-19,ICU Admission,No        ,XX,81.9
+2018-19,Mechanical Ventilation,Yes       ,XX,6.4
+2018-19,Mechanical Ventilation,No        ,XX,93.6
+2018-19,Pneumonia Diagnosis,Yes       ,XX,29.2
+2018-19,Pneumonia Diagnosis,No        ,XX,70.8
+2018-19,Deaths,Yes       ,XX,2.9
+2018-19,Deaths,No        ,XX,97.1
+2018-19,Antiviral Treatments,Yes       ,XX,92.4
+2018-19,Antiviral Treatments,No        ,XX,7.6
