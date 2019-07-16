@@ -51,7 +51,7 @@ We will simulate HIHCs using a modified version of the curve-fitting approach de
 
 First, we fit a quadratic trend filter to historical hospitalization curves as released by the CDC (beginning with the 2003--2004 season), using the R package `glmgen` [@Brooks2015-fl; @Centers_for_Disease_Control_and_Prevention2016-nr]. This model is fit within flu severity group (Low, High/Moderate).
 
-For each season $s$ and each week $i$, Brook et al. conceptualize a seasonal influenza curve as some function plus noise:
+For each season $s$ and each week $i$, Brooks et al. conceptualize a seasonal influenza curve as some function plus noise:
 
 $$y^s_i = f^s (i) + \epsilon^s_i, \epsilon \sim N(0, \tau^s),$$
 
@@ -59,13 +59,47 @@ where
 
 $$f^s (i) = b + \frac{\theta - b}{max_j f(j) - b} \left[ f \left( \frac{i - u}{v} + \genfrac{}{}{0pt}{}{arg\text{ }max}{j} f (j) \right) - b \right]$$
 
-and $b$ represents a seasonal "baseline" increase in cases which is used to designate officially the week of season onset. To account for natural variation in $b$ across flu seasons, we will sweep a plausible range of values (to be determined) during curve simulation. ^[In Brook et al., the authors use their framework to forecast a current flu season, where $b$ represents the current season's epidemic threshold. Because we are interested in model fitting, we will sample from a range of plausible "hospitalization thresholds" to account for seasonal variation.]
+and $b$ represents a seasonal "baseline" increase in cases which is used to designate officially the week of season onset. 
+
+To account for natural variation in $b$ across flu seasons, we will sweep a plausible range of values (to be determined) during curve simulation. ^[In Brook et al., the authors use their framework to forecast a current flu season, where $b$ represents the current season's epidemic threshold. Because we are interested in model fitting, we will sample from a range of plausible "hospitalization thresholds" to account for seasonal variation.]
 
 Based on fitting the quadratic trend filtering model to empirical data (i.e., historical CDC flu hospitalization data), we estimate error $\tau^s$:
 
 $$\left( \hat{\tau}^s \right)^2 = \genfrac{}{}{0pt}{}{avg}{i} \left[ y^s_i - \hat{f}^s (i) \right]^2$$
 
 and then sample from the model, introducing noise for each weekly observation based this estimate of $\tau^2$.
+
+## Parameters in quadratic trend filtering model
+
+The quadratice trend filter is fit using the following sampling scheme for each parameter represented in the model for hospitalization count ($y^s_i$) at each week:
+
+$$\left< f, o, \nu, \theta, \mu \right>$$
+
+## Shape ($f$)
+
+$$f \sim U \{ \hat{f} : \text{historical season } s \} $$
+
+## Noise ($\sigma$)
+
+$$\sigma \sim U \{\hat{\tau}^s \text{ : historical season } s \}$$
+
+## Peak height ($\theta$)
+
+$$\theta \sim U\left[\theta_m , \theta_M\right]$$
+
+Results in the following curve:
+
+$$f_3(i) = f_2(i - \mu + \text{arg max}_j f_2(j))$$
+
+## Pacing ($\nu$)
+
+Curve-stretching around peak week:
+
+$$\nu \sim U[0.75, 1.25]$$
+
+Results in following curve:
+
+$$f_4 (i) = f_3 \left( \frac{i - \text{arg max}_j \text{ } f_3 (j)}{\nu} + \text{arg max}_j \text{ } f_3 (j) \right)$$
 
 
 # Candidate models
