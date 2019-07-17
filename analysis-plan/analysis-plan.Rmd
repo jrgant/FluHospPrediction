@@ -46,7 +46,7 @@ All weeks will be specified using the _MMWR_ Week convention [@Centers_for_Disea
 
 These targets follow from [@Brooks2015-fl].
 
-```{r, echo = FALSE, fig.fullwidth = TRUE, fig.cap = "Empirical hospitalization curves, peak weeks, and peak number of cases --- 2003--2017 (Source: FluSurv-NET, CDC)"}
+```{r flusurv-net_fig, echo = FALSE, fig.fullwidth = TRUE, fig.cap = "Empirical hospitalization curves, peak weeks, and peak number of cases --- 2003--2017 (Source: FluSurv-NET, CDC). Data excludes 2009--2010 pandemic influenza season."}
 knitr::include_graphics("hospital-curve-empirical.pdf")
 ```
 

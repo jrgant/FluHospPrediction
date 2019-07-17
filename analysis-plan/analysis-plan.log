@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2019.6.9)  17 JUL 2019 12:14
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2019.6.9)  17 JUL 2019 13:07
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1020,7 +1020,7 @@ Here is how much of TeX's memory you used:
  16984 multiletter control sequences out of 15000+600000
  114037 words of font info for 80 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 40i,11n,45p,351b,477s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 40i,11n,45p,404b,477s stack positions out of 5000i,500n,10000p,200000b,80000s
  <c:/Users/jason/Documents/.TinyTeX/texmf-var/fonts/pk/ljfour/jknappen/ec/ect
 t0800.600pk>{c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/
 roboto/rbto_hsw3yt.enc}{c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts
@@ -1043,7 +1043,7 @@ ing/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/Users/jason
 :/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm
 /cmr7.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public
 /amsfonts/cm/cmsy10.pfb>
-Output written on analysis-plan.pdf (6 pages, 210855 bytes).
+Output written on analysis-plan.pdf (6 pages, 210887 bytes).
 PDF statistics:
  302 PDF objects out of 1000 (max. 8388607)
  235 compressed objects within 3 object streams
