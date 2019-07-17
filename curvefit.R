@@ -1,4 +1,10 @@
-library(glmgen)
+
+# Load packages -------------------------------------------------------------
+
+pacman::p_load(glmgen, ggplot2, ggthemes, viridis, purrr, tidyr)
+
+
+# Load data -----------------------------------------------------------------
 
 # convert MASS::accdeaths to data frame
 ts <- as.data.frame(
@@ -13,12 +19,11 @@ sapply(ts, class)
 length(unique(ts$year))
 length(unique(ts$month))
 
-# check factor levels
-levels(ts$year)
-levels(ts$month)
 
-library(ggplot2)
-library(viridis)
+
+# Plot ----------------------------------------------------------------------
+
+# Empirical curves
 ggplot(ts, aes(x = factor(month),
                y = deaths,
                color = factor(year))) +
@@ -28,16 +33,29 @@ ggplot(ts, aes(x = factor(month),
   theme_clean()
 
 
-# k = 2 uses the quadratic trend filter as in Brook et al.
-tf_mod <- trendfilter(x = ts$month, y = ts$deaths, 
-                      k = 2, verbose = T)       
+# Quadratic Trend Filter ----------------------------------------------------
 
+# k = 2 uses the quadratic trend filter as in Brooks et al.
+tf_mod <- trendfilter(x = ts$month, 
+                      y = ts$deaths, 
+                      k = 2, 
+                      verbose = T)       
+
+# Split Seasons 
 seas <- split(ts, ts$year)
-tf_seas <- lapply(seas, function(x) trendfilter(x = x$month, y = x$deaths, k = 2))
+tf_seas <- lapply(seas, function(x) { 
+  trendfilter(x = x$month, y = x$deaths, k = 2) 
+  })
 
-tf_pred <- purrr::map2(seas, tf_seas, function(x, y) predict(y, x.new = x$month, lambda = y$lambda[15]))
+# Predict 
+# predict the weekly count (y) and error (tau) for each season
+tf_pred <- map2(seas, tf_seas, function(x, y) { 
+  predict(y, x.new = x$month, lambda = y$lambda[15]) 
+  })
 
-taus <- purrr::map2(seas, tf_pred, function(x, y) {
+# get taus
+taus <- map2(seas, tf_pred, function(x, y) {
+  
   obs <- x$deaths
   pred <- as.vector(y)
   error <- (obs - pred)^2
@@ -48,6 +66,8 @@ taus <- purrr::map2(seas, tf_pred, function(x, y) {
   list(preds = df, mean.squared.error = mnsqerr)
 })
 
+taus
+
 pred_plot_dat <- map2_dfr(taus, 1973:1978, function(x, y) {
   df <- x[[1]]
   df$year <- y
@@ -55,18 +75,21 @@ pred_plot_dat <- map2_dfr(taus, 1973:1978, function(x, y) {
   df
 })
 
-pred_plot_dat
+head(pred_plot_dat)
 
-ggplot(pred_plot_dat,
-       aes(x = factor(month),
-           group = factor(year))) +
-  geom_line(aes(y = obs), color = "red") + 
-  geom_line(aes(y = pred), color = "black") +
-  geom_point(aes(y = obs), color = "red") +
-  geom_point(aes(y = pred), color = "black") +
-  facet_wrap(~factor(year)) +
-  labs(x = "Month\n", y = "Deaths", caption = "Black, predicted deaths using quadratic trend filtering; Red, observed deaths") +
-  theme_clean() +
-  theme(plot.caption = element_text(hjust = 0, 
-                                    face = "italic"),
-        strip.text = element_text(face = "bold"))
+pgath <- pred_plot_dat %>% gather(type, deaths, -sqerr, -year, -month)
+
+ggplot(pgath, aes(x = factor(month),
+                  y = deaths,
+                  group = type,
+                  color = type)) +
+  geom_point(size = 2, alpha = 0.6) +
+  geom_line(size = 0.5, alpha = 0.4) +
+  facet_wrap(~year) +
+  scale_color_manual(values = c("black", "red")) +
+  theme_clean()
+
+
+# Generate hypothetical curves ----------------------------------------------
+
+tf_mod

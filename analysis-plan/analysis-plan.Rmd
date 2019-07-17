@@ -9,6 +9,7 @@ link-citations: yes
 
 ```{r setup, include=FALSE}
 library(tint)
+library(here)
 # invalidate cache when the package version changes
 knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tint'))
 options(htmltools.dir.version = FALSE)
@@ -45,6 +46,10 @@ All weeks will be specified using the _MMWR_ Week convention [@Centers_for_Disea
 
 These targets follow from [@Brooks2015-fl].
 
+```{r, echo = FALSE, fig.fullwidth = TRUE, fig.cap = "Empirical hospitalization curves, peak weeks, and peak number of cases --- 2003--2017 (Source: FluSurv-NET, CDC)"}
+knitr::include_graphics("hospital-curve-empirical.pdf")
+```
+
 # Curve fitting and simulation
 
 We will simulate HIHCs using a modified version of the curve-fitting approach described by Brooks et al. [@Brooks2015-fl].
@@ -57,7 +62,7 @@ $$y^s_i = f^s (i) + \epsilon^s_i, \epsilon \sim N(0, \tau^s),$$
 
 where 
 
-$$f^s (i) = b + \frac{\theta - b}{max_j f(j) - b} \left[ f \left( \frac{i - u}{v} + \genfrac{}{}{0pt}{}{arg\text{ }max}{j} f (j) \right) - b \right]$$
+$$f^s (i) = b + \frac{\theta - b}{\text{max}_j f(j) - b} \left[ f \left( \frac{i - u}{v} + \genfrac{}{}{0pt}{}{\text{arg max }{j}} f (j) \right) - b \right]$$
 
 and $b$ represents a seasonal "baseline" increase in cases which is used to designate officially the week of season onset. 
 
@@ -65,7 +70,7 @@ To account for natural variation in $b$ across flu seasons, we will sweep a plau
 
 Based on fitting the quadratic trend filtering model to empirical data (i.e., historical CDC flu hospitalization data), we estimate error $\tau^s$:
 
-$$\left( \hat{\tau}^s \right)^2 = \genfrac{}{}{0pt}{}{avg}{i} \left[ y^s_i - \hat{f}^s (i) \right]^2$$
+$$\left( \hat{\tau}^s \right)^2 = \genfrac{}{}{0pt}{}{\text{avg}}{i} \left[ y^s_i - \hat{f}^s (i) \right]^2$$
 
 and then sample from the model, introducing noise for each weekly observation based this estimate of $\tau^2$.
 

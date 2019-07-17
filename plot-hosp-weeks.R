@@ -68,26 +68,33 @@ wct_p <- wct %>% filter(!seas %in% c("2009-10", "2018-19"))
 
 # plot theme tweaks
 theme_tweak <- 
-  theme_clean(base_size = 15) +
+  theme_clean(base_size = 12) +
   theme(axis.line = element_blank(),
-                     axis.ticks.y = element_blank(),
-                     axis.title = element_text(face = "bold"),
-                     axis.title.x = element_text(margin = margin(t = 10)),
-                     axis.title.y = element_text(margin = margin(r = 10)),
-                     legend.position = "right",
-                     legend.background = element_blank())
+        axis.ticks.y = element_blank(),
+        axis.title.x = element_text(margin = margin(t = 10)),
+        axis.title.y = element_text(margin = margin(r = 10)),
+        legend.position = "right",
+        legend.background = element_blank(),
+        plot.background = element_blank(),
+        plot.margin = margin(t = 0.2, r = 0.2, b = 0.2, l = 0.2, unit = "in"))
 
 
 seas_p <- wct_p %>%
-  ggplot(aes(x = epiweek,
+  ggplot(aes(x = factor(epiweek),
              y = inf.tot,
              group = seas,
              color = severity)) +
-  geom_line(size = 0.5) +
-  labs(x = "Epiweek", y = "Influenza hospitalizations (A and B)",
-       title = "Hospitalization curves, 2003–2018") +
-  scale_color_colorblind("Severity") +
-  theme_tweak
+  geom_line(size = 1, alpha = 0.7) +
+  labs(x = "Epiweek", 
+       y = "Influenza hospitalizations (A and B)") +
+  scale_color_viridis_d("Severity", 
+                        option = "inferno", 
+                        end = 0.8) +
+  scale_x_discrete(breaks = c(45, 50, 2, 7, 12)) +
+  facet_grid(~severity) +
+  theme_tweak +
+  theme(legend.position = "none",
+        strip.text = element_text(face = "bold"))
 
 seas_p
 
@@ -101,27 +108,28 @@ peaks <- wct_p %>%
          inf.tot,
          severity, 
          sev2) %>%
-  mutate(wk2 = match(wk, ))
+  mutate(wk2 = match(wk, epiweek_subset))
 
 pkwk_p <- peaks %>%
   ggplot(aes(x = sev2, y = wk2)) +
   geom_point(size = 2, alpha = 0.5) +
   scale_y_continuous(labels = c(0, epiweek_subset[15], epiweek_subset[20], epiweek_subset[25])) +
   labs(x = "Severity", y = "Peak week (epiweek)") +
-  theme_tweak
-
-pkwk_p
+  theme_tweak + 
+  theme(axis.line = element_blank())
 
 pkcs_p <- peaks %>%
   ggplot(aes(x = sev2, y = inf.tot, label = seas)) +
   geom_point(size = 2, alpha = 0.5) +
   labs(x = "Severity", y = "Peak cases (#)") +
-  theme_tweak
+  theme_tweak +
+  theme(axis.line = element_blank())
 
-pkcs_p
+hosp_grid <- grid.arrange(
+  seas_p, pkwk_p, pkcs_p,
+  layout_matrix = matrix(c(1, 1, 2, 1, 1, 3), nrow = 2, byrow = T)
+  )
+grid::grid.draw(hosp_grid)
 
-
-grid.arrange(seas_p, pkwk_p, pkcs_p,
-             layout_matrix = matrix(c(1, 1, 2, 1, 1, 3), nrow = 2, byrow = T))
-
-             
+# Save Grid in Analysis Plan Directory --------------------------------------
+ggsave(filename = "analysis-plan/hospital-curve-empirical.pdf", plot = hosp_grid)
