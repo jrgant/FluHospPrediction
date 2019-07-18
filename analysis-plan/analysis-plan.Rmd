@@ -76,7 +76,7 @@ and then sample from the model, introducing noise for each weekly observation ba
 
 ## Parameters in quadratic trend filtering model
 
-The quadratice trend filter is fit using the following sampling scheme for each parameter represented in the model for hospitalization count ($y^s_i$) at each week:
+The quadratic trend filter is fit using the following sampling scheme for each parameter represented in the model for hospitalization count ($y^s_i$) at each week:
 
 $$\left< f, o, \nu, \theta, \mu \right>$$
 
