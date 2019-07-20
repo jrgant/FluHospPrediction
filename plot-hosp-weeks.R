@@ -4,47 +4,18 @@
 # install.packages("pacman")
 # install.packages("devtools")
 # devtools::install_github("kmcconeghy/flumodelr)
-pacman::p_load(flumodelr, magrittr, stringr, viridis, ggthemes, broom, rvest,
-               gridExtra)
+pacman::p_load(flumodelr, magrittr, stringr, viridis, ggthemes, broom, gridExtra)
 
 # Load Data -----------------------------------------------------------------
 
-cdcsv    <- readRDS("cdcsv_2019-07-19.Rds")
-hsp_file <- "hospdat/Weekly_Data_Counts.csv"
-hsp_names <- c("seas", "epiweek", "inf.a", "inf.b", "inf.ab", "inf.unk")
-
-epiweek_levels <- paste(c(35:53, 1:17))
-seas_levels <- paste(2003:2018, str_extract(2004:2019, "[0-9]{2}$"), sep = "-")
-
-# wct = weekly hospitalization counts
-wct <- 
-  read_csv(hsp_file, skip = 2, 
-           col_names = hsp_names) %>%
-  mutate(
-    epiweek  = factor(str_remove(epiweek, "[0-9]{4}\\-"), levels = epiweek_levels),
-    seas     = factor(seas, levels = seas_levels),
-    # match season with CDC overall severity classification
-    severity = cdcsv$overall[match(seas, cdcsv$season)],
-    sev2 = if_else(severity == "Low", "Low", "High/Moderate")
-    ) %>%
-  rowwise() %>%
-  mutate(inf.tot = sum(inf.a, inf.b, inf.ab, na.rm = TRUE)) %>%
-  ungroup() %>%
-  # order factor levels
-  mutate(severity = factor(severity, levels = c("Low", "Moderate", "High")),
-         sev2 = factor(sev2, levels = c("Low", "High/Moderate")))
-
-# check two-level severity variable
-table(is.na(wct$severity))
-table(is.na(wct$sev2))
-with(wct, table(severity, sev2, exclude = NULL))
-
+# empirical data
+empdat <- readRDS("empdat.Rds")
 
 # View Hospitalization Curves -----------------------------------------------
 
 # drop pandemic influenza year
 # drop 2018-19 due to lack of severity designation
-wct_p <- wct %>% filter(!seas %in% c("2009-10", "2018-19"))
+wct_p <- empdat$whsp_ct %>% filter(!seas %in% c("2009-10", "2018-19"))
 
 # plot theme tweaks
 theme_tweak <- 
@@ -79,7 +50,9 @@ seas_p <- wct_p %>%
 seas_p
 
 # Summarize peak weeks
+epiweek_levels <- levels(empdat$whsp_ct$epiweek)
 epiweek_subset <- epiweek_levels[!epiweek_levels %in% 35:39]
+
 peaks <- wct_p %>%
   group_by(seas) %>%
   filter(inf.tot == max(inf.tot)) %>%
