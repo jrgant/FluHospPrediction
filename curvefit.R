@@ -1,95 +1,181 @@
+# Hypothetical Curve Simulation
+
+# Approach adapted from:
+
+# Brooks LC, Farrow DC, Hyun S, Tibshirani RJ, Rosenfeld R. Flexible Modeling of 
+# Epidemics with an Empirical Bayes Framework. PLoS Comput Biol 2015;11:e1004382. 
+# doi:10.1371/journal.pcbi.1004382.
+
 
 # Load packages -------------------------------------------------------------
 
-pacman::p_load(glmgen, ggplot2, ggthemes, viridis, purrr, tidyr)
-
+pacman::p_load(glmgen, ggplot2, ggthemes, viridis, purrr, tidyr, data.table)
 
 # Load data -----------------------------------------------------------------
 
-# convert MASS::accdeaths to data frame
-ts <- as.data.frame(
-  cbind(deaths = as.vector(MASS::accdeaths),
-        year = rep(1973:1978, each = 12),
-        month = 1:12))
+ed <- readRDS("empdat.Rds")
 
-# check variable classes
-sapply(ts, class)
+# convert data.frames in list to data.tables
+sapply(ed, setDT) 
 
-# check number of unique factor values
-length(unique(ts$year))
-length(unique(ts$month))
+# convert factor variables to character in whsp_ct
+#ed$whsp_ct[, epiweek := as.numeric(as.character(epiweek))]
 
+fct_to_char <- c("seas", "severity", "sev2")
+ed$whsp_ct[, (fct_to_char) := lapply(.SD, as.character), 
+               .SDcols = fct_to_char]
 
+# subset whsp_ct to deisred seasons and epiweeks
+# drop pandemic flu and seasons with missing severity data
+drop_seas <- c("2009-10", "2018-19")
+ed$cdc_svr <- ed$cdc_svr[!season %in% drop_seas]
 
-# Plot ----------------------------------------------------------------------
+ew_order <- c(40:53, 1:17)
+ed$whsp_ct <- ed$whsp_ct[!seas %in% drop_seas & 
+                           epiweek %in% ew_order]
 
-# Empirical curves
-ggplot(ts, aes(x = factor(month),
-               y = deaths,
-               color = factor(year))) +
-  geom_line(aes(group = factor(year))) +
-  scale_color_viridis_d(option = "B") +
-  labs(title = "Testing trendfilter() using MASS::accdeaths") +
-  theme_clean()
+# create a week variable that matches epiweek to integers
+# trandfilter() does not take factors
+ed$whsp_ct[, week := c(1:31)[match(epiweek, ew_order)]]
 
+# view variable classes in both datasets
+sapply(ed, function(x) sapply(x, class))
+ed
 
 # Quadratic Trend Filter ----------------------------------------------------
 
-# k = 2 uses the quadratic trend filter as in Brooks et al.
-tf_mod <- trendfilter(x = ts$month, 
-                      y = ts$deaths, 
-                      k = 2, 
-                      verbose = T)       
+# Split Observed Seasons 
+# each gets its own data.frame
+seas_obs <- split(ed$whsp_ct, ed$whsp_ct$seas)
 
-# Split Seasons 
-seas <- split(ts, ts$year)
-tf_seas <- lapply(seas, function(x) { 
-  trendfilter(x = x$month, y = x$deaths, k = 2) 
+# run trendfilter on each observed season
+tf_seas <- lapply(seas_obs, function(x) { 
+  trendfilter(x = x$week, y = x$inf.tot, k = 2) 
   })
+
+tf_seas
 
 # Predict 
 # predict the weekly count (y) and error (tau) for each season
-tf_pred <- map2(seas, tf_seas, function(x, y) { 
-  predict(y, x.new = x$month, lambda = y$lambda[15]) 
+# @DEV 2019-07-25: Generalize to loop through lambda values
+pred_fun <- function(x, y) {
+  predict(y, x.new = x, lambda = y$lambda[45])
+}
+
+# @BUG: predict() is throwing a warning saying saying:
+#      "Predict called at new x values out of the original range."
+#       Don't think it's a problem. Suspect its related to a few leap years
+#       where seasons had an epiweek 53.
+tf_pred <- lapply(
+  setNames(names(tf_seas), names(tf_seas)), 
+  function(x) {
+    
+    pred.hosp <- pred_fun(seas_obs[[x]]$x, tf_seas[[x]])
+    obs.hosp1 <- tf_seas[[x]]$y
+    obs.hosp2 <- seas_obs[[x]]$inf.tot
+    check.obs <- obs.hosp1 - obs.hosp2
+    
+    # calculate tau^2 for each season
+    sqerr <- (obs.hosp1 - as.vector(pred.hosp))^2
+    
+    if (sum(check.obs) != 0) stop("Observed hospitalizations don't match!")
+      
+    list(
+      dat = data.frame(season = x,
+                       week = 1:length(pred.hosp),
+                       pred.hosp = as.vector(pred.hosp),
+                       obs.hosp1,
+                       obs.hosp2,
+                       check.obs,
+                       sqerr,
+                       severity = seas_obs[[x]]$sev2),
+      # take the mean of the squared error
+      mean.tau.sq = mean(sqerr),
+      tau = sqrt(mean(sqerr)))
   })
 
-# get taus
-taus <- map2(seas, tf_pred, function(x, y) {
-  
-  obs <- x$deaths
-  pred <- as.vector(y)
-  error <- (obs - pred)^2
-  
-  df <- data.frame(obs, pred = pred, sqerr = error)
-  mnsqerr <- mean(df$sqerr)
-  
-  list(preds = df, mean.squared.error = mnsqerr)
-})
+tf_pred
 
-taus
+tfp <- map_dfr(tf_pred, function(x) x[[1]])
+setDT(tfp)
 
-pred_plot_dat <- map2_dfr(taus, 1973:1978, function(x, y) {
-  df <- x[[1]]
-  df$year <- y
-  df$month <- 1:12
-  df
-})
-
-head(pred_plot_dat)
-
-pgath <- pred_plot_dat %>% gather(type, deaths, -sqerr, -year, -month)
-
-ggplot(pgath, aes(x = factor(month),
-                  y = deaths,
-                  group = type,
-                  color = type)) +
-  geom_point(size = 2, alpha = 0.6) +
-  geom_line(size = 0.5, alpha = 0.4) +
-  facet_wrap(~year) +
-  scale_color_manual(values = c("black", "red")) +
-  theme_clean()
+tfp %>%
+  ggplot(aes(x = week, group = season, col = season)) +
+  geom_line(aes(y = pred.hosp)) +
+  geom_point(aes(y = obs.hosp1), shape = 21) +
+  facet_grid(~severity) +
+  scale_color_viridis_d() +
+  scale_x_continuous("Epiweek", labels = c(0, ew_order[c(10, 20, 30)])) +
+  labs(y = "Hospitalizations (n)",
+       title = "Trend filter, predicted hospitalizations vs. observed") +
+  theme_clean(base_size = 15) +
+  theme(plot.caption = element_text(face = "italic", size = 10),
+        axis.title = element_text(face = "bold", color = "slategray"))
 
 
 # Generate hypothetical curves ----------------------------------------------
 
-tf_mod
+# @DEV 2019-07-25: Stratify into High/Moderate and Low severity seasons
+# @DEV 2019-07-25: Determine how to handle the multiple lambdas for each fitted qtf
+# @BUG 2019-07-25: Some pathological curves generated for some samples...
+#                  Determine cause, related to arg_f assignment.
+
+# record peak weeks ()
+dist_peaks <- ed$whsp_ct[, .(pkhosp = max(inf.tot), 
+                             pkweek = week[inf.tot == max(inf.tot)]), 
+                         by = "seas"]
+
+simcrv <- function() {
+  
+  # sample shape (f)
+  s <- sample(unique(ed$whsp_ct$seas), 1)
+  max_j <- dist_peaks[, pkhosp[seas == s]]
+  argmax_j <- dist_peaks[, pkweek[seas == s]]
+  
+  # sample noise (sigma)
+  sigma <- tf_pred[[s]]$tau
+  
+  # peak height (theta)
+  theta <- runif(1, min(dist_peaks$pkhosp), max(dist_peaks$pkhosp))
+  
+  # peak week
+  mu <- round(runif(1, min(dist_peaks$pkweek), max(dist_peaks$pkweek)))
+  
+  # pacing (nu)
+  nu <- runif(1, 0.75, 1.25)
+  
+  # set b to 0
+  b <- 0
+  
+  print(cbind(
+    c("season", "maxj", "argmax", "sigma", "theta", "mu", "nu", "b"),
+    c(s, max_j, argmax_j, sigma, theta, mu, nu, b)
+    ))
+  
+  # curvefun
+  
+  # term 1
+  t1 <- (theta - b) / (max_j - b)
+  
+  # term 2
+  arg_f <- ((1:31 - mu) / nu) + argmax_j
+  f     <- predict(tf_seas[[s]], x.new = arg_f, lambda = tf_seas[[s]]$lambda[15])
+  t2    <- f - b 
+  
+  f_i <- b + t1 * t2 + rnorm(n = length(t2), 0, sd = sigma)
+  
+  plot(f_i, type = "l", col = "red", 
+       main = substitute(paste("b = ", b, ", ", 
+                               sigma, " = ", sig, ", ",
+                               theta, " = ", the, ", ",
+                               mu, " = ", mus, ", ",
+                               nu, " = ", nus),
+                         list(b = b,
+                              sig = round(sigma, 2),
+                              the = round(theta, 2),
+                              mus = round(mu, 2),
+                              nus = round(nu, 2))))
+}
+
+par(mfrow = c(4, 2))
+suppressWarnings(replicate(8, do.call("simcrv", args = list())))
