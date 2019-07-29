@@ -30,23 +30,22 @@ _Subquestion:_ Which model best predicts the proportion of flu-attributable hosp
 
 1. Simulate 3,000 HIHCs using the empirical Bayes model as a "generative model".  
 
-1. Stratify these HIHCs into groups representing High, Moderate, and Mild severity sets of HIHCs, based on the CDC's categorization [@Biggerstaff2018-ns; @Centers_for_Disease_Control_and_Prevention2018-mf].
+1. Stratify these HIHCs into groups representing High/Moderate and Mild severity HIHCs, based on the CDC's categorization [@Biggerstaff2018-ns; @Centers_for_Disease_Control_and_Prevention2018-mf].
 
-1. Fit each CSM to each severity set and test for goodness of fit. Systematically alter the functional form of epiweek independent predictors as in Wang et al.’s study of influenza mortality [@Wang2012-am].
+1. Fit each CSM within each severity stratum and test for goodness of fit. Systematically alter the functional form of epiweek indicators as in Wang et al.’s study of influenza mortality [@Wang2012-am].
 
 
 # Forecasting targets
 
 All weeks will be specified using the _MMWR_ Week convention [@Centers_for_Disease_Control_and_Prevention_undated-pu]:
 
-1. Season onset week
 1. Peak week
-1. Peak count
-1. Total hospitalization counts
+1. Peak number of hospitalizations
+1. Total hospitalizations
 
-These targets follow from [@Brooks2015-fl].
+These targets follow in part from [@Brooks2015-fl].
 
-```{r flusurv-net_fig, echo = FALSE, fig.fullwidth = TRUE, fig.cap = "Empirical hospitalization curves, peak weeks, and peak number of cases --- 2003--2017 (Source: FluSurv-NET, CDC). Data excludes 2009--2010 pandemic influenza season."}
+```{r flusurv-net_fig, echo = FALSE, fig.fullwidth = TRUE, fig.cap = "Empirical hospitalization curves, peak weeks, and peak number of cases --- 2003--2017 (Source: FluSurv-NET, CDC). Data excludes 2009--2010 pandemic influenza season and 2017--2018 due to no official severity designation."}
 knitr::include_graphics("hospital-curve-empirical.pdf")
 ```
 
@@ -54,7 +53,7 @@ knitr::include_graphics("hospital-curve-empirical.pdf")
 
 We will simulate HIHCs using a modified version of the curve-fitting approach described by Brooks et al. [@Brooks2015-fl].
 
-First, we fit a quadratic trend filter to historical hospitalization curves as released by the CDC (beginning with the 2003--2004 season), using the R package `glmgen` [@Brooks2015-fl; @Centers_for_Disease_Control_and_Prevention2016-nr]. This model is fit within flu severity group (Low, High/Moderate).
+First, we fit a quadratic trend filter to historical hospitalization curves released by the CDC (beginning with the 2003--2004 season), using the R package `glmgen` [@Brooks2015-fl; @Centers_for_Disease_Control_and_Prevention2016-nr]. This model is fit within flu severity group (Mild, High/Moderate).
 
 For each season $s$ and each week $i$, Brooks et al. conceptualize a seasonal influenza curve as some function plus noise:
 
@@ -76,7 +75,7 @@ and then sample from the model, introducing noise for each weekly observation ba
 
 ## Parameters in quadratic trend filtering model
 
-The quadratic trend filter is fit using the following sampling scheme for each parameter represented in the model for hospitalization count ($y^s_i$) at each week:
+The quadratic trend filter is fit using the following sampling scheme for each parameter represented in the model for hospitalization count ($y^s_i$) at each week. Note that all equations are either adapted from or appear in [@Brooks2015-fl].
 
 $$\left< f, o, \nu, \theta, \mu \right>$$
 
@@ -118,41 +117,44 @@ $$f_4 (i) = f_3 \left( \frac{i - \text{arg max}_j \text{ } f_3 (j)}{\nu} + \text
 
 ## Serfling model (least squares)
 
-As presented in [@McConeghy_undated-ps]:
+Modified from [@McConeghy_undated-ps]:
 
-$$Y = \beta_0 \alpha + \beta_1 t + \beta_6 cos \left( \frac{2 \pi t}{52} \right) + \beta_7 sin \left( \frac{2 \pi t}{52} \right)$$
+$$Y = \beta_0 \alpha + \beta_1 t + \beta_rX_r + ... + \beta_p cos \left( \frac{2 \pi t}{52} \right) + \beta_q sin \left( \frac{2 \pi t}{52} \right)$$
+
+Where $t$ = time (epiweek), subscript $r$ denotes a vector of $\beta$ coefficients and variables, and subscripts $p$ and $q$ take on particular numbers based on the length of $r$.
+
 
 ## Modified Serfling model
 
-As presented in [@McConeghy_undated-ps]:
+Modified [@McConeghy_undated-ps]:
 
-$$y = \alpha_0 + \beta_1 t + \beta_2 Flu_t + sin \left( \frac{2 \pi t}{period} \right) + cos \left( \frac{2 \pi t}{period} \right) + u$$
+$$y = \alpha_0 + \beta_1 t + \beta_2 Flu_t + \beta_p X_p + ... + sin \left( \frac{2 \pi t}{period} \right) + cos \left( \frac{2 \pi t}{period} \right) + u$$
+
+Where $t$ = time (epiweek) and subscript $p$ denotes a vector of $beta$ coefficients and variables.
+
 
 ## Generalized additive model (Prophet)
 
-This model will be implemented using Facebook's R package _prophet_ [@Taylor2017-ta]. Exact specifications TBD.
-
-
-## Seasonal - ARIMA (?)
-
-## Neural net (?) See _Forecast_ package.
+This model will be implemented using Facebook's R package _prophet_ [@Taylor2017-ta]. Exact specifications TBD upon consultation with Kevin.
 
 
 ## Model terms
 
+The following model terms will be entered into the vector of covariates considered for each model (see Serfling and modified Serfling equations):
+
 a) Cyclical terms (Serfling, Fourier, etc.)
 
-b) Historical (empirical) flu hospitalizations
+a) Historical (empirical) flu hospitalizations
 
-- Historical data on viral activity (NREVSS), outpatient surveillance (ILI-Net)
+a) Historical data on viral activity (NREVSS), outpatient surveillance (ILI-Net)
 
-- Average weekly temperature
+a) Average weekly temperature
 
-- Climate factors (e.g., prior summer temperatures)
+a) Climate factors (e.g., prior summer temperatures)
 
-- Lags and leads of c or d
+a) Lags and leads of c or d
 
-- Indicators for weeks of Thanksgiving and/or Christmas [@Brooks2015-fl; @Taylor2017-ta]
+a) Indicators for weeks of Thanksgiving and/or Christmas [@Brooks2015-fl; @Taylor2017-ta]
 
 
 # Goodness of fit

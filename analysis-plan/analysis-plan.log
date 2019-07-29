@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2019.6.9)  18 JUL 2019 08:45
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019/W32TeX) (preloaded format=pdflatex 2019.6.9)  29 JUL 2019 00:42
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -923,60 +923,65 @@ LaTeX Font Info:    Font shape `T1/Roboto-LF/bold/n' will be
 (Font)              scaled to size 12.0pt on input line 219.
 LaTeX Font Info:    Font shape `T1/Roboto-LF/condensed/it' will be
 (Font)              scaled to size 10.0pt on input line 230.
-<hospital-curve-empirical.pdf, id=44, 550.055pt x 322.20375pt>
+<hospital-curve-empirical.pdf, id=44, 703.62875pt x 264.99pt>
 File: hospital-curve-empirical.pdf Graphic file (type pdf)
 <use hospital-curve-empirical.pdf>
-Package pdftex.def Info: hospital-curve-empirical.pdf  used on input line 279.
-(pdftex.def)             Requested size: 480.01279pt x 281.17537pt.
+Package pdftex.def Info: hospital-curve-empirical.pdf  used on input line 276.
+(pdftex.def)             Requested size: 479.99654pt x 180.76901pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 279--280
+Underfull \hbox (badness 10000) in paragraph at lines 276--277
+[][]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 276--277
 
  []
 
 LaTeX Font Info:    Font shape `T1/Roboto-LF/condensed/n' will be
-(Font)              scaled to size 8.0pt on input line 280.
+(Font)              scaled to size 8.0pt on input line 277.
 [1
 
 {c:/Users/jason/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdfte
 x.map}]
-LaTeX Font Info:    Try loading font information for T1+cmtt on input line 291.
+LaTeX Font Info:    Try loading font information for T1+cmtt on input line 288.
 
 (c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
-LaTeX Font Info:    Try loading font information for U+msa on input line 295.
+LaTeX Font Info:    Try loading font information for U+msa on input line 292.
 (c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 295.
+LaTeX Font Info:    Try loading font information for U+msb on input line 292.
 (c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    Font shape `T1/Roboto-LF/condensed/n' will be
-(Font)              scaled to size 7.0pt on input line 302.
+(Font)              scaled to size 7.0pt on input line 299.
 LaTeX Font Info:    Font shape `T1/Roboto-LF/condensed/n' will be
-(Font)              scaled to size 5.0pt on input line 302.
+(Font)              scaled to size 5.0pt on input line 299.
 LaTeX Font Info:    Font shape `T1/Roboto-LF/condensed/n' will be
-(Font)              scaled to size 6.0pt on input line 313.
-LaTeX Font Info:    Font shape `T1/Roboto-LF/condensed/sc' will be
-(Font)              scaled to size 10.0pt on input line 314.
-[2 <./hospital-curve-empirical.pdf>]
+(Font)              scaled to size 6.0pt on input line 310.
 
-LaTeX Warning: Marginpar on page 3 moved.
+LaTeX Warning: Marginpar on page 2 moved.
 
 LaTeX Font Info:    Font shape `T1/Roboto-LF/m/n' in size <10> not available
 (Font)              Font shape `T1/Roboto-LF/regular/n' tried instead on input 
-line 326.
+line 323.
 LaTeX Font Info:    Font shape `T1/Roboto-LF/regular/n' will be
-(Font)              scaled to size 10.0pt on input line 326.
+(Font)              scaled to size 10.0pt on input line 323.
 LaTeX Font Info:    Font shape `T1/Roboto-LF/m/n' in size <10.95> not available
 
 (Font)              Font shape `T1/Roboto-LF/regular/n' tried instead on input 
-line 326.
+line 323.
 LaTeX Font Info:    Font shape `T1/Roboto-LF/regular/n' will be
-(Font)              scaled to size 10.95pt on input line 326.
+(Font)              scaled to size 10.95pt on input line 323.
+LaTeX Font Info:    Font shape `T1/Roboto-LF/condensed/sc' will be
+(Font)              scaled to size 10.0pt on input line 329.
+[2 <./hospital-curve-empirical.pdf>]
 LaTeX Font Info:    Try loading font information for TS1+Roboto-LF on input lin
-e 376.
+e 374.
 
 (c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/roboto/TS1Roboto-L
 F.fd
@@ -984,15 +989,8 @@ File: TS1Roboto-LF.fd 2019/04/19 (autoinst) Font definitions for TS1/Roboto-LF.
 
 )
 LaTeX Font Info:    Font shape `TS1/Roboto-LF/condensed/n' will be
-(Font)              scaled to size 10.0pt on input line 376.
-[3]
-LaTeX Font Info:    Font shape `T1/Roboto-LF/m/it' in size <10.95> not availabl
-e
-(Font)              Font shape `T1/Roboto-LF/regular/it' tried instead on input
- line 411.
-LaTeX Font Info:    Font shape `T1/Roboto-LF/regular/it' will be
-(Font)              scaled to size 10.95pt on input line 411.
-[4] (./analysis-plan.bbl
+(Font)              scaled to size 10.0pt on input line 374.
+[3] [4] (./analysis-plan.bbl
 LaTeX Font Info:    Font shape `T1/Roboto-LF/b/n' in size <8> not available
 (Font)              Font shape `T1/Roboto-LF/bold/n' tried instead on input lin
 e 1.
@@ -1010,42 +1008,41 @@ Package atveryend Info: Empty hook `AfterLastShipout' on input line 486.
 Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 486.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 486.
 Package rerunfilecheck Info: File `analysis-plan.out' has not changed.
-(rerunfilecheck)             Checksum: C4CBCE7C848F96F3CAC28CAEB270A02D;795.
+(rerunfilecheck)             Checksum: 51C07B5E17D97CDE1D5B8E6AE3330681;795.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 486.
  ) 
 Here is how much of TeX's memory you used:
- 13650 strings out of 494553
- 202749 string characters out of 6175972
- 291219 words of memory out of 5000000
- 16984 multiletter control sequences out of 15000+600000
- 114037 words of font info for 80 fonts, out of 8000000 for 9000
+ 13644 strings out of 494553
+ 202553 string characters out of 6175972
+ 291065 words of memory out of 5000000
+ 16980 multiletter control sequences out of 15000+600000
+ 108775 words of font info for 78 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 40i,11n,45p,404b,477s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 40i,12n,45p,459b,477s stack positions out of 5000i,500n,10000p,200000b,80000s
  <c:/Users/jason/Documents/.TinyTeX/texmf-var/fonts/pk/ljfour/jknappen/ec/ect
 t0800.600pk>{c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/
-roboto/rbto_hsw3yt.enc}{c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts
-/enc/dvips/roboto/rbto_sbly3j.enc} <c:/Users/jason/Documents/.TinyTeX/texmf-var
+roboto/rbto_sbly3j.enc}{c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts
+/enc/dvips/roboto/rbto_hsw3yt.enc} <c:/Users/jason/Documents/.TinyTeX/texmf-var
 /fonts/pk/ljfour/jknappen/ec/ectt1000.600pk>{c:/Users/jason/AppData/Roaming/Tin
 yTeX/texmf-dist/fonts/enc/dvips/roboto/rbto_xyzkxs.enc}<c:/Users/jason/AppData/
 Roaming/TinyTeX/texmf-dist/fonts/type1/google/roboto/Roboto-Bold.pfb><c:/Users/
-jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/google/roboto/Roboto-Itali
-c.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/google/rob
-oto/Roboto-Light.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/t
-ype1/google/roboto/Roboto-Regular.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/t
-exmf-dist/fonts/type1/google/roboto/RobotoCondensed-Italic.pfb><c:/Users/jason/
-AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/google/roboto/RobotoCondensed-Re
-gular.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public
-/amsfonts/cm/cmex10.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/font
-s/type1/public/amsfonts/cm/cmmi10.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/t
-exmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb><c:/Users/jason/AppData/Roam
-ing/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/Users/jason
-/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c
-:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm
-/cmr7.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public
-/amsfonts/cm/cmsy10.pfb>
-Output written on analysis-plan.pdf (6 pages, 211638 bytes).
+jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/google/roboto/Roboto-Light
+.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/google/robo
+to/Roboto-Regular.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/
+type1/google/roboto/RobotoCondensed-Italic.pfb><c:/Users/jason/AppData/Roaming/
+TinyTeX/texmf-dist/fonts/type1/google/roboto/RobotoCondensed-Regular.pfb><c:/Us
+ers/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cme
+x10.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmmi10.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/
+type1/public/amsfonts/cm/cmmi7.pfb><c:/Users/jason/AppData/Roaming/TinyTeX/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/Users/jason/AppData/Roaming
+/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/jason/Ap
+pData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><c:/Us
+ers/jason/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cms
+y10.pfb>
+Output written on analysis-plan.pdf (6 pages, 201064 bytes).
 PDF statistics:
- 302 PDF objects out of 1000 (max. 8388607)
+ 301 PDF objects out of 1000 (max. 8388607)
  235 compressed objects within 3 object streams
  69 named destinations out of 1000 (max. 500000)
  2102 words of extra memory for PDF output out of 10000 (max. 10000000)
