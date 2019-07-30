@@ -61,7 +61,7 @@ $$y^s_i = f^s (i) + \epsilon^s_i, \epsilon \sim N(0, \tau^s),$$
 
 where 
 
-$$f^s (i) = b + \frac{\theta - b}{\text{max}_j f(j) - b} \left[ f \left( \frac{i - u}{v} + \genfrac{}{}{0pt}{}{\text{arg max }{j}} f (j) \right) - b \right]$$
+$$f^s (i) = b + \frac{\theta - b}{\text{max}_j f(j) - b} \left[ f \left( \frac{i - \mu}{v} + \genfrac{}{}{0pt}{}{\text{arg max }{j}} f (j) \right) - b \right]$$
 
 and $b$ represents a seasonal "baseline" increase in cases which is used to designate officially the week of season onset. 
 
