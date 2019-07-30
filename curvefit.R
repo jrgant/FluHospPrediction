@@ -59,7 +59,7 @@ tf_seas
 # predict the weekly count (y) and error (tau) for each season
 # @DEV 2019-07-25: Generalize to loop through lambda values
 pred_fun <- function(x, y) {
-  predict(y, x.new = x, lambda = y$lambda[45])
+  predict(y, x.new = x, lambda = y$lambda[1])
 }
 
 # @BUG: predict() is throwing a warning saying saying:
@@ -76,7 +76,7 @@ tf_pred <- lapply(
     check.obs <- obs.hosp1 - obs.hosp2
     
     # calculate tau^2 for each season
-    sqerr <- (obs.hosp1 - as.vector(pred.hosp))^2
+    sqerr <- (as.vector(pred.hosp) - obs.hosp1)^2
     
     if (sum(check.obs) != 0) stop("Observed hospitalizations don't match!")
       
@@ -125,7 +125,8 @@ dist_peaks <- ed$whsp_ct[, .(pkhosp = max(inf.tot),
                              pkweek = week[inf.tot == max(inf.tot)]), 
                          by = "seas"]
 
-simcrv <- function() {
+simcrv <- function(print.plot = FALSE, print.samples = FALSE, print.eq = FALSE,
+                   verbose = FALSE) {
   
   # sample shape (f)
   s <- sample(unique(ed$whsp_ct$seas), 1)
@@ -145,37 +146,86 @@ simcrv <- function() {
   nu <- runif(1, 0.75, 1.25)
   
   # set b to 0
-  b <- 0
+  # b <- 0
   
-  print(cbind(
-    c("season", "maxj", "argmax", "sigma", "theta", "mu", "nu", "b"),
-    c(s, max_j, argmax_j, sigma, theta, mu, nu, b)
-    ))
+  slist <- list("season" = s,
+                "maxj" = max_j,
+                "argmax" = argmax_j,
+                "sigma" = sigma,
+                "theta" = theta,
+                "mu" = mu,
+                "nu" = nu)
+  
+  if (print.samples | verbose) print(slist)
   
   # curvefun
   
-  # term 1
-  t1 <- (theta - b) / (max_j - b)
+  # # term 1
+  # t1 <- (theta - b) / (max_j - b)
+  # 
+  # # term 2
+  # arg_f <- ((1:31 - mu) / nu) + argmax_j
+  # f     <- predict(tf_seas[[s]], x.new = arg_f, lambda = tf_seas[[s]]$lambda[15])
+  # t2    <- f - b 
+  # 
+  # f_i <- b + t1 * t2 + rnorm(n = length(t2), 0, sd = sigma)
   
-  # term 2
+  # Alternate Curve (no baseline)
+  t1 <- theta / max_j
   arg_f <- ((1:31 - mu) / nu) + argmax_j
-  f     <- predict(tf_seas[[s]], x.new = arg_f, lambda = tf_seas[[s]]$lambda[15])
-  t2    <- f - b 
+  f <- predict(tf_seas[[s]], x.new = arg_f, lambda = tf_seas[[s]]$lambda[15])
   
-  f_i <- b + t1 * t2 + rnorm(n = length(t2), 0, sd = sigma)
+  err <- rnorm(n = length(f), 0, sd = sqrt(sigma))
+  fi <- t1 * f + err
+  fi_max0 <- sapply(fi, function(x) { max(0, x)})
   
-  plot(f_i, type = "l", col = "red", 
-       main = substitute(paste("b = ", b, ", ", 
-                               sigma, " = ", sig, ", ",
-                               theta, " = ", the, ", ",
-                               mu, " = ", mus, ", ",
-                               nu, " = ", nus),
-                         list(b = b,
-                              sig = round(sigma, 2),
-                              the = round(theta, 2),
-                              mus = round(mu, 2),
-                              nus = round(nu, 2))))
+  
+  eqlist <- list("term1" = t1,
+                 "arg_f" = arg_f,
+                 "predictions" = f,
+                 "error" = err,
+                 "fi_pluserr" = fi,
+                 "fi_max0" = fi_max0)
+  
+  if (print.eq | verbose) print(eqlist)
+  
+  
+  if (print.plot)  {
+    plot(fi_max0, type = "l", col = "red", 
+         main = substitute(paste(sigma, " = ", sig, ", ",
+                                 theta, " = ", the, ", ",
+                                 mu, " = ", mus, ", ",
+                                 nu, " = ", nus),
+                           list(sig = round(sigma, 2),
+                                the = round(theta, 2),
+                                mus = round(mu, 2),
+                                nus = round(nu, 2))),
+         col.main = "navy",
+         font.main = 2)
+  }
+  
+  return(list(sample = slist,
+              eq = eqlist))
 }
 
-par(mfrow = c(4, 2))
-suppressWarnings(replicate(8, do.call("simcrv", args = list())))
+simcrv(verbose = TRUE)
+
+
+set.seed(1983745)
+hihc <- replicate(100, do.call("simcrv", args = list()), simplify = FALSE)
+
+outhc <- as.data.frame(sapply(hihc, function(x) x$eq$fi_max0))
+setDT(outhc)
+
+pdat <- melt.data.table(outhc, 
+                measure.vars = names(outhc), 
+                variable.name = "simid", 
+                value.name = "value")
+pdat$intweek <- rep(1:31, length(outhc))
+
+ggplot(pdat, 
+       aes(x = factor(intweek), group = simid)) +
+  geom_line(aes(y = value), alpha = 0.2) +
+  theme_clean()
+
+            
