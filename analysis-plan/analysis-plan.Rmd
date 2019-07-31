@@ -55,17 +55,13 @@ We will simulate HIHCs using a modified version of the curve-fitting approach de
 
 First, we fit a quadratic trend filter to historical hospitalization curves released by the CDC (beginning with the 2003--2004 season), using the R package `glmgen` [@Brooks2015-fl; @Centers_for_Disease_Control_and_Prevention2016-nr]. This model is fit within flu severity group (Mild, High/Moderate).
 
-For each season $s$ and each week $i$, Brooks et al. conceptualize a seasonal influenza curve as some function plus noise:
+For each season $s$ and each week $i$, Brooks et al. conceptualize a seasonal influenza curve as some function plus noise^[Brook et al. use their method to forecast a current flu season, where $b$ represents the current season's epidemic threshold of weighted influenza-like illness percent. Because hospitalization curves have a lower bound of 0, we drop $b$ from the original equation.]:
 
 $$y^s_i = f^s (i) + \epsilon^s_i, \epsilon \sim N(0, \tau^s),$$
 
 where 
 
-$$f^s (i) = b + \frac{\theta - b}{\text{max}_j f(j) - b} \left[ f \left( \frac{i - \mu}{v} + \genfrac{}{}{0pt}{}{\text{arg max }{j}} f (j) \right) - b \right]$$
-
-and $b$ represents a seasonal "baseline" increase in cases which is used to designate officially the week of season onset. 
-
-To account for natural variation in $b$ across flu seasons, we will sweep a plausible range of values (to be determined) during curve simulation. ^[In Brook et al., the authors use their framework to forecast a current flu season, where $b$ represents the current season's epidemic threshold. Because we are interested in model fitting, we will sample from a range of plausible "hospitalization thresholds" to account for seasonal variation.]
+$$f^s (i) = \frac{\theta}{\text{max}_j f(j)} \left[ f \left( \frac{i - \mu}{v} + \genfrac{}{}{0pt}{}{\text{arg max }{j}} f (j) \right) \right]$$
 
 Based on fitting the quadratic trend filtering model to empirical data (i.e., historical CDC flu hospitalization data), we estimate error $\tau^s$:
 
