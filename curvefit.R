@@ -2,8 +2,8 @@
 
 # Approach adapted from:
 
-# Brooks LC, Farrow DC, Hyun S, Tibshirani RJ, Rosenfeld R. Flexible Modeling of 
-# Epidemics with an Empirical Bayes Framework. PLoS Comput Biol 2015;11:e1004382. 
+# Brooks LC, Farrow DC, Hyun S, Tibshirani RJ, Rosenfeld R. Flexible Modeling of
+# Epidemics with an Empirical Bayes Framework. PLoS Comput Biol 2015;11:e1004382.
 # doi:10.1371/journal.pcbi.1004382.
 
 
@@ -16,13 +16,10 @@ pacman::p_load(glmgen, ggplot2, ggthemes, viridis, purrr, tidyr, data.table)
 ed <- readRDS("empdat.Rds")
 
 # convert data.frames in list to data.tables
-sapply(ed, setDT) 
-
-# convert factor variables to character in whsp_ct
-#ed$whsp_ct[, epiweek := as.numeric(as.character(epiweek))]
+sapply(ed, setDT)
 
 fct_to_char <- c("seas", "severity", "sev2")
-ed$whsp_ct[, (fct_to_char) := lapply(.SD, as.character), 
+ed$whsp_ct[, (fct_to_char) := lapply(.SD, as.character),
                .SDcols = fct_to_char]
 
 # subset whsp_ct to deisred seasons and epiweeks
@@ -31,7 +28,7 @@ drop_seas <- c("2009-10", "2018-19")
 ed$cdc_svr <- ed$cdc_svr[!season %in% drop_seas]
 
 ew_order <- c(40:53, 1:17)
-ed$whsp_ct <- ed$whsp_ct[!seas %in% drop_seas & 
+ed$whsp_ct <- ed$whsp_ct[!seas %in% drop_seas &
                            epiweek %in% ew_order]
 
 # create a week variable that matches epiweek to integers
@@ -44,42 +41,49 @@ ed
 
 # Quadratic Trend Filter ----------------------------------------------------
 
-# Split Observed Seasons 
+# Split Observed Seasons
 # each gets its own data.frame
 seas_obs <- split(ed$whsp_ct, ed$whsp_ct$seas)
 
 # run trendfilter on each observed season
-tf_seas <- lapply(seas_obs, function(x) { 
-  trendfilter(x = x$week, y = x$inf.tot, k = 2) 
+tf_seas <- lapply(seas_obs, function(x) {
+  trendfilter(x = x$week, y = x$inf.tot, k = 2)
   })
 
 tf_seas
 
-# Predict 
+# view model summaries
+sapply(tf_seas, summary, simplify = FALSE)
+
+# Predict
 # predict the weekly count (y) and error (tau) for each season
 # @DEV 2019-07-25: Generalize to loop through lambda values
 pred_fun <- function(x, y) {
-  predict(y, x.new = x, lambda = y$lambda[1])
+  predict(y, x.new = x, lambda = lambda[15])
 }
 
-# @BUG: predict() is throwing a warning saying saying:
+# @BUG: predict() throws a warning saying saying:
 #      "Predict called at new x values out of the original range."
-#       Don't think it's a problem. Suspect its related to a few leap years
-#       where seasons had an epiweek 53.
+#
+#       Don't think it's a problem:
+#         Leap years produce coefficients for weeks that aren't present
+#         in other years. Therefore, I believe the model extrapolates into
+#         the missing week when generating predictions for non-leap years.
+
 tf_pred <- lapply(
-  setNames(names(tf_seas), names(tf_seas)), 
+  setNames(names(tf_seas), names(tf_seas)),
   function(x) {
-    
+
     pred.hosp <- pred_fun(seas_obs[[x]]$x, tf_seas[[x]])
     obs.hosp1 <- tf_seas[[x]]$y
     obs.hosp2 <- seas_obs[[x]]$inf.tot
     check.obs <- obs.hosp1 - obs.hosp2
-    
+
     # calculate tau^2 for each season
     sqerr <- (as.vector(pred.hosp) - obs.hosp1)^2
-    
+
     if (sum(check.obs) != 0) stop("Observed hospitalizations don't match!")
-      
+
     list(
       dat = data.frame(season = x,
                        week = 1:length(pred.hosp),
@@ -121,33 +125,34 @@ tfp %>%
 #                  Determine cause, related to arg_f assignment.
 
 # record peak weeks ()
-dist_peaks <- ed$whsp_ct[, .(pkhosp = max(inf.tot), 
-                             pkweek = week[inf.tot == max(inf.tot)]), 
+dist_peaks <- ed$whsp_ct[, .(pkhosp = max(inf.tot),
+                             pkweek = week[inf.tot == max(inf.tot)]),
                          by = "seas"]
 
-simcrv <- function(print.plot = FALSE, print.samples = FALSE, print.eq = FALSE,
-                   verbose = FALSE) {
-  
+simcrv <- function(
+  print.plot = FALSE,
+  print.samples = FALSE,
+  print.eq = FALSE,
+  verbose = FALSE
+  ) {
+
   # sample shape (f)
   s <- sample(unique(ed$whsp_ct$seas), 1)
   max_j <- dist_peaks[, pkhosp[seas == s]]
   argmax_j <- dist_peaks[, pkweek[seas == s]]
-  
+
   # sample noise (sigma)
   sigma <- tf_pred[[s]]$tau
-  
+
   # peak height (theta)
   theta <- runif(1, min(dist_peaks$pkhosp), max(dist_peaks$pkhosp))
-  
+
   # peak week
   mu <- round(runif(1, min(dist_peaks$pkweek), max(dist_peaks$pkweek)))
-  
+
   # pacing (nu)
   nu <- runif(1, 0.75, 1.25)
-  
-  # set b to 0
-  # b <- 0
-  
+
   slist <- list("season" = s,
                 "maxj" = max_j,
                 "argmax" = argmax_j,
@@ -155,43 +160,36 @@ simcrv <- function(print.plot = FALSE, print.samples = FALSE, print.eq = FALSE,
                 "theta" = theta,
                 "mu" = mu,
                 "nu" = nu)
-  
+
   if (print.samples | verbose) print(slist)
-  
-  # curvefun
-  
-  # # term 1
-  # t1 <- (theta - b) / (max_j - b)
-  # 
-  # # term 2
-  # arg_f <- ((1:31 - mu) / nu) + argmax_j
-  # f     <- predict(tf_seas[[s]], x.new = arg_f, lambda = tf_seas[[s]]$lambda[15])
-  # t2    <- f - b 
-  # 
-  # f_i <- b + t1 * t2 + rnorm(n = length(t2), 0, sd = sigma)
-  
-  # Alternate Curve (no baseline)
+
+  # Calculate curve equation
   t1 <- theta / max_j
-  arg_f <- ((1:31 - mu) / nu) + argmax_j
+
+  arg_f <- ((1:31 - mu) / nu ) + argmax_j
+
   f <- predict(tf_seas[[s]], x.new = arg_f, lambda = tf_seas[[s]]$lambda[15])
-  
+
   err <- rnorm(n = length(f), 0, sd = sqrt(sigma))
   fi <- t1 * f + err
-  fi_max0 <- sapply(fi, function(x) { max(0, x)})
-  
-  
+
+  #  transformation to set the lower function bound to 0
+  fi_tf <- sapply(fi, function(x) {
+    0.5 * (abs(x) + x)
+    })
+
   eqlist <- list("term1" = t1,
                  "arg_f" = arg_f,
                  "predictions" = f,
                  "error" = err,
                  "fi_pluserr" = fi,
-                 "fi_max0" = fi_max0)
-  
+                 "fi_tf" = fi_tf)
+
   if (print.eq | verbose) print(eqlist)
-  
-  
+
+
   if (print.plot)  {
-    plot(fi_max0, type = "l", col = "red", 
+    plot(fi_tf, type = "l", col = "red",
          main = substitute(paste(sigma, " = ", sig, ", ",
                                  theta, " = ", the, ", ",
                                  mu, " = ", mus, ", ",
@@ -203,29 +201,26 @@ simcrv <- function(print.plot = FALSE, print.samples = FALSE, print.eq = FALSE,
          col.main = "navy",
          font.main = 2)
   }
-  
+
   return(list(sample = slist,
               eq = eqlist))
 }
 
 simcrv(verbose = TRUE)
 
-
 set.seed(1983745)
 hihc <- replicate(100, do.call("simcrv", args = list()), simplify = FALSE)
 
-outhc <- as.data.frame(sapply(hihc, function(x) x$eq$fi_max0))
+outhc <- as.data.frame(sapply(hihc, function(x) x$eq$fi_tf))
 setDT(outhc)
 
-pdat <- melt.data.table(outhc, 
-                measure.vars = names(outhc), 
-                variable.name = "simid", 
+pdat <- melt.data.table(outhc,
+                measure.vars = names(outhc),
+                variable.name = "simid",
                 value.name = "value")
 pdat$intweek <- rep(1:31, length(outhc))
 
-ggplot(pdat, 
+ggplot(pdat,
        aes(x = factor(intweek), group = simid)) +
   geom_line(aes(y = value), alpha = 0.2) +
   theme_clean()
-
-            

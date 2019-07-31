@@ -69,6 +69,11 @@ $$\left( \hat{\tau}^s \right)^2 = \genfrac{}{}{0pt}{}{\text{avg}}{i} \left[ y^s_
 
 and then sample from the model, introducing noise for each weekly observation based this estimate of $\tau^2$.
 
+We impose a lower bound of 0 hospitalizations via the following transformation of $\hat{y}^s_i$, which we denoted below as $\hat{z}^s_i$:
+
+$$\hat{z}^s_i = 0.5 \bigg( | \hat{y}^s_i | + \hat{y}^s_i \bigg)$$
+
+
 ## Parameters in quadratic trend filtering model
 
 The HIHCs are simulated using the following sampling scheme for each parameter represented in the model for hospitalization count ($y^s_i$) at each week. Note that all equations are either adapted from or appear in [@Brooks2015-fl].
