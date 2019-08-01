@@ -59,7 +59,7 @@ sapply(tf_seas, summary, simplify = FALSE)
 # predict the weekly count (y) and error (tau) for each season
 # @DEV 2019-07-25: Generalize to loop through lambda values
 pred_fun <- function(x, y) {
-  predict(y, x.new = x, lambda = lambda[15])
+  predict(y, x.new = x, lambda = y$lambda[15])
 }
 
 # @BUG: predict() throws a warning saying saying:
