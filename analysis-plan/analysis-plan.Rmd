@@ -1,6 +1,6 @@
 ---
-title: "Predicting Seasonal Influenza Hospitalizations using Simple Statistical Models"
-author: "Kevin W. McConeghy, Jason R. Gantenberg, Andrew R. Zullo, Chanelle J. Howe, ..."
+title: "Predicting Seasonal Influenza Hospitalizations"
+author: "Kevin W. McConeghy, Jason R. Gantenberg, Andrew R. Zullo, Chanelle J. Howe, ... (author list tentative)"
 date: "Compiled: `r Sys.Date()`"
 output: tint::tintPdf
 bibliography: flurefs.bib
@@ -63,6 +63,8 @@ where
 
 $$f^s (i) = \frac{\theta}{\text{max}_j f(j)} \left[ f \left( \frac{i - \mu}{v} + \genfrac{}{}{0pt}{}{\text{arg max }{j}} f (j) \right) \right]$$
 
+\marginnote{\textcolor{red}{\textbf{Note:}} In the Brooks paper, exactly what $j$ stood for was a little unclear. I believe the only sensible interpretation is that it is the indicator for the week in the trend filter predictions $f(j)$ conducted as part of each curve simulation.}
+
 Based on fitting the quadratic trend filtering model to empirical data (i.e., historical CDC flu hospitalization data), we estimate error $\tau^s$:
 
 $$\left( \hat{\tau}^s \right)^2 = \genfrac{}{}{0pt}{}{\text{avg}}{i} \left[ y^s_i - \hat{f}^s (i) \right]^2$$
@@ -88,9 +90,11 @@ $$f \sim U \{ \hat{f} : \text{historical season } s \} $$
 
 $$\sigma \sim U \{\hat{\tau}^s \text{ : historical season } s \}$$
 
-## Peak height ($\theta$)
+## Peak height ($\theta$) 
 
 $$\theta \sim U\left[\theta_m , \theta_M\right]$$
+
+\marginnote{\textcolor{red}{\textbf{Note:}} Brooks et al. say they get "unbiased estimators" for the minimum and maximum peak heights $\theta_m$ and $\theta_M$, respectively. However, given the notation does not indicate these parameters are estiamtes, I am using the observed minimum and maximum heights based on CDC data.}
 
 Results in the following curve:
 
@@ -115,6 +119,8 @@ $$f_4 (i) = f_3 \left( \frac{i - \text{arg max}_j \text{ } f_3 (j)}{\nu} + \text
 
 - Thresholds: 0.1 and 0.15 as in [@Thompson2009-wt].
 
+\noindent
+\marginnote{\textcolor{red}{\bfseries Question for Kevin:} Does it make sense to use the rate-difference model in the context of hospitalizations? We essentially have a rate of 0 (or very close to it) at the beginning of each flu season, unlike with wILI.}
 
 ## Serfling model (least squares)
 
@@ -127,7 +133,7 @@ Where $t$ = time (epiweek), subscript $r$ denotes a vector of $\beta$ coefficien
 
 ## Modified Serfling model
 
-Modified [@McConeghy_undated-ps]:
+Modified from [@McConeghy_undated-ps]:
 
 $$y = \alpha_0 + \beta_1 t + \beta_2 Flu_t + \beta_p X_p + ... + sin \left( \frac{2 \pi t}{period} \right) + cos \left( \frac{2 \pi t}{period} \right) + u$$
 
@@ -136,12 +142,19 @@ Where $t$ = time (epiweek) and subscript $p$ denotes a vector of $beta$ coeffici
 
 ## Generalized additive model (Prophet)
 
-This model will be implemented using Facebook's R package _prophet_ [@Taylor2017-ta]. Exact specifications TBD upon consultation with Kevin.
+This model will be implemented using the R package _prophet_ [@Taylor2018-pl], which implements a generalized additive modeling approach developed by engineers at Facebook, Inc.
 
+The general form of the equation that will be fit to the HIHCs:
+
+$$y(t)= g(t) + ... + h(t) + \epsilon_t,$$
+
+where $g(t)$ models nonperiod trends and $h(t)$ stands for a vector of holidays or other events that are known to correlate with flu hospitalization [@Brooks2015-fl]. As with the Serfling and modified Serfling models, the Prophet model will include additional model terms included to improve fit.
+
+\marginnote{\textcolor{red}{\bfseries Question for Kevin:} Do you agree that we won't need seasonality terms here? We are essentially modeling one flu hospitalization season at a time, so it's unclear to me where seasonality would come into the picture. Consequently, does this fact obviate the need for cyclical terms in the Prophet model and perhaps any need for the Serfling models? The curves look as if they could be modeled simply as quadratic functions.}
 
 ## Model terms
 
-The following model terms will be entered into the vector of covariates considered for each model (see Serfling and modified Serfling equations):
+The following model terms will be entered into the vector of covariates considered for each model:
 
 a) Cyclical terms (Serfling, Fourier, etc.)
 
@@ -153,9 +166,9 @@ a) Average weekly temperature
 
 a) Climate factors (e.g., prior summer temperatures)
 
-a) Lags and leads of c or d
+a) Lags and leads of c) or d)
 
-a) Indicators for weeks of Thanksgiving and/or Christmas [@Brooks2015-fl; @Taylor2017-ta]
+a) Indicators for weeks of Thanksgiving and/or Christmas [@Brooks2015-fl; @Taylor2018-pl]
 
 
 # Goodness of fit
@@ -166,17 +179,20 @@ a) Indicators for weeks of Thanksgiving and/or Christmas [@Brooks2015-fl; @Taylo
 
 - Relative bias
 
-- Cross-validation, sample-splitting?
+\marginnote{\textcolor{red}{\bfseries Question for Dr. Naimi:} Should we be doing cross-validation or sample-splitting given the aims of this analysis? We can simulate an arbitrary number of hypothetical hospitalization curves, so the limited number of historical flu season available may not be an issue.}
 
 
 ## Sensitivity analysis
 
 _Challenge_
 
-The composition of institutions reflected in the FluSurv-NET has changed over time [@Centers_for_Disease_Control_and_Prevention_undated-vt; @Kandula2019-tg], meaning the FluSurv-NET estimates for influenza-related hospitalizations may not be comparable across time.
+\noindent
+The composition of institutions reflected in the FluSurv-NET has changed over time [@Centers_for_Disease_Control_and_Prevention_undated-vt; @Kandula2019-tg], meaning the FluSurv-NET estimates for influenza-related hospitalizations may not be comparable across time. \bigskip
 
+\noindent
 _Response_
 
+\noindent
 Redo the analysis three times: one for each set of years in which the same participating institutions reported flu data to CDC. See [@Centers_for_Disease_Control_and_Prevention_undated-vt] for more information.
 
 ## Limitations
