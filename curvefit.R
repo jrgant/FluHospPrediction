@@ -60,13 +60,13 @@ pred_fun <- function(x, y) {
   predict(y, x.new = x, lambda = y$lambda[25])
 }
 
-# @BUG: predict() throws a warning saying saying:
-#      "Predict called at new x values out of the original range."
+# @NOTE: predict() throws a warning saying saying:
+#       "Predict called at new x values out of the original range."
 #
-#       Don't think it's a problem:
-#         Leap years produce coefficients for weeks that aren't present
-#         in other years. Therefore, I believe the model extrapolates into
-#         the missing week when generating predictions for non-leap years.
+#        Don't think it's a problem:
+#          Leap years produce coefficients for weeks that aren't present
+#          in other years. Therefore, I believe the model extrapolates into
+#          the missing week when generating predictions for non-leap years.
 
 tf_pred <- lapply(
   setNames(names(tf_seas), names(tf_seas)),
