@@ -20,11 +20,10 @@ options(htmltools.dir.version = FALSE)
 To determine which of a set of simple candidate statistical models (CSM) most closely fits a series of hypothetical influenza hospitalization curves (HIHC), stratified by season severity [@Centers_for_Disease_Control_and_Prevention2016-nr].
 
 Which of these simple CSMs would provide the best severity forecast at the beginning of the flu season (i.e., epiweek 40) based purely on fit to the HIHCs described below?
-  
+
 _Subquestion:_ Which model best predicts the proportion of flu-attributable hospitalizations?
 
 # General approach
-
 
 1. Fit a quadratic trend filter model [@Brooks2015-fl] to FluSurv-NET hospitalization data for the seasons 2003–2004 through 2017–2018, based in part on the approach described by Brooks et al. [@Brooks2015-fl].
 
@@ -35,12 +34,12 @@ _Subquestion:_ Which model best predicts the proportion of flu-attributable hosp
 1. Fit each CSM within each severity stratum and test for goodness of fit. Systematically alter the functional form of epiweek indicators as in Wang et al.’s study of influenza mortality [@Wang2012-am].
 
 
-# Forecasting targets
+# Targets
 
-All weeks will be specified using the _MMWR_ Week convention [@Centers_for_Disease_Control_and_Prevention_undated-pu]:
+All weeks will be specified based on the _MMWR_ Week convention [@Centers_for_Disease_Control_and_Prevention_undated-pu]:
 
-1. Peak week
-1. Peak number of hospitalizations
+1. Peak height (number of hospitalizations)
+1. Peak week (week in which maximum number of hospitalizations occurred)
 1. Total hospitalizations
 
 These targets follow in part from [@Brooks2015-fl].
@@ -59,11 +58,11 @@ For each season $s$ and each week $i$, Brooks et al. conceptualize a seasonal in
 
 $$y^s_i = f^s (i) + \epsilon^s_i, \epsilon \sim N(0, \tau^s),$$
 
-where 
+where
 
 $$f^s (i) = \frac{\theta}{\text{max}_j f(j)} \left[ f \left( \frac{i - \mu}{v} + \genfrac{}{}{0pt}{}{\text{arg max }{j}} f (j) \right) \right]$$
 
-\marginnote{\textcolor{red}{\textbf{Note:}} In the Brooks paper, exactly what $j$ stood for was a little unclear. I believe the only sensible interpretation is that it is the indicator for the week in the trend filter predictions $f(j)$ conducted as part of each curve simulation.}
+\marginnote{\textcolor{red}{\textbf{Note:}} In the Brooks paper, exactly what $j$ stood for was a little unclear. I believe the only sensible interpretation is that it's the indicator for the week in the trend filter predictions $f(j)$ conducted as part of each curve simulation.}
 
 Based on fitting the quadratic trend filtering model to empirical data (i.e., historical CDC flu hospitalization data), we estimate error $\tau^s$:
 
@@ -90,11 +89,11 @@ $$f \sim U \{ \hat{f} : \text{historical season } s \} $$
 
 $$\sigma \sim U \{\hat{\tau}^s \text{ : historical season } s \}$$
 
-## Peak height ($\theta$) 
+## Peak height ($\theta$)
 
 $$\theta \sim U\left[\theta_m , \theta_M\right]$$
 
-\marginnote{\textcolor{red}{\textbf{Note:}} Brooks et al. say they get "unbiased estimators" for the minimum and maximum peak heights $\theta_m$ and $\theta_M$, respectively. However, given the notation does not indicate these parameters are estiamtes, I am using the observed minimum and maximum heights based on CDC data.}
+\marginnote{\textcolor{red}{\textbf{Note:}} Brooks et al. say they get "unbiased estimators" for the minimum ($\theta_m$) and maximum ($\theta_M$) peak heights, respectively. However, given the notation does not seem to indicate that these parameters are estimates, I am using the observed minimum and maximum heights from the CDC data.}
 
 Results in the following curve:
 
@@ -113,14 +112,7 @@ $$f_4 (i) = f_3 \left( \frac{i - \text{arg max}_j \text{ } f_3 (j)}{\nu} + \text
 
 # Candidate models
 
-## Incidence-rate difference models
-
-- Generate a set of predicted flu-related hospitalizations based on a standard incidence rate difference model typically used to model flu cases. Implement in flumodelr based on [@Izurieta2000-sl; @Thompson2009-wt].
-
-- Thresholds: 0.1 and 0.15 as in [@Thompson2009-wt].
-
-\noindent
-\marginnote{\textcolor{red}{\bfseries Question for Kevin:} Does it make sense to use the rate-difference model in the context of hospitalizations? We essentially have a rate of 0 (or very close to it) at the beginning of each flu season, unlike with wILI.}
+\marginnote{\textbf{\textcolor{red}{Question for Kevin:}} I've removed the rate-difference model. Can you think of another model we might want to test? My suspicion is that a linear model with quadratic and other terms may be too close to the Serfling models. I'm still getting through his original paper, though.}
 
 ## Serfling model (least squares)
 
@@ -150,7 +142,6 @@ $$y(t)= g(t) + ... + h(t) + \epsilon_t,$$
 
 where $g(t)$ models nonperiod trends and $h(t)$ stands for a vector of holidays or other events that are known to correlate with flu hospitalization [@Brooks2015-fl]. As with the Serfling and modified Serfling models, the Prophet model will include additional model terms included to improve fit.
 
-\marginnote{\textcolor{red}{\bfseries Question for Kevin:} Do you agree that we won't need seasonality terms here? We are essentially modeling one flu hospitalization season at a time, so it's unclear to me where seasonality would come into the picture. Consequently, does this fact obviate the need for cyclical terms in the Prophet model and perhaps any need for the Serfling models? The curves look as if they could be modeled simply as quadratic functions.}
 
 ## Model terms
 
