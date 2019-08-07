@@ -19,8 +19,7 @@ ed <- readRDS("empdat.Rds")
 sapply(ed, setDT)
 
 fct_to_char <- c("seas", "severity", "sev2")
-ed$whsp_ct[, (fct_to_char) := lapply(.SD, as.character),
-               .SDcols = fct_to_char]
+ed$whsp_ct[, (fct_to_char) := lapply(.SD, as.character), .SDcols = fct_to_char]
 
 # subset whsp_ct to deisred seasons and epiweeks
 # drop pandemic flu and seasons with missing severity data
@@ -28,8 +27,7 @@ drop_seas <- c("2009-10", "2018-19")
 ed$cdc_svr <- ed$cdc_svr[!season %in% drop_seas]
 
 ew_order <- c(40:53, 1:17)
-ed$whsp_ct <- ed$whsp_ct[!seas %in% drop_seas &
-                           epiweek %in% ew_order]
+ed$whsp_ct <- ed$whsp_ct[!seas %in% drop_seas & epiweek %in% ew_order]
 
 # create a week variable that matches epiweek to integers
 # trandfilter() does not take factors
@@ -59,7 +57,7 @@ sapply(tf_seas, summary, simplify = FALSE)
 # predict the weekly count (y) and error (tau) for each season
 # @DEV 2019-07-25: Generalize to loop through lambda values
 pred_fun <- function(x, y) {
-  predict(y, x.new = x, lambda = y$lambda[15])
+  predict(y, x.new = x, lambda = y$lambda[25])
 }
 
 # @BUG: predict() throws a warning saying saying:
@@ -121,8 +119,6 @@ tfp %>%
 
 # @DEV 2019-07-25: Stratify into High/Moderate and Low severity seasons
 # @DEV 2019-07-25: Determine how to handle the multiple lambdas for each fitted qtf
-# @BUG 2019-07-25: Some pathological curves generated for some samples...
-#                  Determine cause, related to arg_f assignment.
 
 # record peak weeks ()
 dist_peaks <- ed$whsp_ct[, .(pkhosp = max(inf.tot),
@@ -130,25 +126,25 @@ dist_peaks <- ed$whsp_ct[, .(pkhosp = max(inf.tot),
                          by = "seas"]
 
 simcrv <- function(
-  print.plot = FALSE,
-  print.samples = FALSE,
-  print.eq = FALSE,
-  verbose = FALSE
-  ) {
+    print.plot = FALSE,
+    print.samples = FALSE,
+    print.eq = FALSE,
+    verbose = FALSE,
+    peakdist = dist_peaks) {
 
   # sample shape (f)
   s <- sample(unique(ed$whsp_ct$seas), 1)
-  max_j <- dist_peaks[, pkhosp[seas == s]]
-  argmax_j <- dist_peaks[, pkweek[seas == s]]
+  max_j <- peakdist[, pkhosp[seas == s]]
+  argmax_j <- peakdist[, pkweek[seas == s]]
 
   # sample noise (sigma)
   sigma <- tf_pred[[s]]$tau
 
   # peak height (theta)
-  theta <- runif(1, min(dist_peaks$pkhosp), max(dist_peaks$pkhosp))
+  theta <- runif(1, min(peakdist$pkhosp), max(dist_peaks$pkhosp))
 
   # peak week
-  mu <- round(runif(1, min(dist_peaks$pkweek), max(dist_peaks$pkweek)))
+  mu <- round(runif(1, min(peakdist$pkweek), max(dist_peaks$pkweek)))
 
   # pacing (nu)
   nu <- runif(1, 0.75, 1.25)
@@ -168,7 +164,7 @@ simcrv <- function(
 
   arg_f <- ((1:31 - mu) / nu ) + argmax_j
 
-  f <- predict(tf_seas[[s]], x.new = arg_f, lambda = tf_seas[[s]]$lambda[15])
+  f <- predict(tf_seas[[s]], x.new = arg_f, lambda = tf_seas[[s]]$lambda[40])
 
   err <- rnorm(n = length(f), 0, sd = sqrt(sigma))
   fi <- t1 * f + err
@@ -206,21 +202,25 @@ simcrv <- function(
               eq = eqlist))
 }
 
-simcrv(verbose = TRUE)
-
+# Generate hypothetical hospitalization curves -------------------------------
 set.seed(1983745)
-hihc <- replicate(100, do.call("simcrv", args = list()), simplify = FALSE)
+reps <- 100
+hihc <- replicate(reps, do.call("simcrv", args = list()), simplify = FALSE)
 
-outhc <- as.data.frame(sapply(hihc, function(x) x$eq$fi_tf))
+outhc <-
+  sapply(hihc, function(x) {
+    data.frame(week = x$eq$arg_f, prediction = x$eq$fi_tf)
+  },
+  simplify = FALSE
+  ) %>%
+  dplyr::bind_rows()
+
 setDT(outhc)
+outhc[, cid := rep(1:100, each = 31)]
+print.data.frame(outhc, nrow = 50)
 
-pdat <- melt.data.table(outhc,
-                measure.vars = names(outhc),
-                variable.name = "simid",
-                value.name = "value")
-pdat$intweek <- rep(1:31, length(outhc))
-
-ggplot(pdat,
-       aes(x = factor(intweek), group = simid)) +
-  geom_line(aes(y = value), alpha = 0.2) +
-  theme_clean()
+ggplot(outhc, aes(x = week, y = prediction)) +
+  geom_line(aes(group = cid), alpha = 0.5) +
+  labs(title = "Hypothetical hospitalization curves") +
+  theme_clean(base_size = 15) +
+  theme(axis.ticks.y = element_blank())
