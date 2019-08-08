@@ -60,7 +60,7 @@ pred_fun <- function(x, y) {
 }
 
 # @NOTE: predict() throws a warning saying saying:
-#       "Predict called at new x values out of the original range."
+#        "Predict called at new x values out of the original range."
 #
 #        Don't think it's a problem:
 #          Leap years produce coefficients for weeks that aren't present
@@ -121,10 +121,7 @@ tfp %>%
   )
 
 
-# Generate hypothetical curves ----------------------------------------------
-
-# @DEV 2019-07-25: Stratify into High/Moderate and Low severity seasons
-# @DEV 2019-07-25: Determine how to handle the multiple lambdas for each fitted qtf
+# Generate hypothetical curves -----------------------------------
 
 # record peak weeks ()
 dist_peaks <-
