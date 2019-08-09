@@ -35,20 +35,21 @@ ed$whsp_ct[, week := c(1:31)[match(epiweek, ew_order)]]
 
 # view variable classes in both datasets
 sapply(ed, function(x) sapply(x, class))
-ed
+print(ed)
 
 # Quadratic Trend Filter ----------------------------------------------------
 
 # Split Observed Seasons
 # each gets its own data.frame
 seas_obs <- split(ed$whsp_ct, ed$whsp_ct$seas)
+print(seas_obs)
 
 # run trendfilter on each observed season
 tf_seas <- lapply(seas_obs, function(x) {
   trendfilter(x = x$week, y = x$inf.tot, k = 2)
 })
 
-tf_seas
+print(tf_seas)
 
 # view model summaries
 sapply(tf_seas, summary, simplify = FALSE)
