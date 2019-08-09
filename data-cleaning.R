@@ -68,11 +68,13 @@ hsp_rates <- paste0(
 whsp_rt <-
   read_csv(hsp_rates, skip = 2) %>%
   select(-CATCHMENT, -NETWORK) %>%
-  tidyr::drop_na(.)
+  tidyr::drop_na(.) %>%
+  setDT(.)
 
 names(whsp_rt) <- tolower(names(whsp_rt))
 
-
+whsp_rt[, severity := cdc_svr$overall[match(season, cdc_svr$season)]]
+whsp_rt
 
 # Save Empirical Data ----------------------------------------------------------
 
