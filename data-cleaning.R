@@ -2,12 +2,12 @@
 #
 # Method described in:
 #
-# Biggerstaff M et al. Systematic Assessment of Multiple Routine and Near 
-# Real-Time Indicators to Classify the Severity of Influenza Seasons and Pandemics 
-# in the United States, 2003-2004 Through 2015-2016. Am J Epidemiol 
+# Biggerstaff M et al. Systematic Assessment of Multiple Routine and Near
+# Real-Time Indicators to Classify the Severity of Influenza Seasons and Pandemics
+# in the United States, 2003-2004 Through 2015-2016. Am J Epidemiol
 # 2018;187:1040–50. doi:10.1093/aje/kwx334.
 
-pacman::p_load(rvest, stringr, readr, dplyr)
+pacman::p_load(rvest, stringr, readr, dplyr, data.table)
 
 url <- "https://www.cdc.gov/flu/about/classifies-flu-severity.htm"
 
@@ -20,9 +20,10 @@ names(cdc_svr) <- tolower(names(cdc_svr))
 
 
 
-# Empirical Hospitalization Data ---------------------------------------------
+# Empirical Hospitalization Counts ---------------------------------------------
 
-hsp_file <- "hospdat/Weekly_Data_Counts.csv"
+hspdat_fldr <- "hospdat"
+hsp_file <- paste0(hspdat_fldr, "/Weekly_Data_Counts.csv")
 hsp_names <- c("seas", "epiweek", "inf.a", "inf.b", "inf.ab", "inf.unk")
 
 # label epiweeks and seasons
@@ -31,11 +32,11 @@ epiweek_labels <- 1:31
 seas_levels <- paste(2003:2018, str_extract(2004:2019, "[0-9]{2}$"), sep = "-")
 
 # wct = weekly hospitalization counts
-whsp_ct <- 
+whsp_ct <-
   read_csv(hsp_file, skip = 2, col_names = hsp_names) %>%
   mutate(
     epiweek  = factor(
-      as.numeric(str_remove(epiweek, "[0-9]{4}\\-")), 
+      as.numeric(str_remove(epiweek, "[0-9]{4}\\-")),
       levels = epiweek_levels,
       labels = epiweek_labels),
     seas     = factor(seas, levels = seas_levels),
@@ -58,9 +59,23 @@ with(whsp_ct, table(severity, sev2, exclude = NULL))
 head(whsp_ct)
 
 
+# Empirical Hospitalization Rates ----------------------------------------------
+
+hsp_rates <- paste0(
+  hspdat_fldr, "/FluSurveillance_FluSurv-NET_Entire Network_Data.csv"
+)
+
+whsp_rt <-
+  read_csv(hsp_rates, skip = 2) %>%
+  select(-CATCHMENT, -NETWORK) %>%
+  
+
+names(whsp_rt) <- tolower(names(whsp_rt))
 
 
-# Save Empirical Data -------------------------------------------------------
+glimpse(whsp_rt)
+
+# Save Empirical Data ----------------------------------------------------------
 
 empdat <- list(cdc_svr = cdc_svr,
                whsp_ct = whsp_ct)
