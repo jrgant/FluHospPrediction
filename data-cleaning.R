@@ -71,9 +71,20 @@ whsp_rt <-
   tidyr::drop_na(.) %>%
   setDT(.)
 
-names(whsp_rt) <- tolower(names(whsp_rt))
+names(whsp_rt) <- c("season", "mmwr_year", "mmwr_week", "agecat",
+                    "cumrates", "weekrate")
 
 whsp_rt[, severity := cdc_svr$overall[match(season, cdc_svr$season)]]
+
+match_sev2 <- c(
+  "High/Moderate" = "High",
+  "High/Moderate" = "Moderate",
+  "Low" = "Low"
+)
+
+whsp_rt[, sev2 := names(match_sev2)[match_sev2 == "High"]]
+whsp_rt[, .(season = factor(season, levels = seas_levels),
+            mmwr_week = factor(mmwr_week))]
 whsp_rt
 
 # Save Empirical Data ----------------------------------------------------------
