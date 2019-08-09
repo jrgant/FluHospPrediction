@@ -62,22 +62,24 @@ head(whsp_ct)
 # Empirical Hospitalization Rates ----------------------------------------------
 
 hsp_rates <- paste0(
-  hspdat_fldr, "/FluSurveillance_FluSurv-NET_Entire Network_Data.csv"
+  hspdat_fldr, "/FluSurveillance_EIP_Entire Network_Data.csv"
 )
 
 whsp_rt <-
   read_csv(hsp_rates, skip = 2) %>%
   select(-CATCHMENT, -NETWORK) %>%
-  
+  tidyr::drop_na(.)
 
 names(whsp_rt) <- tolower(names(whsp_rt))
 
 
-glimpse(whsp_rt)
 
 # Save Empirical Data ----------------------------------------------------------
 
-empdat <- list(cdc_svr = cdc_svr,
-               whsp_ct = whsp_ct)
+empdat <- list(
+  cdc_svr = cdc_svr,
+  whsp_ct = whsp_ct,
+  whsp_rt = whsp_rt
+)
 
 saveRDS(empdat, "empdat.Rds")
