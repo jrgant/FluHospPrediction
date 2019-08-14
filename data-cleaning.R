@@ -18,9 +18,11 @@ cdc_svr <- url %>%
 
 names(cdc_svr) <- tolower(names(cdc_svr))
 
-
+write.csv2(cdc_svr, file = "hospdat/cdc_svr.csv")
 
 # Empirical Hospitalization Counts ---------------------------------------------
+
+cdc_svr <- read.csv2("hospdat/cdc_svr.csv")
 
 hspdat_fldr <- "hospdat"
 hsp_file <- paste0(hspdat_fldr, "/Weekly_Data_Counts.csv")
@@ -74,17 +76,20 @@ whsp_rt <-
 names(whsp_rt) <- c("season", "mmwr_year", "mmwr_week", "agecat",
                     "cumrates", "weekrate")
 
-whsp_rt[, severity := cdc_svr$overall[match(season, cdc_svr$season)]]
-
-match_sev2 <- c(
-  "High/Moderate" = "High",
-  "High/Moderate" = "Moderate",
-  "Low" = "Low"
-)
+whsp_rt[, severity := fct_collapse(ovrall,
+  `High/Moderate` = c("High", "Moderate"),
+  Low = "Low"
+)]
 
 whsp_rt[, sev2 := names(match_sev2)[match_sev2 == "High"]]
-whsp_rt[, .(season = factor(season, levels = seas_levels),
-            mmwr_week = factor(mmwr_week))]
+whsp_rt[, .(
+  season = factor(season, levels = seas_levels),
+  mmwr_week = factor(
+    mmwr_week,
+    levels = epiweek_levels,
+    labels = epiweek_labels
+  )
+)]
 whsp_rt
 
 # Save Empirical Data ----------------------------------------------------------
