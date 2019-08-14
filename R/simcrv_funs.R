@@ -124,7 +124,6 @@ simcrv <- function(
 
 simdist <- function(nreps,
                     seed = 1971,
-                    severity,
                     gimme = NULL,
                     check = FALSE,
                     nrow = 10,
@@ -147,7 +146,7 @@ simdist <- function(nreps,
     dplyr::bind_rows()
 
   setDT(outhc)
-  outhc[, cid := rep(1:100, each = 31)]
+  outhc[, cid := rep(1:nreps, each = 31)]
 
   if (check) print(outhc, topn = nrow)
 
