@@ -88,4 +88,5 @@ grid::grid.draw(hosp_grid)
 ggsave(filename = "analysis-plan/hospital-curve-empirical.pdf", plot = hosp_grid)
 
 ggsave(filename = "analysis-plan/hospital-curve-empirical.png",
-       plot = hosp_grid, width = 6, height = 3, units = "in")
+       plot = hosp_grid, width = 7, height = 3, units = "in")
+       
