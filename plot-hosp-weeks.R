@@ -18,7 +18,7 @@ empdat <- readRDS("empdat.Rds")
 wct_p <- empdat$whsp_ct %>% filter(!seas %in% c("2009-10", "2018-19"))
 
 # plot theme tweaks
-theme_tweak <- 
+theme_tweak <-
   theme_clean(base_size = 12) +
   theme(axis.line = element_blank(),
         axis.ticks.y = element_blank(),
@@ -36,10 +36,10 @@ seas_p <- wct_p %>%
              group = seas,
              color = severity)) +
   geom_line(size = 1, alpha = 0.7) +
-  labs(x = "Epiweek", 
+  labs(x = "Epiweek",
        y = "Influenza hospitalizations (A and B)") +
-  scale_color_viridis_d("Severity", 
-                        option = "inferno", 
+  scale_color_viridis_d("Severity",
+                        option = "inferno",
                         end = 0.8) +
   scale_x_discrete(breaks = c(45, 50, 2, 7, 12)) +
   facet_grid(~severity) +
@@ -56,10 +56,10 @@ epiweek_subset <- epiweek_levels[!epiweek_levels %in% 35:39]
 peaks <- wct_p %>%
   group_by(seas) %>%
   filter(inf.tot == max(inf.tot)) %>%
-  select(seas, 
+  select(seas,
          wk = epiweek,
          inf.tot,
-         severity, 
+         severity,
          sev2) %>%
   mutate(wk2 = match(wk, epiweek_subset))
 
@@ -68,7 +68,7 @@ pkwk_p <- peaks %>%
   geom_point(size = 2, alpha = 0.5) +
   scale_y_continuous(labels = c(0, epiweek_subset[15], epiweek_subset[20], epiweek_subset[25])) +
   labs(x = "Severity", y = "Peak week (epiweek)") +
-  theme_tweak + 
+  theme_tweak +
   theme(axis.line = element_blank())
 
 pkcs_p <- peaks %>%
@@ -86,3 +86,6 @@ grid::grid.draw(hosp_grid)
 
 # Save Grid in Analysis Plan Directory --------------------------------------
 ggsave(filename = "analysis-plan/hospital-curve-empirical.pdf", plot = hosp_grid)
+
+ggsave(filename = "analysis-plan/hospital-curve-empirical.png",
+       plot = hosp_grid, width = 6, height = 3, units = "in")
