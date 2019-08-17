@@ -2,13 +2,16 @@
 title: "Predicting Seasonal Influenza Hospitalizations"
 author: "Kevin W. McConeghy, Jason R. Gantenberg, Andrew R. Zullo, Chanelle J. Howe, ... (author list tentative)"
 date: "Compiled: `r Sys.Date()`"
-output: pdf_document
+output:
+  word_document:
+    reference_docx: word_styles.docx
 bibliography: flurefs.bib
 csl: mathematical-medicine-and-biology.csl
 link-citations: yes
 geometry: "left=1.75in,right=1.75in,top=1.5in,bottom=1.5in"
 header-includes:
 - \renewcommand{\thefootnote}{\roman{footnote}}
+- \usepackage(amsmath)
 ---
 
 # Purpose
@@ -25,7 +28,7 @@ Stratified by the Centers for Disease Control and Prevention's (CDC) season seve
 
 ## _MMWR_ Weeks
 
-All weeks will be specified based on the _MMWR_ Week convention [@Centers_for_Disease_Control_and_Prevention_undated-pu]. Referred to as "epiweeks", _MMWR_ weeks are integer values assigned to each week of the year, ranging from 1--53 [@Centers_for_Disease_Control_and_Prevention_undated-pu]. A typical flu season begins in epiweek 40. For the purposes of our analysis, we will renumber epiweeks to begin at 1 in epiweek 40 and end at 52 (or 53, in leap years) in epiweek 39.
+All weeks will be specified based on the _MMWR_ Week convention [@Centers_for_Disease_Control_and_Prevention_undated-pu]. Referred to as "epiweeks", _MMWR_ weeks are integer values assigned to each week of the year, ranging from 1--53 [@Centers_for_Disease_Control_and_Prevention_undated-pu]. A typical flu season begins in epiweek 40. For the purposes of our analysis, we will renumber epiweeks to begin at 1 in epiweek 40.
 
 ## Season severity
 
@@ -37,11 +40,11 @@ Recently, the CDC developed a methodology to designate the severity of each flu 
 
 1. Simulate _N_ hypothetical influenza hospitalization curves using the empirical Bayes approach described in _Curve fitting and simulation_.
 
-1. For each candidate statistical model, find the set of variables that results in best fit to the distribution of hypothetical influenza hospitalization curves. Compare the best model for each model type against pre-specified target parameters to determine which candidate statistical model performs best across these targets.
+1. For each candidate statistical model, find the set of variables that results in best fit to the distribution of hypothetical influenza hospitalization curves. Compare the best-fitting model for each model type against pre-specified target parameters to determine which candidate statistical model performs best across these targets.
 
 # Targets
 
-For each of the following target parameters, we will calculate the root mean squared errors (RMSE), Bayesian information criterion (BIC), and relative bias for each of the best-fitting candidate statistical model types:
+For each of the following target parameters, we will calculate the root mean squared errors (RMSE) and relative bias for each of the best-fitting candidate statistical model types:
 
 1. _Peak height_ - largest number of hospitalizations in a single week
 1. _Peak week_ -  the week in which this peak height occurred
@@ -49,8 +52,9 @@ For each of the following target parameters, we will calculate the root mean squ
 
 These targets follow in part from [@Brooks2015-fl], who focused on influenza-like illness rather than hospitalizations.
 
-```{r flusurv-net_fig, echo = FALSE, fig.fullwidth = TRUE, fig.cap = "Empirical hospitalization curves, peak weeks, and peak number of cases --- 2003--2017 (Source: FluSurv-NET, CDC). Data excludes 2009--2010 pandemic influenza season and 2018--2019 due to no official severity designation."}
-knitr::include_graphics("hospital-curve-empirical.pdf")
+```{r emphypfig, echo = FALSE, fig.cap = "Empirical and simulated hospitalization curves. $\\lambda$ index refers to the position of one in a vector of trend filter penalties tested for each season. The actual value $\\lambda$ varies by season."}
+
+knitr::include_graphics("../curve_grid.jpg", auto_pdf = FALSE)
 ```
 
 # Curve fitting and simulation
@@ -65,15 +69,23 @@ $$y^s_i = f^s (i) + \epsilon^s_i, \epsilon \sim N(0, \tau^s),$$
 
 where
 
-$$f^s (i) = \frac{\theta}{\text{max}_j f(j)} \left[ f \left( \frac{i - \mu}{v} + \genfrac{}{}{0pt}{}{\text{arg max }{j}} f (j) \right) \right].$$
+<!-- WORD VERSION -->
+$$f^s (i) = \frac{\theta}{\text{max}_j f(j)} \left[ f \left( \frac{i - \mu}{v} + \substack{\text{arg max }{j} \\ f(j) } \right) \right].$$
+
+<!-- LATEX VERSION -->
+<!-- $$f^s (i) = \frac{\theta}{\text{max}_j f(j)} \left[ f \left( \frac{i - \mu}{v} + \genfrac{}{}{0pt}{}{\text{arg max }{j}} f (j) \right) \right].$$ -->
 
 For each empirical season $s$, we fit a quadratic trend filter and average the residuals over $i$ to estimate $\tau^s$:
 
-$$\left( \hat{\tau}^s \right)^2 = \genfrac{}{}{0pt}{}{\text{avg}}{i} \left[ y^s_i - \hat{f}^s (i) \right]^2.$$
+<!-- WORD VERSION -->
+$$( \hat{\tau}^s )^2 = \substack{ \text{avg} \\ i } [ y^s_i - \hat{f}^s (i) ]^2.$$
 
-We use the fitted trend filters in the curve simulation procedure as $f(j)$), where $j$ represents the indicator for a given week in the trend filter model for the corresponding season.^[In the Brooks paper, what $j$ stood for was not defined explicitly. After studying the paper in detail and simulating my own curves, I believe the only sensible interpretation is the one provided in this analysis plan.] introducing noise for each simulated weekly hospitalization count based this estimate of $\tau^2$.
+<!-- LATEX VERSION -->
+<!-- $$\left( \hat{\tau}^s \right)^2 = \genfrac{}{}{0pt}{}{\text{avg}}{i} \left[ y^s_i - \hat{f}^s (i) \right]^2.$$ -->
 
-We alter the original curve formula to impose a lower bound of 0 via the following transformation of $\hat{y}^s_i$, denoted below as $\hat{z}^s_i$:
+We use the fitted trend filters in the curve simulation procedure as $f(j)$, where $j$ represents the week indicator in the trend filter model used to predict the hospitalization rate in week _j_,^[In the Brooks paper, what $j$ stood for was not defined explicitly. After studying the paper in detail and simulating my own curves, I believe the only sensible interpretation is the one provided in this analysis plan.] introducing noise for each simulated weekly hospitalization count based this estimate of $\tau^2$.
+
+We alter the original curve formula to impose a lower bound of 0 on the hospitalization rate via the following transformation of $\hat{y}^s_i$, denoted below as $\hat{z}^s_i$:
 
 $$\hat{z}^s_i = 0.5 \bigg( | \hat{y}^s_i | + \hat{y}^s_i \bigg)$$
 
@@ -82,7 +94,8 @@ $$\hat{z}^s_i = 0.5 \bigg( | \hat{y}^s_i | + \hat{y}^s_i \bigg)$$
 
 The hypothetical influenza hospitalization curves are simulated using the following sampling scheme for each parameter used to simulate the hospitalization rate in week $i$, using the shape of season $s$ as a starting point ($y^s_i$). Note that all notation included below either is adapted from or appears in [@Brooks2015-fl].
 
-$$\big< f, o, \nu, \theta, \mu \big>$$
+$$< f, o, \nu, \theta, \mu >$$
+<!-- $$\big< f, o, \nu, \theta, \mu \big>$$ -->
 
 ## $f$ : Shape
 
@@ -96,19 +109,11 @@ $\sigma \sim U \{\hat{\tau}^s \text{ : historical season } s \}$
 
 $\theta \sim U\left[\theta_m , \theta_M\right]$^[Brooks et al. say they get "unbiased estimators" for the minimum ($\theta_m$) and maximum ($\theta_M$) peak heights, respectively. However, given their notation does not seem to indicate that these parameters are estimates, I am using the observed minimum and maximum heights from the CDC data.]
 
-Results in the following curve:
-
-$f_3(i) = f_2(i - \mu + \text{arg max}_j f_2(j))$
-
 ## $\nu$ : Pacing
 
 Curve-stretching around peak week:
 
 $\nu \sim U[0.75, 1.25]$
-
-Results in following curve:
-
-$f_4 (i) = f_3 \left( \frac{i - \text{arg max}_j \text{ } f_3 (j)}{\nu} + \text{arg max}_j \text{ } f_3 (j) \right)$
 
 
 # Candidate models
@@ -117,7 +122,7 @@ $f_4 (i) = f_3 \left( \frac{i - \text{arg max}_j \text{ } f_3 (j)}{\nu} + \text{
 
 Modified from [@McConeghy_undated-ps]:
 
-$$Y = \beta_0 \alpha + \beta_1 t + \beta_rX_r + ... + \beta_p cos \left( \frac{2 \pi t}{52} \right) + \beta_q sin \left( \frac{2 \pi t}{52} \right)$$
+$$y = \beta_0 \alpha + \beta_1 t + \beta_rX_r + ... + \beta_p cos \left( \frac{2 \pi t}{52} \right) + \beta_q sin \left( \frac{2 \pi t}{52} \right)$$
 
 Where $t$ = time (week), subscript $r$ denotes a vector of $\beta$ coefficients and variables, and subscripts $p$ and $q$ take on particular numbers based on the length of $r$.
 
@@ -160,9 +165,18 @@ a) Lags and leads of c) or d)
 
 a) Indicators for weeks of Thanksgiving and/or Christmas [@Brooks2015-fl; @Taylor2018-pl]
 
-Automated variable selection be used to select the best-fitting model for each model type using 2, 3, 4, and 5 prior seasons to predict the $n^{th}$ season's curve.
+The hypothetical hospitalization curves will be partitioned into a training set and a test set.
 
-In each case, prior seasons will be drawn from the distribution of hypothetical hospitalization curves and concatenated.
+The best-fitting model from each class of models will be determined using an appropriate automated variable selection technique (e.g., AIC, BIC). Models will be fit according to the following procedure:
+
+1. Sample a vector of $n$ hypothetical curves from the training set and concatenate them. We will investigate $n \in [2, 3, 4, 5]$.
+
+2. Use the sampled set of curves as the input to each model and generate a prediction for the next season.
+
+3. Find the model specification that results in the predictions that best fit the training set of hypothetical hospitalization curves.
+
+To compare the performance of each model type's best-fitting model, the steps above in the test set of hypothetical hospitalization curves (minus the variable selection step).
+
 
 # Goodness of fit
 
@@ -170,7 +184,7 @@ In each case, prior seasons will be drawn from the distribution of hypothetical 
 
 - Relative bias
 
-Measures of fit will be calculated for each model against each of the target parameters (_i.e._, peak height, peak week, cumulative hospitalizations).^[Question for Dr. Naimi: Should we be doing cross-validation or sample-splitting given the aims of this analysis? We can simulate an arbitrary number of hypothetical hospitalization curves, so the limited number of historical flu season available may not be an issue.]
+Measures of fit will be calculated for each model against each of the target parameters (_i.e._, peak height, peak week, cumulative hospitalizations).^[Question for Dr. Naimi: We can simulate an arbitrary number of hypothetical curves, for which reason I'm inclined to simulate a large enough number that we can have equally sized test and training sets. Currently, I'm working with 3,000 simulated curves total.]
 
 
 ## Sensitivity analysis
@@ -184,9 +198,3 @@ _Response_
 Redo the analysis three times: one for each set of years in which the same participating institutions reported flu data to CDC. See [@Centers_for_Disease_Control_and_Prevention_undated-vt] for more information.
 
 ## References
-
-\footnotesize
-\setlength{\parindent}{-0.2in}
-\setlength{\leftskip}{0.2in}
-\setlength{\parskip}{8pt}
-\noindent
