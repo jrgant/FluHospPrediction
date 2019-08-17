@@ -10,3 +10,5 @@
 **/*.Rds
 **/*.png
 **/*.jpg
+analysis-plan.pdf 
+analysis-plan/analysis-plan.pdf 
