@@ -3,8 +3,8 @@
 # Method described in:
 #
 # Biggerstaff M et al. Systematic Assessment of Multiple Routine and Near
-# Real-Time Indicators to Classify the Severity of Influenza Seasons and Pandemics
-# in the United States, 2003-2004 Through 2015-2016. Am J Epidemiol
+# Real-Time Indicators to Classify the Severity of Influenza Seasons and
+# Pandemics in the United States, 2003-2004 Through 2015-2016. Am J Epidemiol
 # 2018;187:1040–50. doi:10.1093/aje/kwx334.
 
 pacman::p_load(rvest, stringr, readr, dplyr, data.table)
