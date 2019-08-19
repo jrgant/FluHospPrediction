@@ -18,13 +18,13 @@ cdc_svr <- url %>%
 
 names(cdc_svr) <- tolower(names(cdc_svr))
 
-write.csv2(cdc_svr, file = "hospdat/cdc_svr.csv")
+write.csv2(cdc_svr, file = "data/cdc_svr.csv")
 
 # Empirical Hospitalization Counts ---------------------------------------------
 
-cdc_svr <- read.csv2("hospdat/cdc_svr.csv")
+cdc_svr <- read.csv2("data/cdc_svr.csv")
 
-hspdat_fldr <- "hospdat"
+hspdat_fldr <- "data"
 hsp_file <- paste0(hspdat_fldr, "/Weekly_Data_Counts.csv")
 hsp_names <- c("seas", "epiweek", "inf.a", "inf.b", "inf.ab", "inf.unk")
 

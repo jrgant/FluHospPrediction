@@ -24,7 +24,7 @@ source("R/simcrv_funs.R")
 
 # Load data -----------------------------------------------------------------
 
-ed <- readRDS("empdat.Rds")
+ed <- readRDS("data/empdat.Rds")
 print(head(ed))
 
 # convert all data frames to data.tables
@@ -282,3 +282,6 @@ grid::grid.draw(curve_grid)
 
 ggsave("curve_grid.pdf", curve_grid, width = 3, height = 1, scale = 6)
 ggsave("curve_grid.jpg", curve_grid, width = 3, height = 1, scale = 6)
+
+# Write Hypothetical curves -------------------------------------------------
+saveRDS(hhc, "data/hypothetical-curves.Rds")
