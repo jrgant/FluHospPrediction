@@ -280,8 +280,11 @@ library(gridExtra)
 curve_grid <- grid.arrange(emp_hosp, emp_cumr, hyp_hosp, nrow = 1)
 grid::grid.draw(curve_grid)
 
-ggsave("curve_grid.pdf", curve_grid, width = 3, height = 1, scale = 6)
-ggsave("curve_grid.jpg", curve_grid, width = 3, height = 1, scale = 6)
+ggsave("analysis-plan/curve_grid.pdf", curve_grid,
+       width = 3, height = 1, scale = 6)
+
+ggsave("analysis-plan/curve_grid.jpg", curve_grid,
+       width = 3, height = 1, scale = 6)
 
 # Write Hypothetical curves -------------------------------------------------
 saveRDS(hhc, "data/hypothetical-curves.Rds")
