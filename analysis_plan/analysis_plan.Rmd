@@ -54,7 +54,7 @@ These targets follow in part from [@Brooks2015-fl], who focused on influenza-lik
 
 ```{r emphypfig, echo = FALSE, fig.cap = "Empirical and simulated hospitalization curves. $\\lambda$ index refers to the position of one in a vector of trend filter penalties tested for each season. The actual value $\\lambda$ varies by season."}
 
-knitr::include_graphics("../curve_grid.jpg", auto_pdf = FALSE)
+knitr::include_graphics("curve_grid.jpg", auto_pdf = FALSE)
 ```
 
 # Curve fitting and simulation
