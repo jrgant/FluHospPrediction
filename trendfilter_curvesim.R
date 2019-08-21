@@ -253,7 +253,7 @@ print(hhc$outhc)
 
 # %%
 # view curves
-simsub <- 1000
+simsub <- 30
 hyp_hosp <- ggplot(hhc$outhc[cid %in% 1:simsub],
                    aes(x = week, y = prediction)) +
   geom_vline(
@@ -356,11 +356,17 @@ target_params <- lapply(setNames(hhc_sets, hhc_sets), function(x) {
                       cumhosp_w = weighted.mean(cumhosp, weight))]
 })
 
-hhc$train <- list(trainset = hhc_splits[["train"]],
-                  train_targets = target_params[["train"]])
+hhc$train <- list(
+  trainset = hhc_trset,
+  trainset_sum = hhc_splits[["train"]],
+  train_targets = target_params[["train"]]
+)
 
-hhc$test  <- list(testset = hhc_splits[["test"]],
-                  test_targets = target_params[["test"]])
+hhc$test <- list(
+  testset = hhc_ttset,
+  testset_sum = hhc_splits[["test"]],
+  test_targets = target_params[["test"]]
+)
 
 print(hhc$train)
 print(hhc$test)
