@@ -55,10 +55,9 @@ ed$whsp_rt[, week := c(1:31)[match(mmwr_week, ew_order)]]
 
 # view variable classes in all datasets
 classes <- sapply(ed, function(x) sapply(x, class))
-classes
+print(classes)
 
 print(ed)
-ed
 
 # View Historical Curves ----------------------------------------------------
 sublab <- "2003–2019, excludes 2009–2010 season"
@@ -120,7 +119,6 @@ emp_cumr
 # each gets its own data.frame
 seas_obs <- split(ed$whsp_rt, ed$whsp_rt$seas)
 print(seas_obs)
-seas_obs
 
 # run trendfilter on each observed season
 tf_seas <- lapply(seas_obs, function(x) {
@@ -136,9 +134,16 @@ pred_fun <- function(x, y, lambda_val) {
   predict(y, x.new = x, lambda = y$lambda[lambda_val])
 }
 
+# @NOTE 2019-08-21:
+#   All subsequent trendfilter predictions use the lambda set here.
+sel_lambda <- 15
+
+# %%
+# @TODO 2019-08-12:
+#   Consider making this a function to call from R/simcrv_funs.R
 tf_pred <- lapply(
   setNames(names(tf_seas), names(tf_seas)),
-  function(x, lambda_insert = 25) {
+  function(x, lambda_insert = sel_lambda) {
     pred.hosp <- pred_fun(seas_obs[[x]]$x, tf_seas[[x]], lambda_insert)
     obs.hosp1 <- tf_seas[[x]]$y
     obs.hosp2 <- seas_obs[[x]]$weekrate
@@ -171,7 +176,9 @@ tf_pred <- lapply(
 
 print(tf_pred)
 
-# @NOTE: Suppressing 'unequal factor levels' warnings. A benign side effect of #        using bind_rows().
+# %%
+# @NOTE: Suppressing 'unequal factor levels' warnings.
+#        A benign side effect of using dplyr::bind_rows().
 tfp <- suppressWarnings(map_dfr(tf_pred, function(x) x[[1]]))
 setDT(tfp)
 
@@ -201,6 +208,7 @@ ggplot(tfp, aes(x = week)) +
 
 # Generate hypothetical curves -----------------------------------
 
+# %%
 # record peak weeks ()
 dist_peaks <-
   ed$whsp_rt[, .(
@@ -211,9 +219,8 @@ dist_peaks <-
   ]
 
 print(dist_peaks)
-print(ed)
 
-# Generate High/Moderate-Severity Curves ------------------------------------
+# Generate Hypothetical Curves -----------------------------------------------
 
 library(tictoc)
 
@@ -222,8 +229,6 @@ reps <- 3000
 
 # time the simulations
 tic(paste0("Curve simulations (n = ", reps, ")"))
-
-sel_lambda <- 25
 
 # @NOTE: Suppressing warnings for predictions out of range. Expected behavior
 #        due to the curve stretching. R is being asked to predict
@@ -246,8 +251,9 @@ toc()
 names(hhc)
 print(hhc$outhc)
 
+# %%
 # view curves
-simsub <- 30
+simsub <- 1000
 hyp_hosp <- ggplot(hhc$outhc[cid %in% 1:simsub],
                    aes(x = week, y = prediction)) +
   geom_vline(
@@ -275,16 +281,107 @@ hyp_hosp <- ggplot(hhc$outhc[cid %in% 1:simsub],
 
 hyp_hosp
 
+
+# Calculate Prediction Targets -----------------------------------------------
+
+## Prediction targets in hypothetical curve distribution:
+##   Peak week
+##   Peak height
+##   Cumulative hospitalizations
+
+## Time horizon: weeks: 1 to 31
+
+# %%
+length(hhc$hc)
+nrow(hhc$outhc)
+print(hhc$outhc)
+
+n_by_cid <- hhc$outhc[, .N, by = "cid"]
+print(n_by_cid)
+
+# %%
+# drop weeks outside of [1, 31]
+outsub <- hhc$outhc[week >= 1 & week <= 31]
+
+print(outsub)
+summary(outsub$week)
+
+cat("Rows in full dist: ", nrow(hhc$outhc), "\n",
+    "Rows in subset:", nrow(outsub), "\n",
+    "Rows dropped: ", nrow(hhc$outhc) - nrow(outsub), "\n",
+    sep = ""
+  )
+
+# split sample into training and test set
+hhc_trset <- outsub[cid <= 0.5 * max(cid)]
+hhc_ttset  <- outsub[!cid %in% unique(hhc_trset$cid)]
+
+print(hhc_trset)
+print(hhc_ttset)
+
+
+# %%
+# split hypothetical curves into training and test sets
+# summarize training and test sets
+hhc_sets <- c("train", "test")
+
+hhc_splits <- lapply(setNames(hhc_sets, hhc_sets), function(x) {
+  if (x == "train") {
+    df <- hhc_trset
+  } else {
+      df <- hhc_ttset
+  }
+
+  # summarize hypothetical curves by prediction target
+  # calculate weights to account for missing data due to curve shifting
+  df[, .(pkht = max(prediction),
+         pkwk = week[prediction == max(prediction)],
+         cumhosp = max(cumsum(prediction)),
+         n = .N),
+     by = "cid"][, weight := n / sum(n)]
+})
+
+lapply(hhc_splits, nrow)
+
+# %%
+# Test Set Summaries
+
+# Unweighted
+lapply(hhc_splits$train, summary)
+
+# Weighted
+target_params <- lapply(setNames(hhc_sets, hhc_sets), function(x) {
+  hhc_splits[[x]][, .(pkht_w = weighted.mean(pkht, weight),
+                      pkwk_w = weighted.mean(pkwk, weight),
+                      cumhosp_w = weighted.mean(cumhosp, weight))]
+})
+
+hhc$train <- list(trainset = hhc_splits[["train"]],
+                  train_targets = target_params[["train"]])
+
+hhc$test  <- list(testset = hhc_splits[["test"]],
+                  test_targets = target_params[["test"]])
+
+print(hhc$train)
+print(hhc$test)
+
+# Write Hypothetical curves ---------------------------------------------------
+
+# %%
+saveRDS(hhc, "data/hypothetical-curves.Rds")
+
+
+# View and Write Plots --------------------------------------------------------
+
 library(grid)
 library(gridExtra)
+
 curve_grid <- grid.arrange(emp_hosp, emp_cumr, hyp_hosp, nrow = 1)
 grid::grid.draw(curve_grid)
 
-ggsave("analysis-plan/curve_grid.pdf", curve_grid,
+## plots
+ggsave("analysis_plan/curve_grid.pdf", curve_grid,
        width = 3, height = 1, scale = 6)
 
-ggsave("analysis-plan/curve_grid.jpg", curve_grid,
+ggsave("analysis_plan/curve_grid.jpg", curve_grid,
        width = 3, height = 1, scale = 6)
-
-# Write Hypothetical curves -------------------------------------------------
-saveRDS(hhc, "data/hypothetical-curves.Rds")
