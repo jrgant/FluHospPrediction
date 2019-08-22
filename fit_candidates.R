@@ -1,28 +1,61 @@
 # Setup ----------------------------------------------------------------------
 
-# %%
+# %% Packages
+pacman::p_load(data.table, flumodelr, prophet)
+
+# %% Load Data
+
+# hypothetical curves
 hhc <- readRDS("data/hypothetical-curves.Rds")
 names(hhc)
-
-pacman::p_load(data.table, flumodelr, prophet)
 
 setDT(hhc$outhc)
 names(hhc$outhc)
 
-hcsub <- hhc$outhc[week >= 1 & week <= 31]
-print(hcsub)
+# save training data to a global df
+tr <- hhc$train
+names(tr)
+sapply(tr, head)
 
 # Serfling Model -------------------------------------------------------------
 
 # %%
 ## flumodelr::flu_serf
-flu_fit <- fluserf(fludta, outc = fludeaths, time = yrweek_dt, period = 52)
-sapply(flu_fit, class)
+# flu_fit <- fluserf(fludta, outc = fludeaths, time = yrweek_dt, period = 52)
+# sapply(flu_fit, class)
 
 # %%
-ggplot(flu_fit %>% filter(year > 2008), aes(x = week_in_order)) +
+fd <- fludta %>%
+  filter(year >= 2000)
+
+fd <- fd %>%
+  mutate(
+    theta = 2 * week / 52,
+    sin_2 = sinpi(theta),
+    cos_2 = cospi(theta),
+    noninf = rnorm(nrow(.), 0, 5)
+  )
+print(fd)
+
+# %%
+fitlm1 <- lm(fludeaths ~ week + sin_2 + cos_2, data = fd)
+summary(fitlm1)
+
+
+library(MASS)
+step1 <- stepAIC(fitlm1, trace = TRUE)
+
+pred1 <- predict(fitlm1, newdata = fd)
+fd$yhat1 <- pred1
+
+setDT(fd)
+print(fd)
+
+# %%
+ggplot(fd, aes(x = week_in_order)) +
   geom_line(aes(y = fludeaths), color = "red") +
-  geom_line(aes(y = y0), color = "blue")
+  geom_line(aes(y = yhat1)) +
+  geom_line(aes(y = yhat2), linetype = "dashed")
 
 
 # Modified Serfling Model ----------------------------------------------------

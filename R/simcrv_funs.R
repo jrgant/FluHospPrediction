@@ -6,7 +6,7 @@ simcrv <- function(
                    print.eq = FALSE,
                    verbose = FALSE,
                    peakdist = dist_peaks,
-                   hstdat = ed$whsp_ct,
+                   hstdat = ed,
                    severity2 = NULL,
                    predfits = tf_pred,
                    fitseas = tf_seas,
@@ -26,13 +26,13 @@ simcrv <- function(
   }
 
   # sample shape (f)
-  s <- sample(unique(hstdat$seas), 1)
-  max_j <- peakdist[, pkhosp[seas == s]]
+  s <- sample(unique(hstdat$season), 1)
+  max_j <- peakdist[, pkhosp[season == s]]
 
   # one season had peak hospitalizations occur in two separate weeks
   # to account for this, we sample one of the peak weeks at random for that
   # season
-  pkw <- peakdist[, pkweek[seas == s]]
+  pkw <- peakdist[, pkweek[season == s]]
   argmax_j <- ifelse(
     length(pkw) > 1,
     pkw[sample(x = c(1, 2), size = 1)],
@@ -53,7 +53,7 @@ simcrv <- function(
 
   slist <- list(
     "season" = s,
-    "severity" = hstdat[, sev2[seas == s]] %>% unique(),
+    "severity" = hstdat[, sev2[season == s]] %>% unique(),
     "maxj" = max_j,
     "argmax" = argmax_j,
     "sigma" = sigma,

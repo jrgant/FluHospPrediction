@@ -25,39 +25,18 @@ source("R/simcrv_funs.R")
 # Load data -----------------------------------------------------------------
 
 ed <- readRDS("data/empdat.Rds")
+class(ed)
 print(head(ed))
 
-# convert all data frames to data.tables
-sapply(ed, setDT)
-sapply(names(ed), function(x) sapply(ed[[x]], class))
+# check for missing data (all 0 = no missing data)
+ed[, lapply(.SD, is.na)][, lapply(.SD, sum)] %>% print
 
-ed$whsp_rt[, ("season") := lapply(.SD, as.character), .SDcols = "season"]
-ed$whsp_rt <- ed$whsp_rt[agecat == "Overall", ]
-
-# only High/Moderate seasons available for rates
-ed$whsp_rt[mmwr_week == 40]
-
-# subset whsp_ct to desired seasons and epiweeks
-# drop pandemic flu
 # @NOTE: If able to simulate by season severity eventually, can drop seasons
 #        without a severity rating (i.e., 2018-19)
-drop_seas <- c("2009-10")
 
-ew_order <- c(40:53, 1:17)
-ed$whsp_rt <- ed$whsp_rt[!season %in% drop_seas & mmwr_week %in% ew_order]
-
-names(ed$whsp_rt)[names(ed$whsp_rt) == "season"] <- "seas"
-
-# @DEV 2019-08-16: Move to data-cleaning.R
-# create a week variable that matches epiweek to integers
-# trandfilter() does not take factors
-ed$whsp_rt[, week := c(1:31)[match(mmwr_week, ew_order)]]
-
-# view variable classes in all datasets
-classes <- sapply(ed, function(x) sapply(x, class))
-print(classes)
-
-print(ed)
+# %% Drop Pandemic Flu
+ed <- ed[season != "2009-10"]
+table(ed$season)
 
 # View Historical Curves ----------------------------------------------------
 sublab <- "2003–2019, excludes 2009–2010 season"
@@ -75,9 +54,9 @@ theme_tweak <-
       plot.margin = margin(rep(0.5, 4),  unit = "cm")
     )
 
-emp_hosp <- ggplot(ed$whsp_rt, aes(x = week, y = weekrate)) +
+emp_hosp <- ggplot(ed, aes(x = weekint, y = weekrate)) +
   geom_line(
-    aes(group = seas),
+    aes(group = season),
     size = 1,
     alpha = 0.4
   ) +
@@ -92,14 +71,14 @@ emp_hosp <- ggplot(ed$whsp_rt, aes(x = week, y = weekrate)) +
 
 emp_hosp
 
-emp_cumr <- ggplot(ed$whsp_rt, aes(x = week, y = cumrates)) +
+emp_cumr <- ggplot(ed, aes(x = weekint, y = cumrates)) +
   geom_line(
-    aes(group = seas),
+    aes(group = season),
     alpha = 0.6
   ) +
   geom_text(
-    data = ed$whsp_rt[week == max(week)],
-    aes(x = 33, label = seas),
+    data = ed[weekint == max(weekint)],
+    aes(x = 33, label = season),
     size = 2
   ) +
   labs(
@@ -117,12 +96,12 @@ emp_cumr
 
 # Split Observed Seasons
 # each gets its own data.frame
-seas_obs <- split(ed$whsp_rt, ed$whsp_rt$seas)
+seas_obs <- split(ed, ed$season)
 print(seas_obs)
 
 # run trendfilter on each observed season
 tf_seas <- lapply(seas_obs, function(x) {
-  trendfilter(x = x$week, y = x$weekrate, k = 2)
+  trendfilter(x = x$weekint, y = x$weekrate, k = 2)
 })
 
 # view model summaries
@@ -211,12 +190,11 @@ ggplot(tfp, aes(x = week)) +
 # %%
 # record peak weeks ()
 dist_peaks <-
-  ed$whsp_rt[, .(
+  ed[, .(
     pkhosp = max(weekrate),
-    pkweek = week[weekrate == max(weekrate)]
-  ),
-  by = "seas"
-  ]
+    pkweek = weekint[weekrate == max(weekrate)]
+    ),
+  by = "season" ]
 
 print(dist_peaks)
 
@@ -242,14 +220,14 @@ hhc <- suppressWarnings(
     sim_args = list(
       severity2 = NULL,
       lamb_val = sel_lambda,
-      hstdat = ed$whsp_rt
+      hstdat = ed
     )
   )
 )
 toc()
 
 names(hhc)
-print(hhc$outhc)
+print(hhc$outhc, topn = 40)
 
 # %%
 # view curves
