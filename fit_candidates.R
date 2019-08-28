@@ -20,11 +20,6 @@ sapply(tr, head)
 # Serfling Model -------------------------------------------------------------
 
 # %%
-## flumodelr::flu_serf
-# flu_fit <- fluserf(fludta, outc = fludeaths, time = yrweek_dt, period = 52)
-# sapply(flu_fit, class)
-
-# %%
 fd <- fludta %>%
   filter(year >= 2000)
 
