@@ -1,0 +1,51 @@
+---
+title: "Algorithms (Draft)"
+date: "Compiled: `r Sys.Date()`"
+output: pdf_document
+header-includes:
+  - \usepackage{algorithm2e}
+  - \usepackage{amsmath}
+---
+
+# Model Fitting
+
+\begin{algorithm}[H]
+  \SetAlgoLined
+  \SetKw{hihc}{$N$}
+  \SetKw{model}{$M$}
+  \SetKw{outcomes}{$\boldsymbol{Y}$}
+  \SetKw{numreps}{$R$}
+  \SetKw{priorprd}{$k$}
+  \SetKw{sampseas}{$s$}
+
+  \hihc{: Hypothetical hospitalization curves}
+  \BlankLine
+
+  \model{: Candidate models }
+  \BlankLine
+
+  \priorprd{$\in$ \{2, 3, 4, 5\}}
+  \BlankLine
+
+  \numreps{: Number of replications}
+  \BlankLine
+
+  \outcomes{ $\in$ \{peak hospitalizations, peak week, cumulative hospitalizations\} }
+  \BlankLine\BlankLine
+
+  \ForEach {\model}{
+    \For {$i = 1$ to \numreps}{
+      Sample \priorprd seasons from \hihc with replacement to form $\priorprd_{set}(i)$\;
+      Concatenate $\priorprd_{set}(i)$ in sampled order\;
+      Fit \model to $\priorprd_{set}(i)$ using stepwise selection\;
+      \BlankLine
+
+      Sample \sampseas\;
+      Predict $\hat{Y}_s$ using \model\;
+      \BlankLine
+
+      Calculate root mean squared error and relative bias.
+    }
+  }
+
+\end{algorithm}
