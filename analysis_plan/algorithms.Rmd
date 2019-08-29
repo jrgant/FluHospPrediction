@@ -18,7 +18,7 @@ header-includes:
   \SetKw{priorprd}{$k$}
   \SetKw{sampseas}{$s$}
 
-  \hihc{: Hypothetical hospitalization curves}
+  \hihc{: Hypothetical hospitalization curve distribution}
   \BlankLine
 
   \model{: Candidate models }
