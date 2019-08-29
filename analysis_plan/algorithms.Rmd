@@ -13,7 +13,7 @@ header-includes:
   \SetAlgoLined
   \SetKw{hihc}{$N$}
   \SetKw{model}{$M$}
-  \SetKw{outcomes}{$\boldsymbol{Y}$}
+  \SetKw{outcomes}{$Y$}
   \SetKw{numreps}{$R$}
   \SetKw{priorprd}{$k$}
   \SetKw{sampseas}{$s$}
@@ -41,10 +41,12 @@ header-includes:
       \BlankLine
 
       Sample \sampseas\;
-      Predict $\hat{Y}_s$ using \model\;
       \BlankLine
 
-      Calculate root mean squared error and relative bias.
+      \ForEach{\outcomes}{
+          Predict $\hat{Y}_s$ using \model\;
+          Calculate root mean squared error and relative bias.
+      }
     }
   }
 
