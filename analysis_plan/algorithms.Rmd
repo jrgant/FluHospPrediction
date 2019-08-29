@@ -7,7 +7,7 @@ header-includes:
   - \usepackage{amsmath}
 ---
 
-# Model Fitting
+# Candidate Model Fitting
 
 \begin{algorithm}[H]
   \SetAlgoLined
