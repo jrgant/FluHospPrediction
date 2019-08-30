@@ -115,7 +115,7 @@ pred_fun <- function(x, y, lambda_val) {
 
 # @NOTE 2019-08-21:
 #   All subsequent trendfilter predictions use the lambda set here.
-sel_lambda <- 15
+sel_lambda <- 20
 
 # %%
 # @TODO 2019-08-12:
@@ -171,8 +171,8 @@ ggplot(tfp, aes(x = week)) +
   ) +
   facet_wrap(~season) +
   scale_color_viridis_d() +
-  scale_x_continuous("Epiweek", labels = c(0, ew_order[c(10, 20, 30)])) +
   labs(
+    x = "Week",
     y = "Hospitalizations (per 100,000)",
     title = "Trend filter, predicted hospitalizations vs. observed",
     caption = paste("lambda = ", tf_pred[[1]]$lambda)
@@ -203,7 +203,7 @@ print(dist_peaks)
 library(tictoc)
 
 # number of curves to simulate
-reps <- 3000
+reps <- 10000
 
 # time the simulations
 tic(paste0("Curve simulations (n = ", reps, ")"))
@@ -285,7 +285,7 @@ print(outsub)
 summary(outsub$week)
 
 cat("Rows in full dist: ", nrow(hhc$outhc), "\n",
-    "Rows in subset:", nrow(outsub), "\n",
+    "Rows in subset: ", nrow(outsub), "\n",
     "Rows dropped: ", nrow(hhc$outhc) - nrow(outsub), "\n",
     sep = ""
   )
@@ -322,7 +322,7 @@ hhc_splits <- lapply(setNames(hhc_sets, hhc_sets), function(x) {
 lapply(hhc_splits, nrow)
 
 # %%
-# Test Set Summaries
+# Single-Season Test Set Summaries
 
 # Unweighted
 lapply(hhc_splits$train, summary)
@@ -348,6 +348,7 @@ hhc$test <- list(
 
 print(hhc$train)
 print(hhc$test)
+
 
 # Write Hypothetical curves ---------------------------------------------------
 
