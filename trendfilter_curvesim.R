@@ -7,8 +7,9 @@
 # 2015;11:e1004382. doi:10.1371/journal.pcbi.1004382.
 
 
-# Load packages -------------------------------------------------------------
+# Load packages ---------------------------------------------------------
 
+# %% Setup
 pacman::p_load(
   glmgen,
   ggplot2,
@@ -22,8 +23,9 @@ pacman::p_load(
 
 source("R/simcrv_funs.R")
 
-# Load data -----------------------------------------------------------------
+# Load data -------------=----------------------------------------------
 
+# %% Setup
 ed <- readRDS("data/empdat.Rds")
 class(ed)
 print(head(ed))
@@ -38,7 +40,7 @@ ed[, lapply(.SD, is.na)][, lapply(.SD, sum)] %>% print
 ed <- ed[season != "2009-10"]
 table(ed$season)
 
-# View Historical Curves ----------------------------------------------------
+# View Historical Curves ------------------------------------------------
 sublab <- "2003–2019, excludes 2009–2010 season"
 sourcecap <- "Source: FluSurv-NET"
 
@@ -92,7 +94,7 @@ emp_cumr <- ggplot(ed, aes(x = weekint, y = cumrates)) +
 
 emp_cumr
 
-# Quadratic Trend Filter ----------------------------------------------------
+# Quadratic Trend Filter ------------------------------------------------
 
 # Split Observed Seasons
 # each gets its own data.frame
@@ -101,7 +103,7 @@ print(seas_obs)
 
 # run trendfilter on each observed season
 tf_seas <- lapply(seas_obs, function(x) {
-  trendfilter(x = x$weekint, y = x$weekrate, k = 2)
+  trendfilter(x = x$weekint, y = x$weekrate, k = 2, family = "gaussian")
 })
 
 # view model summaries
@@ -115,7 +117,7 @@ pred_fun <- function(x, y, lambda_val) {
 
 # @NOTE 2019-08-21:
 #   All subsequent trendfilter predictions use the lambda set here.
-sel_lambda <- 20
+sel_lambda <- 25
 
 # %%
 # @TODO 2019-08-12:
@@ -185,7 +187,7 @@ ggplot(tfp, aes(x = week)) +
     legend.position = "bottom"
   )
 
-# Generate hypothetical curves -----------------------------------
+# Generate hypothetical curves -----------------------------------------
 
 # %%
 # record peak weeks ()
@@ -198,13 +200,14 @@ dist_peaks <-
 
 print(dist_peaks)
 
-# Generate Hypothetical Curves -----------------------------------------------
+# Generate Hypothetical Curves ------------------------------------------
 
 library(tictoc)
 
 # number of curves to simulate
 reps <- 10000
 
+# %% Simulate Curves
 # time the simulations
 tic(paste0("Curve simulations (n = ", reps, ")"))
 
@@ -226,25 +229,31 @@ hhc <- suppressWarnings(
 )
 toc()
 
+# %%
 names(hhc)
+head(hhc$hc)
+
+# check to make sure each season has 31 predicted periods
+veclengths <- sapply(hhc$hc, function(x) length(x$eq$arg_f))
+table(veclengths == 31)
+
+# map prediction to i (1:31)
+hhc$outhc[, weekmap := rep(1:31, length(unique(cid)))]
 print(hhc$outhc, topn = 40)
 
 # %%
 # view curves
 simsub <- 30
-hyp_hosp <- ggplot(hhc$outhc[cid %in% 1:simsub],
-                   aes(x = week, y = prediction)) +
-  geom_vline(
-    data = data.frame(x = c(1, 31)),
-    aes(xintercept = x),
-    color = "red"
+
+hyp_hosp_p <-
+  ggplot(
+    hhc$outhc[cid %in% sample(cid, size = simsub)],
+    aes(x = weekmap, y = prediction)
   ) +
-  geom_text(
-    aes(x = 16, y = 14),
-    label = "Prediction window",
-    color = "red"
+  geom_line(
+    aes(group = cid, color = factor(cid)),
+    alpha = 0.6
   ) +
-  geom_line(aes(group = cid), alpha = 0.2) +
   labs(
     x = "Week",
     y = "Predicted hospitalizations (per 100,000)",
@@ -252,71 +261,44 @@ hyp_hosp <- ggplot(hhc$outhc[cid %in% 1:simsub],
     subtitle = paste(simsub, "simulations"),
     caption = paste0("\u03BB index", " = ", sel_lambda)
   ) +
-  # remove weeks outside the CDC season window
-  # avoids including extrapolations well past the data
-  coord_cartesian(xlim = c(1, 31), ylim = c(0, 10)) +
-  theme_tweak
+  theme_tweak +
+  theme(legend.position = "none")
 
-hyp_hosp
+# @BUG 2019-09-03:
+#   Inspection of random subsets of simulated curves reveals some unrealistic
+#   patterns at time i = 0 (e.g., seasons beginning well above 0/100,000 people)
+hyp_hosp_p
 
-
-# Calculate Prediction Targets -----------------------------------------------
-
-## Prediction targets in hypothetical curve distribution:
-##   Peak week
-##   Peak height
-##   Cumulative hospitalizations
-
-## Time horizon: weeks: 1 to 31
-
-# %%
-length(hhc$hc)
-nrow(hhc$outhc)
-print(hhc$outhc)
-
-n_by_cid <- hhc$outhc[, .N, by = "cid"]
-print(n_by_cid)
-
-# %%
-# drop weeks outside of [1, 31]
-outsub <- hhc$outhc[week >= 1 & week <= 31]
-
-print(outsub)
-summary(outsub$week)
-
-cat("Rows in full dist: ", nrow(hhc$outhc), "\n",
-    "Rows in subset: ", nrow(outsub), "\n",
-    "Rows dropped: ", nrow(hhc$outhc) - nrow(outsub), "\n",
-    sep = ""
-  )
-
-# split sample into training and test set
-hhc_trset <- outsub[cid <= 0.5 * max(cid)]
-hhc_ttset  <- outsub[!cid %in% unique(hhc_trset$cid)]
-
-print(hhc_trset)
-print(hhc_ttset)
-
+# Training and Test Sets ------------------------------------------------
 
 # %%
 # split hypothetical curves into training and test sets
 # summarize training and test sets
 hhc_sets <- c("train", "test")
+train_cids <- with(hhc$outhc, min(cid):(0.5 * max(cid)))
+test_cids <- with(hhc$outhc, unique(cid[!cid %in% train_cids]))
 
+# check ranges
+cat("Range of training set simulation IDs:", range(train_cids), "\n")
+cat("Range of test set simulation IDs:", range(test_cids), "\n")
+
+# split simulated curves
 hhc_splits <- lapply(setNames(hhc_sets, hhc_sets), function(x) {
   if (x == "train") {
-    df <- hhc_trset
+    df <- hhc$outhc[cid %in% train_cids, ]
   } else {
-      df <- hhc_ttset
+      df <- hhc$outhc[cid %in% test_cids, ]
   }
 
   # summarize hypothetical curves by prediction target
   # calculate weights to account for missing data due to curve shifting
   df[, .(pkht = max(prediction),
          pkwk = week[prediction == max(prediction)],
+         pkwk_int = weekmap[prediction == max(prediction)],
          cumhosp = max(cumsum(prediction)),
          n = .N),
-     by = "cid"][, weight := n / sum(n)]
+     by = "cid"] %>%
+     .[, weight := n / sum(n)]
 })
 
 lapply(hhc_splits, nrow)
@@ -335,13 +317,13 @@ target_params <- lapply(setNames(hhc_sets, hhc_sets), function(x) {
 })
 
 hhc$train <- list(
-  trainset = hhc_trset,
+  trainset = hhc$outhc[cid %in% train_cids, ],
   trainset_sum = hhc_splits[["train"]],
   train_targets = target_params[["train"]]
 )
 
 hhc$test <- list(
-  testset = hhc_ttset,
+  testset = hhc$outhc[cid %in% test_cids, ],
   testset_sum = hhc_splits[["test"]],
   test_targets = target_params[["test"]]
 )
@@ -350,18 +332,18 @@ print(hhc$train)
 print(hhc$test)
 
 
-# Write Hypothetical curves ---------------------------------------------------
+# Write Hypothetical curves ---------------------------------------------
 
 # %%
 saveRDS(hhc, "data/hypothetical-curves.Rds")
 
 
-# View and Write Plots --------------------------------------------------------
+# View and Write Plots --------------------------------------------------
 
 library(grid)
 library(gridExtra)
 
-curve_grid <- grid.arrange(emp_hosp, emp_cumr, hyp_hosp, nrow = 1)
+curve_grid <- grid.arrange(emp_hosp, emp_cumr, hyp_hosp_p, nrow = 1)
 grid::grid.draw(curve_grid)
 
 ## plots
