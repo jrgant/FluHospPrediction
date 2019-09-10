@@ -103,7 +103,7 @@ print(seas_obs)
 
 # run trendfilter on each observed season
 tf_seas <- lapply(seas_obs, function(x) {
-  trendfilter(x = x$weekint, y = x$weekrate, k = 2, family = "gaussian")
+  trendfilter(x = x$weekint, y = x$weekrate, k = 1, family = "gaussian")
 })
 
 # view model summaries
@@ -117,7 +117,7 @@ pred_fun <- function(x, y, lambda_val) {
 
 # @NOTE 2019-08-21:
 #   All subsequent trendfilter predictions use the lambda set here.
-sel_lambda <- 25
+sel_lambda <- 20
 
 # %%
 # @TODO 2019-08-12:
@@ -125,6 +125,7 @@ sel_lambda <- 25
 tf_pred <- lapply(
   setNames(names(tf_seas), names(tf_seas)),
   function(x, lambda_insert = sel_lambda) {
+
     pred.hosp <- pred_fun(seas_obs[[x]]$x, tf_seas[[x]], lambda_insert)
     obs.hosp1 <- tf_seas[[x]]$y
     obs.hosp2 <- seas_obs[[x]]$weekrate
@@ -155,6 +156,7 @@ tf_pred <- lapply(
   }
 )
 
+sapply(tf_pred, function(x) class(x$dat))
 print(tf_pred)
 
 # %%
