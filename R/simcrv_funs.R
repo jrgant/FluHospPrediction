@@ -46,7 +46,7 @@ simcrv <- function(
   theta <- runif(1, min(peakdist$pkhosp), max(peakdist$pkhosp))
 
   # peak week
-  mu <- round(runif(1, min(peakdist$pkweek), max(peakdist$pkweek)))
+  mu <- runif(1, min(peakdist$pkweek), max(peakdist$pkweek))
 
   # pacing (nu)
   nu <- runif(1, 0.75, 1.25)
@@ -66,7 +66,7 @@ simcrv <- function(
 
   # Calculate curve equation
   t1 <- theta / max_j
-  arg_f <- ((1:31 - mu) / nu) + argmax_j
+  arg_f <- (1:31 - mu) / nu + argmax_j
 
   f <- predict(fitseas[[s]],
     x.new = arg_f,
