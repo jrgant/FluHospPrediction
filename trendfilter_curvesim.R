@@ -31,7 +31,10 @@ class(ed)
 print(head(ed))
 
 # check for missing data (all 0 = no missing data)
-ed[, lapply(.SD, is.na)][, lapply(.SD, sum)] %>% print
+ed[, lapply(.SD, is.na)] %>%
+  .[, lapply(.SD, sum)] %>%
+  melt %>%
+  print
 
 # @NOTE: If able to simulate by season severity eventually, can drop seasons
 #        without a severity rating (i.e., 2018-19)
@@ -231,6 +234,7 @@ hhc <- suppressWarnings(
 )
 toc()
 
+
 # %%
 names(hhc)
 head(hhc$hc)
@@ -334,13 +338,39 @@ print(hhc$train)
 print(hhc$test)
 
 
-# Write Hypothetical curves ---------------------------------------------
+# Write Hypothetical Curves ---------------------------------------------
 
 # %%
 saveRDS(hhc, "data/hypothetical-curves.Rds")
 
 
-# View and Write Plots --------------------------------------------------
+# %% Visualize Training Set Curves --------------------------------------
+
+train_pkhts <- hhc$train$trainset_sum %>%
+  .[, .(median = median(pkht),
+        mean = mean(pkht),
+        q25 = quantile(pkht, 0.25),
+        q75 = quantile(pkht, 0.75))] %>%
+        melt
+
+
+train_pkhts
+
+p <- ggplot(hhc$train$trainset_sum) + theme_minimal()
+
+# %%
+p +
+  geom_density(aes(x = pkht), color = "gray", fill = "lightgray") +
+  geom_segment(
+    data = train_pkhts,
+    aes(x = value, xend = value,
+        y = 0.0125, yend = 0.0175,
+        color = variable),
+        size = 1
+  ) +
+  geom_jitter(aes(x = pkht, y = 0), height = 0.01, size = 0.2)
+
+# %% View and Write Plots ------------------------------------------------
 
 library(grid)
 library(gridExtra)
