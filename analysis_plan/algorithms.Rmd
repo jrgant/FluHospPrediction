@@ -7,47 +7,116 @@ header-includes:
   - \usepackage{amsmath}
 ---
 
+# Curve Simulation
+
+Notation and algorithm from the Bayesian prior simulation procedure by Brooks et al.:
+
+\begin{algorithm}[H]
+
+  \SetAlgoLined
+
+  % Parameters
+  \SetKw{empseas}{$s$}
+  \SetKw{shape}{$f$}
+  \SetKw{noise}{$\sigma$}
+  \SetKw{pkht}{$\theta$}
+  \SetKw{pacing}{$\nu$}
+  \SetKw{numreps}{$R$}
+  \SetKw{week}{$i$}
+
+  % Parameter Descriptions
+  \empseas{: empirical season} \BlankLine
+  \shape{$\sim U\{\hat{f} : \text{historical season} s\}$} \BlankLine
+  \noise{$\sim U\{ \hat{\tau}_s : \text{historical season} s$} \BlankLine
+  \pkht{$\sim U \left[ \theta_m, \theta_M \right]$} \BlankLine
+  \pacing{$\sim U \left[ 0.75, 1.25 \right]$} \BlankLine
+  \numreps{: number of hypothetical seasons to Simulate} \BlankLine
+
+  % Algorithm
+  \ForEach{\empseas}{
+    Fit $trendfilter(s) \rightarrow f(j)$\;
+    \BlankLine
+
+    \ForEach{\week where j = \week}{
+      Calculate $\hat{\tau}^2_i = (y_{s,i} - \hat{f}_{s,j})^2$\;
+    }
+    \BlankLine
+    Calculate $\hat{\tau}^2_s = { \genfrac {}{}{0pt}{0}{avg}{i} } \left( \hat{\tau}_i \right)$\;
+  }
+  \BlankLine
+
+  \For{i = 1 to \numreps}{
+    Draw $\left< \shape, \noise, \pkht, \nu \right>$\;
+    Simulate curve as $f(i) + \epsilon, \text{ } \epsilon \sim N(0, \hat{\tau}^2_s)$\;
+  }
+\end{algorithm}
+
+
 # Candidate Model Fitting
 
 \begin{algorithm}[H]
+
   \SetAlgoLined
-  \SetKw{hihc}{$N$}
+
+  % Parameters
+  \SetKw{hihctrain}{$N_{train}$}  
+  \SetKw{hihctest}{$N_{test}$}
   \SetKw{model}{$M$}
+  \SetKw{varset}{$V$}
   \SetKw{outcomes}{$Y$}
-  \SetKw{numreps}{$R$}
   \SetKw{priorprd}{$k$}
-  \SetKw{sampseas}{$s$}
+  \SetKw{brep}{$B$}
 
-  \hihc{: Hypothetical hospitalization curve distribution}
+  \SetKwFunction{ModelSelect}{ModelSelect}
+
+  % Parameter Descriptions
+  \hihctrain{: Size of training set }
   \BlankLine
 
-  \model{: Candidate models }
+  \hihctest{: Size of test set }
   \BlankLine
 
-  \priorprd{$\in$ \{2, 3, 4, 5\}}
+  \model{: Candidate model }
   \BlankLine
 
-  \numreps{: Number of replications}
+  \varset{: Variable set}
   \BlankLine
 
-  \outcomes{ $\in$ \{peak hospitalizations, peak week, cumulative hospitalizations\} }
+  \brep{: Number of bootstrap replicates}
+  \BlankLine
+
+  \outcomes{$\in$ \{peak hospitalizations, peak week, cumulative hospitalizations\} }
   \BlankLine\BlankLine
 
-  \ForEach {\model}{
-    \For {$i = 1$ to \numreps}{
-      Sample \priorprd seasons from \hihc with replacement to form $\priorprd_{set}(i)$\;
-      Concatenate $\priorprd_{set}(i)$ in sampled order\;
-      Fit \model to $\priorprd_{set}(i)$ using stepwise selection\;
-      \BlankLine
 
-      Sample \sampseas\;
-      \BlankLine
+  % Algorithm
+
+  $trainset$ $\leftarrow$ store half of simulated hypothetical hospitalization curves
+  \BlankLine
+
+  $testset$ $\leftarrow$ store other half of simulated hypothetical hospitalization curves
+  \BlankLine
+
+  \ForEach{\model}{
+
+    Draw \brep of size \ $N_{train}$ from $trainset$.
+
+    \ForEach{$b$ in \brep}{
+
+      Run {\ModelSelect{\model, \varset, \brep, \text{AIC}, \text{backward stepwise}}};
 
       \ForEach{\outcomes}{
-          Predict $\hat{Y}_s$ using \model\;
+          Predict $\hat{Y}$ using \model\;
           Calculate root mean squared error and relative bias.
       }
     }
+    Fit selected model from {\ModelSelect} to $testset$ \;
+
+    \ForEach{\outcomes}{
+      Predict $\hat{Y}$ using \model \;
+      Calculate root mean squared error and relative bias.
+    }
   }
+  \BlankLine
 
 \end{algorithm}
