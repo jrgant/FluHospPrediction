@@ -1,13 +1,5 @@
-# CDC Flu Season Severity ----------------------------------------------------
-#
-# Method described in:
-#
-# Biggerstaff M et al. Systematic Assessment of Multiple Routine and Near
-# Real-Time Indicators to Classify the Severity of Influenza Seasons and
-# Pandemics in the United States, 2003-2004 Through 2015-2016. Am J Epidemiol
-# 2018;187:1040–50. doi:10.1093/aje/kwx334.
+# %% Setup -------------------------------------------------------------------
 
-# %%
 pacman::p_load(
   rvest,
   stringr,
@@ -19,8 +11,22 @@ pacman::p_load(
   here
 )
 
+
+# %% CDC Flu Season Severity -------------------------------------------------
+
+# Method described in:
+
+# Biggerstaff M et al. Systematic Assessment of Multiple Routine and Near
+# Real-Time Indicators to Classify the Severity of Influenza Seasons and
+# Pandemics in the United States, 2003-2004 Through 2015-2016. Am J Epidemiol
+# 2018;187:1040–50. doi:10.1093/aje/kwx334.
+
+# @NOTE:
+# If simply interested in viewing cleaned data, skip to 'Set Global Options'
+
 datfldr <- "data"
 
+# Severity information is written to a file at the end of section
 url <- "https://www.cdc.gov/flu/about/classifies-flu-severity.htm"
 
 cdc_svr <- url %>%
@@ -41,20 +47,19 @@ cdc_svr[, ":="(
 
 print(cdc_svr)
 
+# frequency table
 cdc_svr[, .N, by = c("sev1", "sev2")]
 
+# Write the season severity designations to a file
 fwrite(cdc_svr, file = here(datfldr, "cdc_svr.csv"), row.names = FALSE)
 
-# Options ---------------------------------------------------------------------
+# %% Set Global Options -------------------------------------------------------
 
-# %%
 ## set data.table print options
 options(datatable.print.topn = 10)
 options(datatable.print.class = TRUE)
 
-# Empirical Hospitalization Counts --------------------------------------------
-
-# %%
+# %% Empirical Hospitalization Counts -----------------------------------------
 
 # CDC season severity data
 cdcsvr_file <- here(datfldr, "cdc_svr.csv")
@@ -78,10 +83,10 @@ hsp_names <- c(
 epiweek_levels <- paste(c(40:53, 1:17))
 epiweek_labels <- 1:31
 seas_levels <- paste(2003:2018, str_extract(2004:2019, "[0-9]{2}$"), sep = "-")
+seas_levels
 
 # whsp_ct = weekly hospitalization counts
 whsp_ct <- fread(hsp_file, col.names = hsp_names)
-
 print(whsp_ct)
 
 # %%
@@ -136,10 +141,11 @@ whsp_rt <- fread(hsp_rates, col.names = whsp_rt_cols, quote = "") %>%
   # order by season and factor-ordered mmwr_week
   .[order(season, factor(mmwr_week, epiweek_levels, epiweek_labels))]
 
-print(whsp_rt)
+whsp_rt
 
 # check weekint matching with mmwr_week
 whsp_rt[, .N, by = c("weekint", "mmwr_week")]
+
 
 # %% ILINet Data --------------------------------------------------------------
 
@@ -205,14 +211,17 @@ ili_dat[, .N, c("season", "mmwr_week", "weekint")][, max(N)]
 # %% Plot to Check Proper weekint labeling
 library(ggplot2)
 ggplot(ili_dat, aes(x = weekint, y = as.numeric(mmwr_week))) +
-  geom_point() +
+  geom_point(size = 0.4) +
   geom_vline(aes(xintercept = 14.5), color = "red") +
   labs(caption = "Separation looks good") +
-  facet_wrap(~season)
+  facet_wrap(~season) +
+  theme_minimal() +
+  theme(strip.text = element_text(face = "bold"))
 
-
-ili_dat[, .(mn_pwi = mean(pct_weighted_ili),
-            mn_pui = mean(pct_unweighted_ili)), weekint] -> ilisum
+# %%
+ilisum <- ili_dat[, .(mn_pwi = mean(pct_weighted_ili),
+                      mn_pui = mean(pct_unweighted_ili)), weekint]
+ilisum
 
 # %% ILI Percent
 ggplot(ilisum, aes(x = weekint)) +
@@ -220,6 +229,44 @@ ggplot(ilisum, aes(x = weekint)) +
   geom_line(aes(y = mn_pui, linetype = "unweighted")) +
   labs(title = "Weighted vs. Unweighted ILI %") +
   theme_minimal()
+
+# %% Holiday Epiweeks ---------------------------------------------------------
+
+# @DEV 2019-09-26: Add citations below for holiday effects on hospitalizations
+# Citation: Brooks et al. and the Kandula paper
+
+# holiday years
+# drops pandemic flu (2009-2010)
+holyrs <- seq(2003, 2018, 1) %>% .[. != 2009]
+
+# get epiweeks for Christmas
+xmas <- sapply(paste(holyrs, "12", "25", sep = "-"), lubridate::epiweek)
+xmas
+
+xmas_epiweeks <- range(xmas)
+xmas_epiweeks
+
+# get epiweeks for Thanksgiving
+# Date range for Thanksgiving: Nov. 22-28
+tg_url <- "https://en.wikipedia.org/wiki/Thanksgiving_(United_States)"
+
+tg_wiki <- read_html(turl) %>%
+  html_nodes(".wikitable") %>%
+  html_table() %>%
+  .[[1]]
+
+tg_wiki
+
+tg_dates <- lapply(1:length(twiki), function(x) {
+  paste(na.omit(twiki[[x]]), 11,
+        str_extract(names(twiki), "[0-9]{2}")[x],
+        sep = "-")
+  }) %>% unlist
+
+tg_dates
+
+tg_epiweeks <- range(lubridate::epiweek(tdates))
+tg_epiweeks
 
 # %% Save Empirical Data ------------------------------------------------------
 
@@ -236,7 +283,7 @@ sel_ctcols <- c(
   paste0("flu.", c("a", "b", "ab", "unk", "tot"))
 )
 
-# %% Merge Flu Data
+# %% Merge Hospitalizions and ILI Data
 whsp_rt %>%
   merge(., whsp_ct[, ..sel_ctcols],
     by = c("season", "weekint"),
@@ -254,11 +301,12 @@ setnames(flumerge,
 names(flumerge)
 print(flumerge)
 
-# %%
-# empdat <- list(
-#   cdc_svr = cdc_svr,
-#   whsp_ct = whsp_ct,
-#   whsp_rt = whsp_rt
-# )
+# %% Create Holiday Indicators
+flumerge %>%
+  .[, xmas := mmwr_week %in% xmas_epiweeks] %>%
+  .[, thanksgiving := mmwr_week %in% tg_epiweeks]
 
+flumerge
+
+# write merged data
 saveRDS(flumerge, "data/empdat.Rds")
