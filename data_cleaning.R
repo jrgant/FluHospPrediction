@@ -231,10 +231,14 @@ ggplot(ilisum, aes(x = weekint)) +
   labs(title = "Weighted vs. Unweighted ILI %") +
   theme_minimal()
 
+
 # %% Holiday Epiweeks ---------------------------------------------------------
 
-# @DEV 2019-09-26: Add citations below for holiday effects on hospitalizations
-# Citation: Brooks et al. and the Kandula paper
+# Sources:
+
+# Brooks LC, Farrow DC, Hyun S, Tibshirani RJ, Rosenfeld R. Flexible Modeling
+# of Epidemics with an Empirical Bayes Framework. PLoS Comput Biol
+# 2015;11:e1004382. doi:10.1371/journal.pcbi.1004382.
 
 # holiday years
 # drops pandemic flu (2009-2010)
