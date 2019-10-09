@@ -8,7 +8,9 @@ pacman::p_load(
   data.table,
   stringr,
   forcats,
-  here
+  here,
+  lubridate,
+  rnoaa
 )
 
 
@@ -51,7 +53,7 @@ print(cdc_svr)
 cdc_svr[, .N, by = c("sev1", "sev2")]
 
 # Write the season severity designations to a file
-fwrite(cdc_svr, file = here(datfldr, "cdc_svr.csv"), row.names = FALSE)
+fwrite(cdc_svr, file = here::here(datfldr, "cdc_svr.csv"), row.names = FALSE)
 
 # %% Set Global Options -------------------------------------------------------
 
@@ -62,13 +64,13 @@ options(datatable.print.class = TRUE)
 # %% Empirical Hospitalization Counts -----------------------------------------
 
 # CDC season severity data
-cdcsvr_file <- here(datfldr, "cdc_svr.csv")
+cdcsvr_file <- here::here(datfldr, "cdc_svr.csv")
 
 cdc_svr <- fread(cdcsvr_file, check.names = TRUE)
 print(cdc_svr)
 
 # %%
-hsp_file <- here(datfldr, "/Weekly_Data_Counts.csv")
+hsp_file <- here::here(datfldr, "Weekly_Data_Counts.csv")
 
 hsp_names <- c(
   "season",
@@ -110,10 +112,10 @@ whsp_ct[, .N, by = c("mmwr_yrweek", "mmwr_week")]
 whsp_ct[, .N, by = c("mmwr_week", "weekint")]
 whsp_ct[, .N, by = c("season", "year")]
 
-# Empirical Hospitalization Rates ----------------------------------------------
+# %% Empirical Hospitalization Rates -------------------------------------------
 
 # %%
-hsp_rates <- here(datfldr, "/FluSurveillance_EIP_Entire Network_Data.csv")
+hsp_rates <- here::here(datfldr, "FluSurveillance_EIP_Entire Network_Data.csv")
 
 whsp_rt_cols <- c(
   "catchment",
@@ -127,8 +129,7 @@ whsp_rt_cols <- c(
 )
 
 # NOTE 2019-08-21:
-#   A warning is thrown when fread() gets to the disclaimer in the csv
-#   file. Benign.
+#   A warning is thrown when fread() gets to the CDC disclaimer text contained #   in the csv file. Benign.
 whsp_rt <- fread(hsp_rates, col.names = whsp_rt_cols, quote = "") %>%
   # drop age-specific rates and two variables
   .[agecat == "Overall", -c("catchment", "network")] %>%
@@ -149,7 +150,7 @@ whsp_rt[, .N, by = c("weekint", "mmwr_week")]
 
 # %% ILINet Data --------------------------------------------------------------
 
-ili_file <- here("data", "ILINET.csv")
+ili_file <- here::here("data", "ILINET.csv")
 
 ili_dat <- fread(ili_file)
 
@@ -250,22 +251,22 @@ xmas_epiweeks
 # Date range for Thanksgiving: Nov. 22-28
 tg_url <- "https://en.wikipedia.org/wiki/Thanksgiving_(United_States)"
 
-tg_wiki <- read_html(turl) %>%
+tg_wiki <- read_html(tg_url) %>%
   html_nodes(".wikitable") %>%
   html_table() %>%
   .[[1]]
 
 tg_wiki
 
-tg_dates <- lapply(1:length(twiki), function(x) {
-  paste(na.omit(twiki[[x]]), 11,
-        str_extract(names(twiki), "[0-9]{2}")[x],
+tg_dates <- lapply(1:length(tg_wiki), function(x) {
+  paste(na.omit(tg_wiki[[x]]), 11,
+        str_extract(names(tg_wiki), "[0-9]{2}")[x],
         sep = "-")
   }) %>% unlist
 
 tg_dates
 
-tg_epiweeks <- range(lubridate::epiweek(tdates))
+tg_epiweeks <- range(lubridate::epiweek(tg_dates))
 tg_epiweeks
 
 # %% Save Empirical Data ------------------------------------------------------
@@ -309,4 +310,4 @@ flumerge %>%
 flumerge
 
 # write merged data
-saveRDS(flumerge, "data/empdat.Rds")
+saveRDS(flumerge, here::here(datfldr, "empdat.Rds"))
