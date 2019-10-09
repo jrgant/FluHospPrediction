@@ -270,10 +270,22 @@ hyp_hosp_p <-
   theme_tweak +
   theme(legend.position = "none")
 
-# @BUG 2019-09-03:
-#   Inspection of random subsets of simulated curves reveals some unrealistic
-#   patterns at time i = 0 (e.g., seasons beginning well above 0/100,000 people)
+# view plot
 hyp_hosp_p
+
+
+# @NOTE 2019-09-26:
+#  Run some summaries on the hypothetical curves to check for errors
+#  May still want to choose different lambda or conduct sensitivy around lambda
+ggplot(hhc$outhc[weekmap == 1, ], aes(x = prediction)) + geom_density()
+summary(hhc$outhc$prediction[hhc$outhc$weekmap == 1])
+
+# Check for unrealistic predictions weekmap 1 and 31
+hhc$outhc[weekmap == 1, .(max = max(prediction),
+                          min = min(prediction))]
+
+hhc$outhc[weekmap == 31, .(max = max(prediction),
+                           min = min(prediction))]
 
 # Training and Test Sets ------------------------------------------------
 
