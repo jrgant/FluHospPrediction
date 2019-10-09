@@ -275,7 +275,6 @@ tg_epiweeks
 
 # %% Save Empirical Data ------------------------------------------------------
 
-# %%
 # merge all weekly data
 # dt1: whsp_ct
 # dt2: whsp_rt
@@ -306,12 +305,14 @@ setnames(flumerge,
 names(flumerge)
 print(flumerge)
 
-# %% Create Holiday Indicators
 flumerge %>%
+  # create holiday indicators
   .[, xmas := mmwr_week %in% xmas_epiweeks] %>%
-  .[, thanksgiving := mmwr_week %in% tg_epiweeks]
+  .[, thanksgiving := mmwr_week %in% tg_epiweeks] %>%
+  # create squared weekint
+  .[, weekint2 := weekint^2]
 
 flumerge
 
-# write merged data
+# Write Merged Data
 saveRDS(flumerge, here::here(datfldr, "empdat.Rds"))
