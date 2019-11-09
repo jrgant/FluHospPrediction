@@ -1,0 +1,436 @@
+---
+title: "Compare Prophet GAMs to traditional methods - CDC"
+author: "Kevin W. McConeghy"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    code_folding: hide
+    fig_caption: yes
+    toc: yes
+    toc_depth: 3
+    toc_float: 
+      collapsed: yes
+---
+
+```{r setup, include=F, warning=F, message=F}
+pkg_load <- c('Scotty', 'tidyverse', 'purrr', 'broom', 'kableExtra', 'splines', 'glmnet', 'flumodelr', 'nnet')
+
+sapply(pkg_load, library, logical.return=F, warn.conflicts=F, quietly=T, character.only=T)
+#remotes::install_github('kmcconeghy/flumodelr')
+wd.Datafiles <- "C:\\Github\\sanofi-fluhosp\\data\\"
+
+set.seed(as.integer(ymd('2019-10-31')))
+```
+```{r, echo=F}
+cat('Non-base packages loaded: ', pkg_load)
+```
+
+### CDC file
+```{r }
+df_cdc_dths <- flumodelr::fludta %>%
+  mutate(y = fludeaths,
+         week_in_order=row_number(),
+         month = month(yrweek_dt),
+         sin_ann = sin((2*pi*week) / 52),
+         cos_ann = cos((2*pi*week) / 52),
+         sin_biann = sin((2*pi*week) / 26),
+         cos_biann = cos((2*pi*week) / 26),
+         sin_qtr = sin((2*pi*week) / 13),
+         cos_qtr = cos((2*pi*week) / 13),
+         sin_mth = sin((2*pi*week) / 4),
+         cos_mth = cos((2*pi*week) / 4)) %>%
+  select(year, month, week, fluyr, epi, yrweek_dt, y, starts_with('sin'), starts_with('cos')) 
+```
+
+### ILI file
+```{r, message=F, warning=F}
+df_ili <- read_csv(paste0(wd.Datafiles, '\\', 'ILINet.csv'), skip = 1) %>%
+  select(YEAR, WEEK, `% WEIGHTED ILI`) %>%
+  rename(year = YEAR, week=WEEK, ili = `% WEIGHTED ILI`)
+```
+
+### Viral
+```{r, message=F, warning=F}
+df_test <- read_csv(paste0(wd.Datafiles, '\\', 'WHO_NREVSS_Combined_prior_to_2015_16.csv'), skip = 1) %>%
+  select(YEAR, WEEK, `PERCENT POSITIVE`, `A (H1)`, `A (H3)`, `B`, `TOTAL SPECIMENS`) %>%
+  mutate(h1 = `A (H1)` / `TOTAL SPECIMENS`,
+         h3 = `A (H3)` / `TOTAL SPECIMENS`,
+         b = `B` / `TOTAL SPECIMENS`) %>%
+  rename(year = YEAR, 
+         week=WEEK, 
+         flupos = `PERCENT POSITIVE`) %>%
+  select(year, week, flupos, h1, h3, b)
+```
+
+### Temperature  
+```{r, message=F, warning=F}
+temp <- readr::read_csv(paste0(wd.Datafiles,'\\', 'tempdta.txt'))
+tmp_2 <- temp %>%
+  dplyr::filter(state!='AK' | state!='SA') %>%
+  group_by(year, week) %>%
+  summarize_at(vars(t_max, t_min, rh_ave), mean, na.rm=T) %>%
+  ungroup()
+```
+
+```{r, message=F, warning=F}
+df_cdc_dths_2 <- df_cdc_dths %>%
+    inner_join(., df_ili, by=c('year', 'week')) %>%
+    inner_join(., df_test, by=c('year', 'week')) %>%
+    inner_join(., tmp_2, by=c('year', 'week'))
+```
+
+```{r }
+table(df_cdc_dths_2$fluyr)
+```
+
+## Veteran hospitalizations   
+```{r, fig.width=7}
+g1 <- ggplot(df_cdc_dths_2, aes(x=yrweek_dt, y=y)) + 
+  geom_line(size=0.8) +
+  scale_x_date(labels = date_format("%Y"), date_breaks="1 year",
+               expand=c(0, .9)) + 
+  xlab("Year") + 
+  ylab("No. of Deaths from P&I") + 
+  theme_light(base_size=16) +
+  theme(plot.title = element_text(size=14)) +
+  labs(title="Figure 1. Pneumonia and Influenza Mortality") +
+  theme(axis.text.x=element_text(angle=90, hjust=1))
+
+g1
+```
+
+
+
+## Estimated deaths using Comparator Poisson dispersion model
+### Modified FluMoMo Model  
+```{r, warning=F, message=F}
+library(glmnet)
+library(splines)
+```
+
+## Analytic dataset  
+```{r }
+df_mod <- df_cdc_dths_2 %>%
+  select(y, year, month, week, yrweek_dt, epi, fluyr, ili, flupos, h1, h3, b, t_max, t_min, rh_ave,
+         starts_with('sin'), starts_with('cos')) %>%
+  mutate(y = round(y)) %>%
+  mutate_at(vars(t_max, t_min, rh_ave, h1, h3),
+            .funs = list(lg1 = ~dplyr::lag(., 1))) %>%
+  mutate_at(vars(t_max, t_min, rh_ave, h1, h3),
+            .funs = list(lg2 = ~dplyr::lag(., 2))) %>%
+  mutate_at(vars(t_max, t_min, rh_ave, h1, h3),
+            .funs = list(lg3 = ~dplyr::lag(., 3))) %>%
+  na.omit(.)  
+
+df_modmat <- df_mod %>%
+  model.matrix(y ~ bs(week, 5) + bs(month, 2) + epi + ili + flupos + 
+                 sin_ann + cos_ann + sin_biann + cos_biann + sin_qtr + cos_qtr + sin_mth + cos_mth +
+                 t_max + t_max_lg1 + t_max_lg2 + t_max_lg3 + 
+                 t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
+                 rh_ave + rh_ave_lg1 + rh_ave_lg2 + rh_ave_lg3 +
+                 h1 + h1_lg1 + h1_lg2 + h1_lg3 +
+                 h3 + h3_lg1 + h3_lg2 + h3_lg3 + b, data=.)
+```
+
+```{r, }
+cvfit = cv.glmnet(df_modmat, df_mod$y, family='poisson', nfolds = length(df_mod), type.measure = 'mae') 
+
+plot(cvfit)
+```
+
+```{r, }
+coef(cvfit, s = 'lambda.1se')
+```
+
+```{r, }
+vars <- coef(cvfit, s = 'lambda.1se')[, 1] %>%
+                .[abs(.)>0] %>%
+  names(.)
+
+mod_form <- paste(vars[1:length(vars)], collapse = ' + ')
+mod_form
+```
+
+# LOO  
+```{r, message=F, warning=F }
+mod_fit_dta <- df_mod %>%
+  mutate_at(vars(starts_with('t_max'), starts_with('t_min')), scale) 
+
+for (i in unique(df_mod$fluyr)) {
+  
+  df_iter <- mod_fit_dta %>%
+    dplyr::filter(fluyr!=i) %>%
+    mutate(week_in_order = row_number(),
+           week_in_year = week)
+    
+       
+  assign(paste0('fit_',i), glm(y ~ bs(week, 2) + bs(month, 3) + 
+                 t_max + t_max_lg1 + t_max_lg2 + t_max_lg3 + 
+                 t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
+                 h3 + h3_lg1 + h3_lg2 + h3_lg3 + b, family=poisson, data=df_iter))
+  
+  mod_fit <- get(paste0(paste0('fit_',i)))
+  
+  pred_test <- predict(mod_fit, newdata=mod_fit_dta, type='response')
+  e <- pred_test - mod_fit_dta$y
+  assign(paste0('rmse_',i), e^2 %>%
+    mean(.) %>%
+    sqrt(.))
+}
+```
+
+# Excess calculation  
+```{r }
+glm_fit <- glm(y ~ bs(week, 2) + bs(month, 3) + 
+                 t_max + t_max_lg1 + t_max_lg2 + t_max_lg3 + 
+                 t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
+                 h3 + h3_lg1 + h3_lg2 + h3_lg3 + b, 
+               family=poisson, data=mod_fit_dta)
+
+
+## Fitted values + prediction interval
+df_pred <- mod_fit_dta %>%
+  mutate(h3=0,
+         h3_lg1=0,
+         h3_lg2=0,
+         h3_lg3=0) %>% 
+  predict(glm_fit, newdata=., type='response', se.fit=TRUE,
+          interval="prediction", level=0.90) #must specify 0.9 bc two-sided
+
+pred_yhat_0 <- df_pred$fit #fitted values
+pred_yhat_upr <- df_pred$fit + df_pred$se.fit*qnorm(0.9)
+
+df_mod_1 <- mod_fit_dta %>%
+  add_column(., pred_yhat_0, pred_yhat_upr) 
+
+df_mod_1$pred_yhat <- predict(glm_fit, type='response',
+          interval="prediction", level=0.90) #fitted values
+```
+
+```{r }
+mean((df_mod_1$pred_yhat  - mod_fit_dta$y)^2) 
+```
+
+#### Excess events  
+```{r, }
+attr.mod_1 <- df_mod_1 %>%
+  rowwise() %>%
+  mutate(attr.deaths = max(y - pred_yhat_0, 0L)) %>%
+  pull(attr.deaths) %>%
+  sum(.)
+```
+
+#### Epidemic weeks  
+```{r, }
+epiwks.mod_1 <- df_mod_1 %>%
+  rowwise() %>%
+  mutate(attr.epiwks = if_else(y > pred_yhat_upr, T, F)) %>%
+  pull(attr.epiwks) %>%
+  sum(.)
+```
+
+#### Figure  1.  
+```{r, fig.width=7}
+g_mod_1 <- ggplot(df_mod_1) + 
+  geom_line(aes(x=yrweek_dt, y=y), size=0.8, alpha=0.2) +
+  geom_line(aes(x=yrweek_dt, y=pred_yhat), linetype='dashed', size=1, color = 'blue') +
+  geom_line(aes(x=yrweek_dt, y=pred_yhat_0), linetype='dotted', color='red', size=1) +
+  scale_x_date(labels = date_format("%Y"), date_breaks="1 year",
+               expand=c(0, .9)) + 
+  xlab("Year") + 
+  ylab("No. of Hospitalizations") + 
+  theme_light(base_size=16) +
+  theme(plot.title = element_text(size=14)) +
+  labs(title="Figure 1. Hospitalizations - Modified GLM") +
+  theme(axis.text.x=element_text(angle=90, hjust=1))
+
+g_mod_1
+```
+
+# Neural Network  
+
+# LOO  
+```{r, message=F, warning=F, results=F}
+max_y <- max(mod_fit_dta$y)
+
+x_nnet_dta <- mod_fit_dta %>%
+  mutate(epi = epi / sd(epi)^2) %>%
+  mutate_at(vars(starts_with('t'), starts_with('rh')), scale) %>%
+  select(-year)
+
+for (i in unique(x_nnet_dta$fluyr)) {
+  
+  df_iter <- x_nnet_dta %>%
+    dplyr::filter(fluyr!=i) %>%
+    mutate(week_in_order = row_number(),
+           week_in_year = week)
+    
+       
+  assign(paste0('fit_',i), nnet(y/max_y ~ bs(week, 5) + bs(month, 2) + 
+                                  epi + ili + flupos + 
+                 sin_ann + cos_ann + sin_biann + cos_biann + sin_qtr + cos_qtr + sin_mth + cos_mth +
+                 t_max + t_max_lg1 + t_max_lg2 + t_max_lg3 + 
+                 t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
+                 rh_ave + rh_ave_lg1 + rh_ave_lg2 + rh_ave_lg3 +
+                 h1 + h1_lg1 + h1_lg2 + h1_lg3 +
+                 h3 + h3_lg1 + h3_lg2 + h3_lg3 + b, 
+               data=x_nnet_dta, size=2, decay=1.0e-5))
+  
+  mod_fit <- get(paste0(paste0('fit_',i)))
+  
+  pred_test <- predict(mod_fit, newdata=x_nnet_dta, type='raw')*max_y
+  e <- pred_test - mod_fit_dta$y
+  assign(paste0('rmse_n_',i), e^2 %>%
+    mean(.) %>%
+    sqrt(.))
+}
+```
+
+# Excess calculation  
+```{r }
+flunet <- nnet(y/max_y ~ bs(week, 2) + bs(month, 3) + 
+                 t_max + t_max_lg1 + t_max_lg2 + t_max_lg3 + 
+                 t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
+                 h3 + h3_lg1 + h3_lg2 + h3_lg3 + b, 
+               data=x_nnet_dta, size=3, decay=1.0e-5)  
+
+
+## Fitted values + prediction interval
+df_pred <- x_nnet_dta %>%
+  mutate(h3=min(h3),
+         h3_lg1=min(h3_lg1),
+         h3_lg2=min(h3_lg2),
+         h3_lg3=min(h3_lg3)) %>% 
+  predict(flunet, newdata=., type='raw',
+          interval="prediction", level=0.90)*max_y #must specify 0.9 bc two-sided
+
+pred_yhat_0 <- df_pred  
+
+x_nnet_dta <- mod_fit_dta %>%
+  add_column(., pred_yhat_0) 
+
+x_nnet_dta$pred_yhat <- predict(flunet, type='raw',
+          interval="prediction", level=0.90)*max_y #fitted values
+```
+
+```{r }
+net_p <- predict(flunet, x_nnet_dta, type= 'raw')*max_y
+```
+
+```{r }
+mean((net_p - mod_fit_dta$y)^2) 
+```
+
+#### Excess events  
+```{r, }
+attr.mod_2 <- x_nnet_dta %>%
+  rowwise() %>%
+  mutate(attr.deaths = max(y - pred_yhat_0+1.96*(sd(pred_yhat_0)), 0L)) %>%
+  pull(attr.deaths) %>%
+  sum(.)
+```
+
+#### Epidemic weeks  
+```{r, }
+epiwks.mod_2 <- x_nnet_dta %>%
+  rowwise() %>%
+  mutate(attr.epiwks = if_else(y > pred_yhat_0+1.96*(sd(pred_yhat_0)), T, F)) %>%
+  pull(attr.epiwks) %>%
+  sum(.)
+```
+
+#### Figure  
+```{r, fig.width=7}
+g_mod_1 <- ggplot(x_nnet_dta) + 
+  geom_line(aes(x=yrweek_dt, y=y), size=0.8, alpha=0.2) +
+  geom_line(aes(x=yrweek_dt, y=pred_yhat), linetype='dashed', size=1, color = 'blue') +
+  geom_line(aes(x=yrweek_dt, y=pred_yhat_0), linetype='dotted', color='red', size=1) +
+  scale_x_date(labels = date_format("%Y"), date_breaks="1 year",
+               expand=c(0, .9)) + 
+  xlab("Year") + 
+  ylab("No. of Hospitalizations") + 
+  theme_light(base_size=16) +
+  theme(plot.title = element_text(size=14)) +
+  labs(title="Figure 1. Hospitalizations - Neural Net") +
+  theme(axis.text.x=element_text(angle=90, hjust=1))
+
+g_mod_1
+```
+
+### Influenza seasons  
+```{r }
+rept_dta <- df_cdc_dths_2 
+
+fluevents <- sum(df_cdc_dths_2$y)
+
+avg_fluevents <- rept_dta %>%
+  dplyr::filter(epi==1) %>%
+  summarize(mean(y)) %>%
+  pull(.) %>% round(., digits=2)
+
+ttl_fluevents <- rept_dta %>%
+  dplyr::filter(epi==0) %>%
+  summarize(sum(y)) 
+```
+
+The total number of hospitalizatoins with primary diagnosis for a respiratory or circulatory condition from 2011 through the 2014 influenza season were `r fluevents`. On average during the period from Oct - May,  `r avg_fluevents`  deaths occurred.    
+
+Model comparisons:  
+```{r }
+attr.mod <- c(attr.mod_1, attr.mod_2) %>%
+  round(.)
+
+epiwks <- c(epiwks.mod_1, epiwks.mod_2)
+
+rmse_glm <- c(mget(ls()[str_detect(ls(), 'rmse_[0-9]')])) %>%
+  sapply(., round, digits=2)
+
+rmse_nnet <- c(mget(ls()[str_detect(ls(), 'rmse_n_')])) %>%
+  sapply(., round, digits=2)
+
+result_1 <- cbind(attr.mod, epiwks)
+
+result_2 <- cbind(rmse_glm, rmse_nnet)
+
+rownames(result_1) <- c('GLM', 'Neural Net')
+
+
+colnames(result_2) <- c('GLM-RMSE', 'Neural Net-RMSE')
+```
+
+```{r }
+result_1
+```
+```{r }
+result_2
+```
+
+### Model fit 
+```{r }
+fsct_a <- df_mod_1 %>%
+  select(yrweek_dt, `Obs.` = y, `GLM` = pred_yhat) 
+
+fsct_b <- x_nnet_dta %>%
+  select(yrweek_dt, `Neural Net` = pred_yhat) 
+
+fsct_df_gph <- fsct_a %>%
+  inner_join(., fsct_b, by='yrweek_dt') %>%
+  gather(., 'Model', y, -yrweek_dt) %>%
+  mutate(Model = factor(Model, levels=c('Obs.', 'GLM', 'Neural Net')))
+```
+
+#### Figure 5.   
+```{r, fig.width=10}
+g1 <- ggplot(fsct_df_gph) + 
+  geom_line(aes(x=yrweek_dt, y=y, colour=Model, linetype=Model), size=0.8) +
+  scale_x_date(labels = date_format("%Y"), date_breaks="1 year",
+               expand=c(0, .9))  +
+  scale_color_manual(values=c('gray', 'darkred', 'blue')) +
+  xlab('Year') +
+  ylab("Hosp. per 100,00") + 
+  theme_light(base_size=16) +
+  theme(plot.title = element_text(size=14)) +
+  theme(axis.text.x=element_text(angle=90, hjust=1))
+
+g1
+```
