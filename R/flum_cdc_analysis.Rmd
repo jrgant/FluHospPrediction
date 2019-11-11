@@ -13,12 +13,13 @@ output:
 ---
 
 ```{r setup, include=F, warning=F, message=F}
-pkg_load <- c('Scotty', 'tidyverse', 'purrr', 'broom', 'kableExtra', 'splines', 'glmnet', 'flumodelr', 'nnet')
+#remotes::install_github('kmcconeghy/flumodelr')
+pkg_load <- c('Scotty', 'tidyverse', 'scales', 'purrr', 'broom', 'kableExtra', 'splines', 'glmnet', 'flumodelr', 'nnet')
+#remotes::install_github('kmcconeghy/flumodelr')
 
 sapply(pkg_load, library, logical.return=F, warn.conflicts=F, quietly=T, character.only=T)
-#remotes::install_github('kmcconeghy/flumodelr')
-wd.Datafiles <- "C:\\Github\\sanofi-fluhosp\\data\\"
-
+#wd.Datafiles <- "C:\\Github\\sanofi-fluhosp\\data\\"
+wd.Datafiles <- "C:\\Users\\kevin\\Documents\\sanofi-fluhosp\\data"
 set.seed(as.integer(ymd('2019-10-31')))
 ```
 ```{r, echo=F}
@@ -111,14 +112,14 @@ library(splines)
 ## Analytic dataset  
 ```{r }
 df_mod <- df_cdc_dths_2 %>%
-  select(y, year, month, week, yrweek_dt, epi, fluyr, ili, flupos, h1, h3, b, t_max, t_min, rh_ave,
+  select(y, year, month, week, yrweek_dt, epi, fluyr, ili, flupos, h1, h3, b, t_max, t_min,
          starts_with('sin'), starts_with('cos')) %>%
   mutate(y = round(y)) %>%
-  mutate_at(vars(t_max, t_min, rh_ave, h1, h3),
+  mutate_at(vars(t_max, t_min, h1, h3),
             .funs = list(lg1 = ~dplyr::lag(., 1))) %>%
-  mutate_at(vars(t_max, t_min, rh_ave, h1, h3),
+  mutate_at(vars(t_max, t_min, h1, h3),
             .funs = list(lg2 = ~dplyr::lag(., 2))) %>%
-  mutate_at(vars(t_max, t_min, rh_ave, h1, h3),
+  mutate_at(vars(t_max, t_min, h1, h3),
             .funs = list(lg3 = ~dplyr::lag(., 3))) %>%
   na.omit(.)  
 
@@ -127,7 +128,6 @@ df_modmat <- df_mod %>%
                  sin_ann + cos_ann + sin_biann + cos_biann + sin_qtr + cos_qtr + sin_mth + cos_mth +
                  t_max + t_max_lg1 + t_max_lg2 + t_max_lg3 + 
                  t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
-                 rh_ave + rh_ave_lg1 + rh_ave_lg2 + rh_ave_lg3 +
                  h1 + h1_lg1 + h1_lg2 + h1_lg3 +
                  h3 + h3_lg1 + h3_lg2 + h3_lg3 + b, data=.)
 ```
@@ -159,20 +159,18 @@ mod_fit_dta <- df_mod %>%
 for (i in unique(df_mod$fluyr)) {
   
   df_iter <- mod_fit_dta %>%
-    dplyr::filter(fluyr!=i) %>%
-    mutate(week_in_order = row_number(),
-           week_in_year = week)
+    dplyr::filter(fluyr!=i) 
     
        
-  assign(paste0('fit_',i), glm(y ~ bs(week, 2) + bs(month, 3) + 
-                 t_max + t_max_lg1 + t_max_lg2 + t_max_lg3 + 
-                 t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
+  assign(paste0('fit_',i), glm(y ~ bs(week, 5) + bs(month, 2) + ili + 
+                 sin_biann + sin_qtr + cos_qtr + sin_mth + cos_mth +
+                 t_max + t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
                  h3 + h3_lg1 + h3_lg2 + h3_lg3 + b, family=poisson, data=df_iter))
   
   mod_fit <- get(paste0(paste0('fit_',i)))
   
-  pred_test <- predict(mod_fit, newdata=mod_fit_dta, type='response')
-  e <- pred_test - mod_fit_dta$y
+  pred_test <- predict(mod_fit, newdata=mod_fit_dta[mod_fit_dta$fluyr==i, ], type='response')
+  e <- pred_test - mod_fit_dta[mod_fit_dta$fluyr==i, ]$y
   assign(paste0('rmse_',i), e^2 %>%
     mean(.) %>%
     sqrt(.))
@@ -181,19 +179,21 @@ for (i in unique(df_mod$fluyr)) {
 
 # Excess calculation  
 ```{r }
-glm_fit <- glm(y ~ bs(week, 2) + bs(month, 3) + 
-                 t_max + t_max_lg1 + t_max_lg2 + t_max_lg3 + 
-                 t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
+glm_fit <- glm(y ~ bs(week, 5) + bs(month, 2) + ili + 
+                 sin_biann + sin_qtr + cos_qtr + sin_mth + cos_mth +
+                 t_max + t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
                  h3 + h3_lg1 + h3_lg2 + h3_lg3 + b, 
                family=poisson, data=mod_fit_dta)
 
 
 ## Fitted values + prediction interval
 df_pred <- mod_fit_dta %>%
-  mutate(h3=0,
+  mutate(ili=0,
+         h3=0,
          h3_lg1=0,
          h3_lg2=0,
-         h3_lg3=0) %>% 
+         h3_lg3=0,
+         b=0) %>% 
   predict(glm_fit, newdata=., type='response', se.fit=TRUE,
           interval="prediction", level=0.90) #must specify 0.9 bc two-sided
 
@@ -261,25 +261,21 @@ x_nnet_dta <- mod_fit_dta %>%
 for (i in unique(x_nnet_dta$fluyr)) {
   
   df_iter <- x_nnet_dta %>%
-    dplyr::filter(fluyr!=i) %>%
-    mutate(week_in_order = row_number(),
-           week_in_year = week)
+    dplyr::filter(fluyr!=i)
     
        
-  assign(paste0('fit_',i), nnet(y/max_y ~ bs(week, 5) + bs(month, 2) + 
-                                  epi + ili + flupos + 
+  assign(paste0('fit_',i), nnet(y/max_y ~ bs(week, 5) + bs(month, 2) + epi + ili + flupos + 
                  sin_ann + cos_ann + sin_biann + cos_biann + sin_qtr + cos_qtr + sin_mth + cos_mth +
                  t_max + t_max_lg1 + t_max_lg2 + t_max_lg3 + 
                  t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
-                 rh_ave + rh_ave_lg1 + rh_ave_lg2 + rh_ave_lg3 +
                  h1 + h1_lg1 + h1_lg2 + h1_lg3 +
                  h3 + h3_lg1 + h3_lg2 + h3_lg3 + b, 
-               data=x_nnet_dta, size=2, decay=1.0e-5))
+               data=x_nnet_dta, size=2, maxit=1000, decay=1.0e-5, trace=F))
   
   mod_fit <- get(paste0(paste0('fit_',i)))
   
-  pred_test <- predict(mod_fit, newdata=x_nnet_dta, type='raw')*max_y
-  e <- pred_test - mod_fit_dta$y
+  pred_test <- predict(mod_fit, newdata=x_nnet_dta[x_nnet_dta$fluyr==i, ], type='raw')*max_y
+  e <- pred_test - x_nnet_dta[x_nnet_dta$fluyr==i, ]$y
   assign(paste0('rmse_n_',i), e^2 %>%
     mean(.) %>%
     sqrt(.))
@@ -292,7 +288,7 @@ flunet <- nnet(y/max_y ~ bs(week, 2) + bs(month, 3) +
                  t_max + t_max_lg1 + t_max_lg2 + t_max_lg3 + 
                  t_min + t_min_lg1 + t_min_lg2 + t_min_lg3 + 
                  h3 + h3_lg1 + h3_lg2 + h3_lg3 + b, 
-               data=x_nnet_dta, size=3, decay=1.0e-5)  
+               data=x_nnet_dta, size=3, maxit=1000, trace=F, decay=1.0e-5)  
 
 
 ## Fitted values + prediction interval
