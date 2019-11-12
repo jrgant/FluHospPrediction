@@ -10,5 +10,8 @@
 **/*.Rds
 **/*.png
 **/*.jpg
+**/*.dat
+**/*.inv
+DailySourceData/*
 analysis-plan.pdf 
 analysis-plan/analysis-plan.pdf 
