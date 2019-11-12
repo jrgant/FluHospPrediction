@@ -1,13 +1,11 @@
 ---
 title: "Predicting Seasonal Influenza Hospitalizations"
-author:
-- Kevin W. McConeghy
-- Jason R. Gantenberg
-- Andrew R. Zullo
-- Chanelle J. Howe
-- Author list tentative
 
-date: "Compiled: `r Sys.Date()`"
+author:
+- Jason R. Gantenberg, Andrew R. Zullo, Chanelle J. Howe, Ashley Naimi (invite), Kevin W. McConeghy
+- "_Author list tentative_"
+
+date: "Last updated: `r Sys.Date()`"
 
 output:
   word_document:
@@ -37,13 +35,15 @@ setDT(emp)
 
 - While forecasting models for influenza-related hospitalization have been developed [@Kandula2019-tg], focus on hospitalizations has been more limited, and existing models have omitted variables that may result in improved forecasts.
 
-- The number of empirical seasons available to model influenza-related hospitalizations is quite limited, with quality surveillance data existing back to the 2003--04 flu season.
+- The number of empirical seasons available to use in forecasts and/or other models of influenza-related hospitalization is limited, with quality surveillance data existing back to the 2003--04 flu season.
 
 ## Objective/Rationale
 
-- Our primary aim is to conduct a prediction-based simulation study to determine which of a set of candidate models and variable sets most closely fits a distribution of simulated hospitalization curves. These curves can be thought of as hypothetical flu seasons that could be, but perhaps have not yet, been realized [@Brooks2015-fl].
+- Our primary aim is to conduct a prediction-based simulation study to determine which of a set of candidate models and variable sets most closely fits a distribution of simulated hospitalization curves. These curves can be thought of as hypothetical flu seasons that could be but perhaps have not been realized [@Brooks2015-fl].
 
-- By simulating an arbitrarily large population of curves, we can circumvent the low number of empirical hospitalization curves available to us, with the ultimate goal of identifying modeling approaches and variables that, if implemented, may improve in-season forecasts of influenza-related forecasts.
+- By simulating an arbitrarily large number of hospitalization curves, we circumvent the limitations of the small sample of empirical (i.e., realized) hospitalization curves available, as long as we are willing to assume that the shapes of future seasonal influenza hospitalization curves are well represented by the simulated distribution.
+
+- Our ultimate goal is to identify candidate models and variable sets that may improve in-season forecasts of weekly influenza-related hospitalizations.
 
 # Background
 
@@ -61,7 +61,7 @@ All weeks will be specified based on the _MMWR_ Week convention [@Centers_for_Di
 
 1. Compare the best-fitting model for each model type against pre-specified target parameters to determine which candidate statistical model performs best across these targets.
 
-# Targets
+# Prediction targets
 
 For each of the following target parameters, we will calculate the root mean squared errors (RMSE) and relative bias for each of the best-fitting candidate statistical model types:
 
@@ -141,13 +141,13 @@ $\nu \sim U[0.75, 1.25]$
 
 # Base Case Model
 
-## Simple Average
+## Historical average
 
 - Fit a loess model to the training set to get the expected influenza-related hospitalization rate at each week
 
-# Candidate models
+# Candidate Models
 
-## Linear Regression Model
+## Linear regression model
 
 - Functional form of integer week: propose a quadratic function for the relationship between week and hospitalization rate.
 
@@ -159,7 +159,7 @@ $$\hat{y} = \beta_0 + \beta_1 i + \beta_2 i^2 + ... + \beta_p L_p + \epsilon, \e
 
 where $\hat{y}$ = expected hospitalization rate, $\beta$ = regression coefficient, $i$ = integer week of flu season, $p$ = number of model paramaters proposed, $L$ = non-integer week variable, $\epsilon$ = model error term.
 
-## Linear Model with Polynomial Splines
+## Linear model with polynomial splines
 
 - Fit polynomial splines [@Harrell2015-cd] for the relationship between week and hospitalization rate.
 
@@ -169,14 +169,17 @@ where $\hat{y}$ = expected hospitalization rate, $\beta$ = regression coefficien
 
 General form [@Howe2011-xs]:
 
+```{r spine-eq}
+knitr::include_graphics("spline-eq.png")
+```
 
-$$
+<!-- $$
 \hat{y} = \beta_0 + \beta_1 i
-  + \beta_2 \left[ (i - I_1)^2_{+} - (i - I_k)^2_{+} \left]
+  + \beta_2 \left[ (i - I_1)^2_{+} - (i - I_k)^2_{+} \right]
   + \beta_3 \left[ (i - I_2)^2_{+} - (i - I_k)^2_{+} \right] + ...
   + \beta_k \left[ (i - I_{k-1})^2_{+} - (i - I_k)^2_{+} \right]
   + \zeta_1 L_1 + ... + \zeta L_p
-$$
+$$ -->
 
 where $\hat{y}$ = expected hospitalization rate, $\beta$ = regression coefficients for intercept and spline terms, $\zeta$ = regression coefficients for other, non-spline, predictor variables, $p$ = number of non-spline predictor variables
 
@@ -209,28 +212,23 @@ tibble::tribble(
 
   "Temperature",
   "$T_{i}, T_{i-1}, T_{i-2}$",
-  "Average historical temperature in the United States and Puerto Rico 2003--04 through 2018--19",
-  "Temperatures in Fahrenheit, National Oceanic and Atmospheric Administration",
-
-  "Absolute humidity",
-  "$AH_{i}, AH_{i-1}, AH_{i-2}$",
-  "",
-  "National Oceanic and Atmospheric Administration",
+  "Average weekly temperature, 2003–2019",
+  "U.S. Climate Reference Network [@Diamond2013-pt]",
 
   "Relative humidity",
   "$RH_{i}, RH_{i-1}, RH_{i-2}$",
-  "",
-  "National Oceanic and Atmospheric Administration",
+  "Average weekly relative humidity, 2003–2019",
+  "U.S. Climate Reference Network [@Diamond2013-pt]",
 
   "Christmas",
   "Binary",
   "A given epiweek is designated as a Christmas holiday if Christmas has ever fallen within that epiweek.",
-  paste0(paste(unique(emp[xmas == 1, .(weekint)]), sep = ","), "; ", "[@Grolemund2011-js; @Brooks2015-fl; @Taylor2018-pl]"),
+  paste0(paste(unique(emp[xmas == 1, .(weekint)]), sep = ","), " / ", "[@Grolemund2011-js; @Brooks2015-fl; @Taylor2018-pl]"),
 
   "Thanksgiving",
   "Binary",
   "A given epiweek is designated as a Thanksgiving holiday if Thanksgiving has ever fallen within that epiweek.",
-  paste0(paste(unique(emp[thanksgiving == 1, .(weekint)]), sep = ","), "; ", "[@Wikipedia_contributors2019-mb; @Brooks2015-fl; @Taylor2018-pl]"),
+  paste0(paste(unique(emp[thanksgiving == 1, .(weekint)]), sep = ","), " / ", "[@Wikipedia_contributors2019-mb; @Brooks2015-fl; @Taylor2018-pl]"),
 
   "Viral activity",
   "$V_{i}, V_{i-1}, V_{i-2}$",
@@ -240,7 +238,7 @@ tibble::tribble(
 ```
 
 
-# Model fitting and selection
+# Model Fitting and Selection
 
 The best-fitting model for each class of candidate models will be selected using the following algorithm [@Austin2004-hu; @Harrell2015-cd]:
 
@@ -252,18 +250,17 @@ The best-fitting model for each class of candidate models will be selected using
 
    1. Calculate root mean squared error (RMSE) and relative bias (RB) in the training set.
 
-1. Fit each of the candidate models to the training set, and calculate RMSE and RB.
+1. Fit each of the candidate models to the test set, and calculate the RMSE and RB.
 
 1. Repeat for each of three definitions of the best-fitting variable sets within each class of models---variables selected in 100%, 80%, and 60% of bootstrap samples [@Austin2004-hu].
 
-$$RMSE = \left( \frac{1}{N} \sum_{i=1}^N (\hat{y}_j - y_{ij})^2 \right)^{0.5}$$
+For each target parameter $p$ and hospitalization curve $c$:
 
-for each target parameter $j$ and hospitalization curve $i$.
+$$RMSE_{cp} = \left( \frac{1}{N} \sum^N (\hat{y}_p - y_{cp})^2 \right)^{0.5}$$
 
+$$RB_{cp} = \frac{1}{N} \sum^N \frac{\text{RMSE}_p}{y_{cp}}$$
 
-$$RB = \frac{1}{N} \sum_{i=1}^N \frac{\text{RMSE}_j}{y_{ij}}$$
-
-# Sensitivity analysis
+# Sensitivity Analysis
 
 _Challenge_
 
@@ -275,10 +272,10 @@ Redo the analysis three times: one for each set of years in which the same parti
 
 # Limitations
 
-- We are not explicitly taking a forecasting approach, so the variables and models selected as part of this exercise may not translate to the forecasting case.
+- We are not explicitly taking a forecasting approach, so the variables and models selected as part of this exercise may not translate directly to the forecasting case.
 
 - If the simulation procedure does not capture the distribution of possible seasonal hospitalization curves accurately, the prediction approach taken may not be valid for the stated purposes.
 
-- While most variables would be available to forecasters producing in-season forecasts, we used wILI, which are corrected estimates of wILI issued by the CDC. Forecasters would have access only to real-time ILI counts. In addition, forecasters would have access to hospitalization rates from FluSurv, which undergo weekly correction [@Kandula2019-tg].
+- While most variables would be available to forecasters producing in-season forecasts, we used wILI, which are corrected estimates of wILI issued by the CDC. Forecasters would have access only to real-time ILI counts. In addition, forecasters would have access to hospitalization rates from FluSurv-NET, which undergo weekly correction [@Kandula2019-tg].
 
 # References
