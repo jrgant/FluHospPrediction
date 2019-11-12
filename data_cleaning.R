@@ -81,7 +81,7 @@ hsp_names <- c(
   "flu.unk"
 )
 
-# label epiweeks and seasons
+# Label epiweeks and seasons
 epiweek_levels <- paste(c(40:53, 1:17))
 epiweek_labels <- 1:31
 seas_levels <- paste(2003:2018, str_extract(2004:2019, "[0-9]{2}$"), sep = "-")
@@ -129,7 +129,7 @@ whsp_rt_cols <- c(
 )
 
 # NOTE 2019-08-21:
-#   A warning is thrown when fread() gets to the CDC disclaimer text contained 
+#   A warning is thrown when fread() gets to the CDC disclaimer text contained
 #   in the csv file. Benign.
 whsp_rt <- fread(hsp_rates, col.names = whsp_rt_cols, quote = "") %>%
   # drop age-specific rates and two variables
@@ -152,8 +152,9 @@ whsp_rt[, .N, by = c("weekint", "mmwr_week")]
 # %% ILINet Data --------------------------------------------------------------
 
 ili_file <- here::here("data", "ILINET.csv")
+ili_dat  <- fread(ili_file)
 
-ili_dat <- fread(ili_file)
+# %% Select columns
 
 ili_colnames <-
   names(ili_dat) %>%
@@ -163,25 +164,28 @@ ili_colnames <-
   str_replace_all("\\.", "") %>%
   str_replace_all("\\-", "to")
 
-ili_colnames
-
+print(ili_colnames)
 names(ili_dat) <- ili_colnames
 
-ili_select <- ili_colnames %>% .[!grepl("region|age", .)]
+ili_col_select <-
+  ili_colnames %>%
+  .[!grepl("region|age", .)]
 
-ili_dat <- ili_dat[, ..ili_select]
+ili_dat <- ili_dat[, ..ili_col_select]
 setnames(ili_dat, "week", "mmwr_week")
+print(ili_dat)
 
-# %%
+# %% Merge ILI
 
 # create a season variable that conforms to the hospitalization dataset format
-ili_dat %>%
-  .[, mmwr_week := as.character(mmwr_week)] %>%
-  .[, weekint := match(mmwr_week, epiweek_levels)] %>%
-  filter(year %in% 2003:2019 & mmwr_week %in% epiweek_levels) %>%
-  setDT -> ili_dat
+ili_dat <-
+  ili_dat %>%
+    .[, mmwr_week := as.character(mmwr_week)] %>%
+    .[, weekint := match(mmwr_week, epiweek_levels)] %>%
+    filter(year %in% 2003:2019 & mmwr_week %in% epiweek_levels) %>%
+    setDT
 
-ili_dat
+print(ili_dat)
 
 ili_dat[, season :=
   ifelse(weekint %in% 1:14,
@@ -190,13 +194,17 @@ ili_dat[, season :=
 
 ili_dat <- ili_dat[season != "2002-03"]
 
-ct_seas_n <- whsp_ct[, .N, season]
-rt_seas_n <- whsp_rt[, .N, season]
-il_seas_n <- ili_dat[, .N, season]
+# Check number of weeks for each season
+ct_seas_n <- whsp_ct[, .(hosp_ct = .N), season]
+rt_seas_n <- whsp_rt[, .(hosp_rt = .N), season]
+il_seas_n <- ili_dat[, .(ili = .N), season]
 
+# @DEV 2019-11-03
+#   - 2008-09: number of weeks in season don't match across hosp and ILI dfs
+#   - 2009-10: also mismatched, but pandemic influenza season (to be dropped)
 merge(ct_seas_n, rt_seas_n, by = "season") %>%
   merge(., il_seas_n, by = "season") %>%
-  .[, check := all.equal(N.x, N.y, N)] %>%
+  .[, check := (hosp_ct + hosp_rt + ili) / hosp_ct == 3] %>%
   print
 
 print(ili_dat)
@@ -207,7 +215,7 @@ ili_dat[, .N, mmwr_week] %>%
   .[order(factor(mmwr_week, epiweek_levels, epiweek_labels))]
 ili_dat[, .N, year]
 
-# max(N) should be 1
+# max(N) -- should be 1
 ili_dat[, .N, c("season", "mmwr_week", "weekint")][, max(N)]
 
 # %% Plot to Check Proper weekint labeling
@@ -221,14 +229,14 @@ ggplot(ili_dat, aes(x = weekint, y = as.numeric(mmwr_week))) +
   theme(strip.text = element_text(face = "bold"))
 
 # %%
-ilisum <- ili_dat[, .(mn_pwi = mean(pct_weighted_ili),
-                      mn_pui = mean(pct_unweighted_ili)), weekint]
+ilisum <- ili_dat[, .(mn_pct_wgt_ili = mean(pct_weighted_ili),
+                      mn_pct_unwgt_ili = mean(pct_unweighted_ili)), weekint]
 ilisum
 
 # %% ILI Percent
 ggplot(ilisum, aes(x = weekint)) +
-  geom_line(aes(y = mn_pwi, linetype = "weighted")) +
-  geom_line(aes(y = mn_pui, linetype = "unweighted")) +
+  geom_line(aes(y = mn_pct_wgt_ili, linetype = "weighted")) +
+  geom_line(aes(y = mn_pct_unwgt_ili, linetype = "unweighted")) +
   labs(title = "Weighted vs. Unweighted ILI %") +
   theme_minimal()
 
