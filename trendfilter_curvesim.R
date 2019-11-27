@@ -36,9 +36,6 @@ ed[, lapply(.SD, is.na)] %>%
   melt %>%
   print
 
-# @NOTE: If able to simulate by season severity eventually, can drop seasons
-#        without a severity rating (i.e., 2018-19)
-
 # %% Drop Pandemic Flu
 ed <- ed[season != "2009-10"]
 table(ed$season)
@@ -147,8 +144,7 @@ tf_pred <- lapply(
         obs.hosp1,
         obs.hosp2,
         check.obs,
-        sqerr,
-        severity = seas_obs[[x]]$sev2
+        sqerr
       ),
       # take the mean of the squared error
       mean.tau.sq = mean(sqerr),
@@ -226,7 +222,6 @@ hhc <- suppressWarnings(
     seed = 1983745,
     gimme = "everything",
     sim_args = list(
-      severity2 = NULL,
       lamb_val = sel_lambda,
       hstdat = ed
     )

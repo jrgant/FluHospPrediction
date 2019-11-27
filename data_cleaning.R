@@ -24,12 +24,6 @@ options(datatable.print.class = TRUE)
 
 # %% Empirical Hospitalization Counts -----------------------------------------
 
-# CDC season severity data
-cdcsvr_file <- here::here(datfldr, "cdc_svr.csv")
-
-cdc_svr <- fread(cdcsvr_file, check.names = TRUE)
-print(cdc_svr)
-
 # %%
 hsp_file <- here::here(datfldr, "Weekly_Data_Counts.csv")
 
