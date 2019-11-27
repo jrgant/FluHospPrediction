@@ -40,7 +40,7 @@ hsp_names <- c(
 epiweek_levels <- paste(c(40:53, 1:17))
 epiweek_labels <- 1:31
 seas_levels <- paste(2003:2018, str_extract(2004:2019, "[0-9]{2}$"), sep = "-")
-seas_levels
+print(seas_levels)
 
 # whsp_ct = weekly hospitalization counts
 whsp_ct <- fread(hsp_file, col.names = hsp_names)
@@ -98,7 +98,7 @@ whsp_rt <- fread(hsp_rates, col.names = whsp_rt_cols, quote = "") %>%
   # order by season and factor-ordered mmwr_week
   .[order(season, factor(mmwr_week, epiweek_levels, epiweek_labels))]
 
-whsp_rt
+print(whsp_rt)
 
 # check weekint matching with mmwr_week
 whsp_rt[, .N, by = c("weekint", "mmwr_week")]
@@ -154,7 +154,7 @@ ct_seas_n <- whsp_ct[, .(hosp_ct = .N), season]
 rt_seas_n <- whsp_rt[, .(hosp_rt = .N), season]
 il_seas_n <- ili_dat[, .(ili = .N), season]
 
-# @DEV 2019-11-03
+# @BUG 2019-11-03
 #   - 2008-09: number of weeks in season don't match across hosp and ILI dfs
 #   - 2009-10: also mismatched, but pandemic influenza season (to be dropped)
 merge(ct_seas_n, rt_seas_n, by = "season") %>%
@@ -168,6 +168,7 @@ print(ili_dat)
 # check weeks
 ili_dat[, .N, mmwr_week] %>%
   .[order(factor(mmwr_week, epiweek_levels, epiweek_labels))]
+
 ili_dat[, .N, year]
 
 # max(N) -- should be 1
@@ -232,10 +233,10 @@ tg_dates <- lapply(1:length(tg_wiki), function(x) {
         sep = "-")
   }) %>% unlist
 
-tg_dates
+print(tg_dates)
 
 tg_epiweeks <- range(lubridate::epiweek(tg_dates))
-tg_epiweeks
+print(tg_epiweeks)
 
 # %% Save Empirical Data ------------------------------------------------------
 
@@ -252,19 +253,18 @@ sel_ctcols <- c(
 )
 
 # %% Merge Hospitalizions and ILI Data
-whsp_rt %>%
-  merge(., whsp_ct[, ..sel_ctcols],
-    by = c("season", "weekint"),
-    all.x = TRUE
-  ) %>%
-  merge(., ili_dat[, -c("year", "mmwr_week")],
-    by = c("season", "weekint"),
-    all.x = TRUE) %>%
-  merge(., cdc_svr, by = "season") -> flumerge
+flumerge <-
+  whsp_rt %>%
+    merge(., whsp_ct[, ..sel_ctcols],
+      by = c("season", "weekint"),
+      all.x = TRUE
+    ) %>%
+    merge(., ili_dat[, -c("year", "mmwr_week")],
+      by = c("season", "weekint"),
+      all.x = TRUE)
 
-setnames(flumerge,
-         c("child", "adults", "older.adults", "overall"),
-         c("child_svr", "adults_svr", "older.adults_svr", "overall_svr"))
+print(flumerge)
+
 
 names(flumerge)
 print(flumerge)
@@ -279,4 +279,4 @@ flumerge %>%
 flumerge
 
 # %% Write Merged Data
-saveRDS(flumerge, here::here(datfldr, "empdat.Rds"))
+fwrite(flumerge, here::here(datfldr, "empdat.csv"))
