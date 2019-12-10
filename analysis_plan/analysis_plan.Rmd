@@ -19,31 +19,36 @@ link-citations: no
 knitr::opts_chunk$set(echo = FALSE)
 
 pacman::p_load(tidyverse, data.table)
-emp <- readRDS(here::here("data", "empdat.Rds"))
+emp <- fread(here::here("data", "empdat.csv"))
 setDT(emp)
 ```
 
 # Motivation
 
-- Influenza forecasting is still maturing science [@Reich2019-uk].
+- Influenza forecasting is still a maturing science [@Reich2019-uk].
 
 - Developing forecasting accuracy and capacity is a central component to efficient outbreak response and promises to be so for the foreseeable future [@George2019-rx].
 
 - Recently, the focus on influenza forecasting has been growing thanks in part to the FluView competitions sponsored by the Centers for Disease Control and Prevention in the United States [@Reich2019-uk; @Biggerstaff2018-ns].
 
-- Most of the newest work in influenza forecasting focuses on modeling influenza-like illness [@Reich2019-uk; @Biggerstaff2018-ns; @Biggerstaff2018-gt; @McGowan2019-ph; @Kandula2018-sq; @Brooks2015-fl].^[Finish reading McGowan 2019 and Kandula 2018.]
+- Most of the newest work in influenza forecasting focuses on modeling influenza-like illness [@Reich2019-uk; @Biggerstaff2018-ns; @Biggerstaff2018-gt; @McGowan2019-ph; @Kandula2018-sq; @Brooks2015-fl].
 
-- While forecasting models for influenza-related hospitalization have been developed [@Kandula2019-tg], focus on hospitalizations has been more limited, and existing models have omitted variables that may result in improved forecasts.
+- Focus on hospitalizations has been more limited, though forecasting models for influenza-related hospitalization have been developed [@Kandula2019-tg].
 
-- The number of empirical seasons available to use in forecasts and/or other models of influenza-related hospitalization is limited, with quality surveillance data existing back to the 2003--04 flu season.
+- Existing models have omitted variables that could potentially improve forecasts.
+
+- The number of empirical seasons available to use in forecasts and/or other models of influenza-related hospitalization is limited, with quality surveillance data existing only since the 2003--04 flu season.
+
 
 ## Objective/Rationale
 
-- Our primary aim is to conduct a prediction-based simulation study to determine which of a set of candidate models and variable sets most closely fits a distribution of simulated hospitalization curves. These curves can be thought of as hypothetical flu seasons that could be but perhaps have not been realized [@Brooks2015-fl].
+- Our primary aim is to conduct a prediction-based simulation study to determine which of a set of candidate models and variable sets most closely fits a distribution of simulated hospitalization curves. These curves can be thought of as hypothetical national-level hospitalization curves that could be but perhaps have not been realized [@Brooks2015-fl].
 
-- By simulating an arbitrarily large number of hospitalization curves, we circumvent the limitations of the small sample of empirical (i.e., realized) hospitalization curves available, as long as we are willing to assume that the shapes of future seasonal influenza hospitalization curves are well represented by the simulated distribution.
+- By simulating an arbitrarily large number of hospitalization curves, we circumvent the limitations of the small sample of empirical (i.e., realized) hospitalization curves available for the purposes of model-fitting, presuming we are willing to assume the simulated distribution adequately represents the space of possible future hospitalization curves.
 
-- Our ultimate goal is to identify candidate models and variable sets that may improve in-season forecasts of weekly influenza-related hospitalizations.
+- Our ultimate goal is to identify candidate models and variable sets that may improve in-season forecasts of weekly influenza-related hospitalizations. The current study is an initial step to determine whether more complex models could, in principle, meaningfully improve predictions and/or forecasts of seasonal influenza hospitalizations, to guide public health practitioners in concentrating their efforts (e.g., toward communication, vaccination, etc.) during the flu season.
+
+- Should the current approach prove fruitful, future work would focus on applying a similar approach to predicting age- and Human Health and Services Region-specific influenza hospitalization rates and/or adapting the approach to produce in-season forecasts in the future.
 
 # Background
 
@@ -53,7 +58,7 @@ All weeks will be specified based on the _MMWR_ Week convention [@Centers_for_Di
 
 # General approach
 
-1. Fit a linear trend filter model [@Kim2009-bz; @Tibshirani2014-tr; @Brooks2015-fl] to empirical FluSurv-NET hospitalization data for the seasons 2003–2004 through 2017–2018 (omitting pandemic year 2009--10), based in part on the approach described by Brooks et al.[@Brooks2015-fl].
+1. Fit a linear trend filter model [@Kim2009-bz; @Tibshirani2014-tr; @Brooks2015-fl] to empirical FluSurv-NET hospitalization data for the seasons 2003–2004 through 2017–2018 (omitting pandemic year 2009--10), based in part on the approach described by Brooks et al. [@Brooks2015-fl].
 
 1. Simulate _N_ hypothetical influenza hospitalization curves using the empirical Bayes approach described in _Curve fitting and simulation_.
 
@@ -63,9 +68,9 @@ All weeks will be specified based on the _MMWR_ Week convention [@Centers_for_Di
 
 # Prediction targets
 
-For each of the following target parameters, we will calculate the root mean squared errors (RMSE) and relative bias for each of the best-fitting candidate statistical model types:
+For each of the following target parameters--each of them aggregate surveillance measures at the national level--we will calculate the root mean squared errors (RMSE) and relative bias for each of the best-fitting candidate statistical model types:
 
-1. _Peak height_ = largest rate of hospitalizations in a single week
+1. _Peak height_ = highest rate of hospitalizations in a single week
 1. _Peak week_ = the week during which this peak height occurred
 1. _Total hospitalizations_ = the cumulative rate of hospitalizations in the season
 
@@ -120,23 +125,28 @@ The hypothetical influenza hospitalization curves are simulated using the follow
 
 $$\langle f, o, \nu, \theta, \mu \rangle$$
 
-**Shape**
+```{r}
+tibble::tribble(
+  ~Parameter,
+  ~Description,
 
-$f \sim U \{ \hat{f} : \text{historical season } s \}$
+  "Shape",
+  "$f \\sim U \\{ \\hat{f} : \\text{historical season } s \\}$",
 
-**Noise**
+  "Noise",
+  "$\\sigma \\sim U \\{\\hat{\\tau}^s \\text{ : historical season } s \\}$",
 
-$\sigma \sim U \{\hat{\tau}^s \text{ : historical season } s \}$
+  "Peak height",
+  "$\\theta \\sim U\\left[\\theta_m , \\theta_M\\right]$",
 
-**Peak height**
+  "Pacing",
+  "$\\nu \\sim U[0.75, 1.25]$, stretches the curve around the peak week"
+) %>%
+  knitr::kable()
+```
 
-$\theta \sim U\left[\theta_m , \theta_M\right]$^[Brooks et al. say they get "unbiased estimators" for the minimum ($\theta_m$) and maximum ($\theta_M$) peak heights, respectively. However, given their notation does not seem to indicate that these parameters are estimates, I am using the observed minimum and maximum heights from the CDC data.]
+Regarding peak height, Brooks et al. say they get "unbiased estimators" for the minimum ($\theta_m$) and maximum ($\theta_M$) peak heights, respectively. However, given their notation does not seem to indicate that these parameters are estimates, I am using the observed minimum and maximum heights from the CDC data.
 
-**Pacing**
-
-Curve-stretching around peak week:
-
-$\nu \sim U[0.75, 1.25]$
 
 
 # Base Case Model
@@ -210,6 +220,11 @@ tibble::tribble(
   "Integer week of flu season",
   "Epiweeks 40--17 (renumbered 1--31). Corresponds approximately to beginning of October through the end of April.",
 
+  "Influenza hospitalizations",
+  "$T_{i-1}, T_{i-2}, T_{i-3}$",
+  "Prior weeks' influenza hospitalization rates",
+  "[@Centers_for_Disease_Control_and_Prevention_undated-vt]",
+
   "Temperature",
   "$T_{i}, T_{i-1}, T_{i-2}$",
   "Average weekly temperature, 2003–2019",
@@ -246,7 +261,7 @@ The best-fitting model for each class of candidate models will be selected using
 
 1. For each candidate model, draw 1,000 bootstrap replicates of size $N_{train}$ from the training set.
 
-   1. Within each bootstrap replicate, begin with a model containing all candidate variables, and select the best-fitting model using backwards stepwise selection based on the Akaike Information Criterion (AIC) [@Akaike1998-ll].^[Still need to read this chapter.]
+   1. Within each bootstrap replicate, begin with a model containing all candidate variables, and select the best-fitting model using backwards stepwise selection based on the Akaike Information Criterion (AIC) [@Akaike1998-ll].
 
    1. Calculate root mean squared error (RMSE) and relative bias (RB) in the training set.
 
