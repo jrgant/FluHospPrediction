@@ -1,12 +1,13 @@
 # %% Setup ---------------------------------------------------------------------
 
 pacman::p_load(
-  crn,
   data.table,
   magrittr,
   stringr,
   summarytools,
-  lubridate
+  lubridate,
+  ggplot2,
+  ggthemes
 )
 
 # %% Climate Data -------------------------------------------------------------
@@ -36,27 +37,27 @@ datadir <- here::here("data", "uscrn")
 
 # eip = Emerging Infections Program
 eip_states <- c(
-  "California" = "CA",
-  "Colorado" = "CO",
+  "California"  = "CA",
+  "Colorado"    = "CO",
   "Connecticut" = "CT",
-  "Georgia" = "GA",
-  "Maryland" = "MD",
-  "Minnesota" = "MN",
-  "New Mexico" = "NM",
-  "New York" = "NY",
-  "Oregon" = "OR",
-  "Tennessee" = "TN"
+  "Georgia"     = "GA",
+  "Maryland"    = "MD",
+  "Minnesota"   = "MN",
+  "New Mexico"  = "NM",
+  "New York"    = "NY",
+  "Oregon"      = "OR",
+  "Tennessee"   = "TN"
 )
 
 oth_states <- c(
   "Michigan" = "MI",
-  "Ohio" = "OH",
-  "Utah" = "UT"
+  "Ohio"     = "OH",
+  "Utah"     = "UT"
 )
 
 all_states <- c(eip_states, oth_states)
 print(all_states)
-length(all_states)
+print(length(all_states))
 
 
 # %% Collate Data ------------------------------------------------------------
@@ -66,24 +67,26 @@ years <- 2003:2019
 kept_paths <- list.files(paste(datadir, years, sep = "/"), full.names = T)
 
 crn <- lapply(kept_paths, function(x) {
-  fread(x)
+  df <- fread(x)
+  df[, state := stringr::str_extract(pattern = "(?<=20[0-9]{2}\\-)[A-Z]{2}",
+                                    string = x)]
   }) %>%
   rbindlist
 
+# Apply column names
 varinfo <- fread(paste(datadir, "HEADERS.txt", sep = "/"), header = T)
-varnames <- varinfo[1, ] %>% unlist
+varnames <- c(varinfo[1, ], "state") %>% unlist
 varnames
 
 names(crn) <- tolower(varnames)
-print(crn)
+crn
 
-crnsub <- crn[, .(wbanno, lst_date, t_daily_avg, rh_daily_avg)]
-
+crnsub <- crn[, .(wbanno, state, lst_date, t_daily_avg, rh_daily_avg)]
 crnsub
 
 summary(crnsub)
 
-# replace -9999 with NA
+# Replace -9999 with NA
 nasub <- names(crnsub)[grepl("daily", names(crnsub))]
 
 crnsub[, c(nasub) := lapply(.SD, function(x) {
@@ -91,43 +94,144 @@ crnsub[, c(nasub) := lapply(.SD, function(x) {
   }
   ), .SDcols = nasub]
 
-# supplement date information
+# Supplement date information
 crnsub[, `:=`(year = str_extract(lst_date, "^20[0-9]{2}"),
               epiweek = epiweek(ymd(lst_date)))]
+
+crnsub[, weekint := ifelse(epiweek %in% (40:53), epiweek - 39, epiweek + 14)]
+
 crnsub
 
 # %% Missing Data Checks ------------------------------------------------------
 
-# Missing Data
-sapply(crnsub, function(x) sum(is.na(x)))
-comp_crn <- crnsub[, .(wbanno, epiweek, t_daily_avg, rh_daily_avg)]
+# MISSING DATA SUMMARY
 
-# Missingness by Climate Station
+sapply(crnsub, function(x) sum(is.na(x)))
+
+comp_crn <- crnsub[, .(wbanno,
+                       state,
+                       epiweek,
+                       weekint,
+                       t_daily_avg,
+                       rh_daily_avg)]
+
+tibble::glimpse(comp_crn)
+
+
+# FLUSURV-NET STATES MISSING FROM USCRN DATA
+
+# @TODO 2019-12-10:
+#  - Connecticut and Maryland not represented in USCRN
+#  - Motivation for a sensitivity analysis where we repeat the procedures
+#    while including Massachusetts and, say, Virginia as proxy climates?
+#  - Go back and pull the CRN data needed
+
+states_in_data <- unique(comp_crn$state)
+missing_states <- all_states[!all_states %in% states_in_data]
+print(missing_states)
+
+
+# TEMPERATURE MISSINGNESS BY CLIMATE STATION
+
 wbanno_t_miss <- comp_crn %>%
   .[, .(prop_missing = mean(is.na(t_daily_avg))), wbanno]
 
-plot(density(wbanno_t_miss$prop_missing))
+tibble::glimpse(wbanno_t_miss)
+
+boxplot(wbanno_t_miss$prop_missing)
 summary(wbanno_t_miss$prop_missing)
 
-# Missingness by Epiweek
+# TEMPERATURE MISSINGNESS BY EPIWEEK
 
-epiweek_t_miss <- comp_crn %>%
-  .[, .(prop_missing = mean(is.na(t_daily_avg))), epiweek]
+epiweek_t_miss <- comp_crn[,
+  .(prop_missing = mean(is.na(t_daily_avg))),
+  weekint]
 
-plot(density(epiweek_t_miss$prop_missing))
+boxplot(epiweek_t_miss$prop_missing)
 summary(epiweek_t_miss$prop_missing)
+ggplot(epiweek_t_miss, aes(x = weekint, y = prop_missing)) +
+  geom_point(size = 0.8) +
+  geom_smooth() +
+  theme_clean()
+
 
 # @NOTE 2019-11-21, Re: Missing Temperature Data
 #  - Very low missingness by both station and epiweek
 #  - Proceed with "complete case" analysis
 
-wbanno_rh_miss <- comp_crn[, .(pmiss = mean(is.na(rh_daily_avg))), wbanno]
+
+# TEMPERATURE MISSINGNESS BY STATE
+
+state_t_miss <- comp_crn[,
+  .(prop_missing = mean(is.na(t_daily_avg))),
+  state]
+
+state_t_miss
+state_t_miss %>%
+  ggplot(aes(x = state, prop_missing)) +
+  geom_point() +
+  theme_clean()
+
+
+# RELATIVE HUMIDITY MISSINGNESS BY CLIMATE STATION
+
+wbanno_rh_miss <- comp_crn[,
+  .(prop_missing = mean(is.na(rh_daily_avg))), wbanno]
+
 wbanno_rh_miss
 
-epiweek_rh_miss <- comp_crn[, .(pmiss = mean(is.na(rh_daily_avg))),
-                              keyby = epiweek]
+boxplot(wbanno_rh_miss$prop_missing)
+summary(wbanno_rh_miss$prop_missing)
+
+ggplot(wbanno_rh_miss, aes(x = factor(wbanno), y = prop_missing)) +
+  geom_point(size = 0.8) +
+  theme_clean()
+
+
+# RELATIVE HUMIDITY MISSINGNESS BY EPIWEEK
+
+epiweek_rh_miss <- comp_crn[, .(prop_missing = mean(is.na(rh_daily_avg))),
+                              keyby = weekint]
 epiweek_rh_miss
 
+boxplot(epiweek_rh_miss$prop_missing)
+summary(epiweek_rh_miss$prop_missing)
+
+ggplot(epiweek_rh_miss, aes(x = weekint, y = prop_missing)) +
+  geom_point(size = 0.8) +
+  geom_smooth() +
+  theme_clean()
+
+# @NOTE:
+#  - Time and station coverage for relative humididty much less than for temp
+#  - Much higher missingness in general
+
+
+# RELATIVE HUMIDITY MISSINGNESS BY STATE
+
+state_rh_miss <- comp_crn[,
+  .(prop_missing = mean(is.na(rh_daily_avg))),
+  state]
+
+state_rh_miss %>%
+  .[, state := forcats::fct_reorder(state, prop_missing)] %>%
+  ggplot(aes(x = state,
+             y = prop_missing)) +
+  geom_point() +
+  geom_segment(aes(y = 0, yend = prop_missing,
+                   x = state, xend = state)) +
+  theme_clean()
+
+rh_missing <- comp_crn[, missing := ifelse(is.na(rh_daily_avg), 1, 0)]
+
+rh_missing %>%
+  .[, .(prop_missing = mean(missing)), .(state, weekint)] %>%
+  ggplot(aes(x = factor(weekint),
+             y = prop_missing)) +
+  geom_segment(aes(x = weekint, xend = weekint,
+                   y = 0, yend = prop_missing)) +
+  facet_wrap(~ state) +
+  theme_clean()
 
 # %% Temperatures -------------------------------------------------------------
 
@@ -136,21 +240,28 @@ epiweek_rh_miss
 # https://www.weather.gov/media/epz/wxcalc/tempConvert.pdf
 selweek <- c(37:53, 1:17)
 
+# @TODO 2019-11-26
+#  - May need to transform temperature and relative humidity distributions to #    calculate mean and 95% confidence interval
+#  - For each epiweek, confidence intervals should use sandwich estimator due
+#    to multiple observations from climate stations (based on daily readings)
+
 temps <- crnsub[!is.na(t_daily_avg) & (epiweek %in% selweek),
-                .(epiweek, t_daily_avg)] %>%
+                .(wbanno, epiweek, weekint, state, t_daily_avg)] %>%
+              # calculate fahrenheit
               .[, t_daily_avg_f := (9 / 5) * t_daily_avg + 32] %>%
               .[order(epiweek)]
 
 temps
 
-temps[, .N, epiweek]
+temps[, freq(weekint)] %>% print
+
+temps[, epiweek := factor(epiweek, levels = selweek)]
 
 temps_avg <-
-  temps[, .(mn_t_daily_avg = mean(t_daily_avg_f),
-            sd_t_daily_avg = sd(t_daily_avg_f)),
-          keyby = epiweek] %>%
-      .[, ll := mn_t_daily_avg - 1.96 * sd_t_daily_avg] %>%
-      .[, ul := mn_t_daily_avg + 1.96 * sd_t_daily_avg]
+  temps[, .(mn = mean(t_daily_avg_f),
+            sd = sd(t_daily_avg_f),
+            n = .N),
+          keyby = epiweek]
 
 print(temps_avg)
 
@@ -158,7 +269,41 @@ print(temps_avg)
 # %% Relative Humidity --------------------------------------------------------
 
 rh <- crnsub[!is.na(rh_daily_avg) & (epiweek %in% selweek),
-                .(epiweek, rh_daily_avg)] %>%
+                .(epiweek, weekint, rh_daily_avg)] %>%
               .[order(epiweek)]
 
 rh[, .N, epiweek]
+
+rh[, epiweek := factor(epiweek, levels = epiweek_levels)]
+
+rh_avg <-
+  rh[, .(mn = mean(rh_daily_avg),
+         sd = sd(rh_daily_avg),
+         n = .N),
+         keyby = epiweek]
+
+print(rh_avg)
+
+# %% Plot Climate Data --------------------------------------------------------
+
+# TEMPERATURE
+
+ggplot(temps, aes(x = epiweek, y = t_daily_avg_f)) +
+  geom_point(size = 0.3) +
+  theme_clean()
+
+ggplot(temps, aes(x = t_daily_avg_f)) +
+  geom_density() +
+  facet_wrap(~ weekint) +
+  theme_classic()
+
+# RELATIVE HUMIDITY
+
+ggplot(rh, aes(x = epiweek, y = rh_daily_avg)) +
+  geom_point(size = 0.3) +
+  theme_clean()
+
+ggplot(rh, aes(x = rh_daily_avg)) +
+  geom_density() +
+  facet_wrap(~ weekint) +
+  theme_clean()
