@@ -10,10 +10,11 @@ pacman::p_load(
   forcats,
   here,
   lubridate,
-  rnoaa
+  rnoaa,
+  ggplot2
 )
 
-datfldr <- "data"
+rawdatadir <- "data/raw"
 
 
 # %% Set Global Options -------------------------------------------------------
@@ -25,7 +26,7 @@ options(datatable.print.class = TRUE)
 # %% Empirical Hospitalization Counts -----------------------------------------
 
 # %%
-hsp_file <- here::here(datfldr, "Weekly_Data_Counts.csv")
+hsp_file <- here::here(rawdatadir, "flu", "Weekly_Data_Counts.csv")
 
 hsp_names <- c(
   "season",
@@ -70,7 +71,8 @@ whsp_ct[, .N, by = c("season", "year")]
 # %% Empirical Hospitalization Rates -------------------------------------------
 
 # %%
-hsp_rates <- here::here(datfldr, "FluSurveillance_EIP_Entire Network_Data.csv")
+hsp_rates <- here::here(rawdatadir, "flu",
+                        "FluSurveillance_EIP_Entire Network_Data.csv")
 
 whsp_rt_cols <- c(
   "catchment",
@@ -106,7 +108,7 @@ whsp_rt[, .N, by = c("weekint", "mmwr_week")]
 
 # %% ILINet Data --------------------------------------------------------------
 
-ili_file <- here::here("data", "ILINET.csv")
+ili_file <- here::here(rawdatadir, "flu", "ILINET.csv")
 ili_dat  <- fread(ili_file)
 
 # %% Select columns
@@ -175,7 +177,7 @@ ili_dat[, .N, year]
 ili_dat[, .N, c("season", "mmwr_week", "weekint")][, max(N)]
 
 # %% Plot to Check Proper weekint labeling
-library(ggplot2)
+
 ggplot(ili_dat, aes(x = weekint, y = as.numeric(mmwr_week))) +
   geom_point(size = 0.4) +
   geom_vline(aes(xintercept = 14.5), color = "red") +
@@ -279,4 +281,4 @@ flumerge %>%
 flumerge
 
 # %% Write Merged Data
-fwrite(flumerge, here::here(datfldr, "empdat.csv"))
+fwrite(flumerge, here::here("data", "cleaned", "empdat.csv"))
