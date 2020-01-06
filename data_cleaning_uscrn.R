@@ -7,6 +7,7 @@ pacman::p_load(
   summarytools,
   lubridate,
   ggplot2,
+  ggridges,
   ggthemes
 )
 
@@ -35,6 +36,9 @@ datadir <- here::here("data", "raw", "uscrn")
 
 # Global epiweek selection
 selweek <- c(38:53, 1:17)
+
+# Set global ggplot2 theme
+theme_set(theme_clean())
 
 # %% Specify States of Interest ----------------------------------------------
 
@@ -114,6 +118,23 @@ sort(unique(crnsub$weekint))
 
 # %% Missing Data Checks ------------------------------------------------------
 
+# SET UP PLOT LABELS
+
+## Global
+miss_ylab <- "Proportion missing"
+week_xlab <- "Week of flu season (integer)"
+state_xlab <- "State in FluSurv-NET"
+stn_xlab <- "Climate station"
+
+# Temperature
+temp_title <- "Missing temperature data (USCRN)"
+
+# Relative humidity
+humd_title <- "Relative humidity missingness (USCRN)"
+
+# State caption
+state_cap <- "Excludes CT and MD due to absence of climate stations."
+
 # MISSING DATA SUMMARY
 
 sapply(crnsub, function(x) sum(is.na(x)))
@@ -134,8 +155,9 @@ comp_crn <- crnsub[
 tibble::glimpse(comp_crn)
 
 sort(unique(comp_crn$epiweek))
+
 # check all weekint in -1:31
-sort(unique(comp_crn$weekint))
+range(sort(unique(comp_crn$weekint)))
 
 # check correct omission of pandemic flu weeks
 lapply(setNames(selweek, selweek),
@@ -165,6 +187,16 @@ tibble::glimpse(wbanno_t_miss)
 boxplot(wbanno_t_miss$prop_missing)
 summary(wbanno_t_miss$prop_missing)
 
+ggplot(wbanno_t_miss[, wbanno := factor(wbanno)],
+  aes(x = forcats::fct_reorder(wbanno, prop_missing),
+      y = prop_missing)) +
+  geom_point(size = 0.8) +
+  geom_segment(aes(x = wbanno, xend = wbanno,
+                   y = 0, yend = prop_missing)) +
+  labs(title = temp_title,
+       y = miss_ylab,
+       x = stn_xlab) +
+  theme(axis.text.x = element_blank())
 
 # TEMPERATURE MISSINGNESS BY EPIWEEK
 
@@ -174,10 +206,13 @@ epiweek_t_miss <- comp_crn[,
 
 boxplot(epiweek_t_miss$prop_missing)
 summary(epiweek_t_miss$prop_missing)
+
 ggplot(epiweek_t_miss, aes(x = weekint, y = prop_missing)) +
   geom_point(size = 0.8) +
   geom_smooth() +
-  theme_clean()
+  labs(title = temp_title,
+       y = temp_ylab,
+       x = week_xlab)
 
 
 # @NOTE 2019-11-21, Re: Missing Temperature Data
@@ -197,7 +232,11 @@ state_t_miss %>%
   geom_point() +
   geom_segment(aes(x = state, xend = state,
                    y = 0, yend = prop_missing)) +
-  theme_clean()
+  labs(title = temp_title,
+       y = miss_ylab,
+       x = state_xlab,
+       caption = state_cap) +
+  theme(plot.caption = element_text(face = "italic"))
 
 
 # RELATIVE HUMIDITY MISSINGNESS BY CLIMATE STATION
@@ -216,7 +255,10 @@ ggplot(wbanno_rh_miss[, wbanno := factor(wbanno)],
   geom_point(size = 0.8) +
   geom_segment(aes(x = wbanno, xend = wbanno,
                    y = 0, yend = prop_missing)) +
-  theme_clean()
+  labs(title = humd_title,
+       y= miss_ylab,
+       x = stn_xlab) +
+  theme(axis.text.x = element_blank())
 
 
 # RELATIVE HUMIDITY MISSINGNESS BY EPIWEEK
@@ -231,7 +273,10 @@ summary(epiweek_rh_miss$prop_missing)
 ggplot(epiweek_rh_miss, aes(x = weekint, y = prop_missing)) +
   geom_point(size = 0.8) +
   geom_smooth() +
-  theme_clean()
+  labs(title = humd_title,
+       y = miss_ylab,
+       x = week_xlab)
+
 
 # @NOTE:
 #  - Week/station coverage for relative humididty **much** less than for temp
@@ -255,7 +300,11 @@ state_rh_miss %>%
   geom_point() +
   geom_segment(aes(y = 0, yend = prop_missing,
                    x = state, xend = state)) +
-  theme_clean()
+  labs(title = humd_title,
+       y = miss_ylab,
+       x = state_xlab,
+       caption = state_cap) +
+  theme(plot.caption = element_text(face = "italic"))
 
 rh_missing <- comp_crn[, missing := ifelse(is.na(rh_daily_avg), 1, 0)]
 
@@ -332,26 +381,22 @@ print(rh_avg)
 ggplot(temps, aes(x = epiweek, y = t_daily_avg_f)) +
   geom_point(size = 0.3, alpha = 0.04) +
   geom_point(data = temps[, .(mnt = mean(t_daily_avg_f)), epiweek],
-             aes(x = epiweek, y = mnt, col = "mean")) +
-  theme_clean()
+             aes(x = epiweek, y = mnt, col = "mean"))
 
-ggplot(temps, aes(x = t_daily_avg_f)) +
-  geom_density() +
-  facet_wrap(~ weekint) +
-  theme_classic()
+ggplot(temps, aes(x = t_daily_avg_f, y = factor(weekint), fill = ..x..)) +
+  geom_density_ridges_gradient() +
+  scale_fill_viridis_c()
 
 # RELATIVE HUMIDITY
 
 ggplot(rh, aes(x = epiweek, y = rh_daily_avg)) +
   geom_point(size = 0.3, alpha = 0.4) +
   geom_point(data = rh[, .(mnt = mean(rh_daily_avg)), epiweek],
-             aes(x = epiweek, y = mnt, col = "mean")) +
-  theme_clean()
+             aes(x = epiweek, y = mnt, col = "mean"))
 
-ggplot(rh, aes(x = rh_daily_avg)) +
-  geom_density() +
-  facet_wrap(~ weekint) +
-  theme_clean()
+ggplot(rh, aes(x = rh_daily_avg, y = factor(weekint), fill = ..x..)) +
+  geom_density_ridges_gradient() +
+  scale_fill_viridis_c()
 
 # %% Merge Data and Write -----------------------------------------------------
 
