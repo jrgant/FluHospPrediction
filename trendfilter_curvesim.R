@@ -170,28 +170,34 @@ tfp <- suppressWarnings(map_dfr(tf_pred, function(x) x[[1]]))
 setDT(tfp)
 
 # plot predictions vs. empirical data
-ggplot(tfp, aes(x = week)) +
-  geom_line(aes(y = pred.hosp), color = "red") +
-  geom_point(
-    aes(y = obs.hosp1),
-    alpha = 0.5,
-    size = 0.8
-  ) +
-  facet_wrap(~season) +
-  scale_color_viridis_d() +
-  labs(
-    x = "Week",
-    y = "Hospitalizations (per 100,000)",
-    title = "Trend filter, predicted hospitalizations vs. observed",
-    caption = paste("lambda = ", tf_pred[[1]]$lambda)
-  ) +
-  theme_clean(base_size = 15) +
-  theme(
-    plot.caption = element_text(face = "italic", size = 10),
-    axis.title = element_text(face = "bold", color = "slategray"),
-    strip.text = element_text(face = "bold"),
-    legend.position = "bottom"
-  )
+tf_pred_plotlist <- lapply(unique(tfp$season), function(x) {
+
+  ggplot(tfp[season == x, ], aes(x = weekint)) +
+    geom_line(aes(y = pred.hosp), color = "red") +
+    geom_point(
+      aes(y = obs.hosp1),
+      alpha = 0.5,
+      size = 0.8
+    ) +
+    scale_color_viridis_d() +
+    labs(
+      x = glue::glue("Week of { x }"),
+      y = "Hospitalizations (per 100,000)",
+      title = "Trend filter, predicted hospitalizations vs. observed",
+      caption = paste("lambda = ", tf_pred[[1]]$lambda)
+    ) +
+    theme_clean(base_size = 15) +
+    theme(
+      plot.caption = element_text(face = "italic", size = 10),
+      axis.title = element_text(face = "bold", color = "slategray"),
+      strip.text = element_text(face = "bold"),
+      legend.position = "bottom"
+    )
+})
+
+tf_pred_plotlist
+
+
 
 # Generate hypothetical curves -----------------------------------------
 
@@ -244,28 +250,69 @@ veclengths <- sapply(hhc$hc, function(x) length(x$eq$arg_f))
 table(veclengths == 31)
 
 # map prediction to i (1:31)
-hhc$outhc[, weekmap := rep(1:31, length(unique(cid)))]
+hhc$outhc[, weekint := rep(1:31, length(unique(cid)))]
 print(hhc$outhc, topn = 40)
+
+names(ed)
+edsum <-
+  ed[, .(pkht = max(weekrate),
+         pkweekint = weekint[weekrate == max(weekrate)],
+         cumhosp = sum(weekrate)),
+     by = .(cid = season)] %>%
+  # in some cases, peak height was the same across weeks
+  # in all such cases, weeks were adjacent (take average peak week)
+  .[, .(pkht = mean(pkht),
+        pkweekint = mean(pkweekint),
+        cumhosp = mean(cumhosp)),
+    by = cid] %>%
+  .[, data := "empirical"]
+
+edsum
+
+names(hhc$outhc)
+simsum <-
+  hhc$outhc[, .(pkht = max(prediction),
+                pkweekint = weekint[prediction == max(prediction)],
+                cumhosp = sum(prediction)), by = .(cid = as.character(cid))] %>%
+  .[, data := "simulated"]
+
+simsum
+
+edsim <- rbind(edsum, simsum)
+
+theme_set(theme_clean())
+
+ggplot(edsim, aes(x = data, y = pkht)) +
+  geom_boxplot()
+
+ggplot(edsim, aes(x = data, y = pkweekint)) +
+  geom_boxplot()
+
+ggplot(edsim, aes(x = data, y = cumhosp)) +
+  geom_boxplot()
 
 # %%
 # view curves
-simsub <- 30
+simsub <- 15
 
+# every time this code block is run, a different subset of simulations
+# is sampled at random
 hyp_hosp_p <-
   ggplot(
     hhc$outhc[cid %in% sample(cid, size = simsub)],
-    aes(x = weekmap, y = prediction)
+    aes(x = weekint, y = prediction)
   ) +
   geom_line(
     aes(group = cid, color = factor(cid)),
     alpha = 0.6
   ) +
+  coord_cartesian(y = c(0, 10)) +
   labs(
     x = "Week",
     y = "Predicted hospitalizations (per 100,000)",
     title = "Hypothetical Hospitalization Curves",
     subtitle = paste(simsub, "simulations"),
-    caption = paste0("\u03BB index", " = ", sel_lambda)
+    caption = paste0("Linear trend filter \u03BB", " = ", sel_lambda)
   ) +
   theme_tweak +
   theme(legend.position = "none")
@@ -277,14 +324,20 @@ hyp_hosp_p
 # @NOTE 2019-09-26:
 #  Run some summaries on the hypothetical curves to check for errors
 #  May still want to choose different lambda or conduct sensitivy around lambda
-ggplot(hhc$outhc[weekmap == 1, ], aes(x = prediction)) + geom_density()
-summary(hhc$outhc$prediction[hhc$outhc$weekmap == 1])
+ggplot(hhc$outhc[weekint == 1, ], aes(x = prediction)) +
+  geom_density() +
+  labs(
+    title = "Predicted hospitalization rates at Epiweek 40 (integer week 1)"
+    ) +
+  theme_clean()
 
-# Check for unrealistic predictions weekmap 1 and 31
-hhc$outhc[weekmap == 1, .(max = max(prediction),
+summary(hhc$outhc$prediction[hhc$outhc$weekint == 1])
+
+# Check for unrealistic predictions weekint 1 and 31
+hhc$outhc[weekint == 1, .(max = max(prediction),
                           min = min(prediction))]
 
-hhc$outhc[weekmap == 31, .(max = max(prediction),
+hhc$outhc[weekint == 31, .(max = max(prediction),
                            min = min(prediction))]
 
 # Training and Test Sets ------------------------------------------------
@@ -309,30 +362,23 @@ hhc_splits <- lapply(setNames(hhc_sets, hhc_sets), function(x) {
   }
 
   # summarize hypothetical curves by prediction target
-  # calculate weights to account for missing data due to curve shifting
   df[, .(pkht = max(prediction),
          pkwk = week[prediction == max(prediction)],
-         pkwk_int = weekmap[prediction == max(prediction)],
+         pkwk_int = weekint[prediction == max(prediction)],
          cumhosp = max(cumsum(prediction)),
          n = .N),
-     by = "cid"] %>%
-     .[, weight := n / sum(n)]
+     by = "cid"]
 })
 
 lapply(hhc_splits, nrow)
 
 # %%
-# Single-Season Test Set Summaries
+# Summaries Over Seasons
 
-# Unweighted
+# training set
 lapply(hhc_splits$train, summary)
 
-# Weighted
-target_params <- lapply(setNames(hhc_sets, hhc_sets), function(x) {
-  hhc_splits[[x]][, .(pkht_w = weighted.mean(pkht, weight),
-                      pkwk_w = weighted.mean(pkwk, weight),
-                      cumhosp_w = weighted.mean(cumhosp, weight))]
-})
+lapply(hhc_splits$test, summary)
 
 hhc$train <- list(
   trainset = hhc$outhc[cid %in% train_cids, ],
@@ -353,7 +399,7 @@ print(hhc$test)
 # Write Hypothetical Curves ---------------------------------------------
 
 # %%
-saveRDS(hhc, "data/hypothetical-curves.Rds")
+saveRDS(hhc, paste0(clndir, "/hypothetical-curves.Rds"))
 
 
 # %% Visualize Training Set Curves --------------------------------------
@@ -373,13 +419,6 @@ p <- ggplot(hhc$train$trainset_sum) + theme_minimal()
 # %%
 p +
   geom_density(aes(x = pkht), color = "gray", fill = "lightgray") +
-  geom_segment(
-    data = train_pkhts,
-    aes(x = value, xend = value,
-        y = 0.0125, yend = 0.0175,
-        color = variable),
-        size = 1
-  ) +
   geom_jitter(aes(x = pkht, y = 0), height = 0.01, size = 0.2)
 
 # %% View and Write Plots ------------------------------------------------
