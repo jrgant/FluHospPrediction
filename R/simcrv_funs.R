@@ -7,23 +7,9 @@ simcrv <- function(
                    verbose = FALSE,
                    peakdist = dist_peaks,
                    hstdat = ed,
-                   severity2 = NULL,
                    predfits = tf_pred,
                    fitseas = tf_seas,
                    lamb_val = 25) {
-
-  # severity2 = one of "High/Moderate", "Low", or NULL
-
-  if (!is.null(severity2)) {
-    if (!severity2 %in% c("High/Moderate", "Low")) {
-      messaging::emit_error(
-        crayon::red(
-          'severity2 must be one of "High/Moderate", "Low", or NULL'
-        )
-      )
-    }
-    hstdat <- hstdat[sev2 == severity2, ]
-  }
 
   # sample shape (f)
   s <- sample(unique(hstdat$season), 1)
@@ -53,7 +39,6 @@ simcrv <- function(
 
   slist <- list(
     "season" = s,
-    "severity" = hstdat[, sev2[season == s]] %>% unique(),
     "maxj" = max_j,
     "argmax" = argmax_j,
     "sigma" = sigma,
