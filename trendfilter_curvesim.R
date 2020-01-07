@@ -7,7 +7,7 @@
 # 2015;11:e1004382. doi:10.1371/journal.pcbi.1004382.
 
 
-# Load packages ---------------------------------------------------------
+# %% Load packages ---------------------------------------------------------
 
 # %% Setup
 pacman::p_load(
@@ -21,12 +21,17 @@ pacman::p_load(
   forcats
 )
 
+# grab functions
 source("R/simcrv_funs.R")
+
+# data directories
+rawdir <- here::here("data", "raw")
+clndir <- here::here("data", "cleaned")
 
 # Load data -------------=----------------------------------------------
 
 # %% Setup
-ed <- readRDS("data/empdat.Rds")
+ed <- fread(paste0(clndir, "/empdat.csv"))
 class(ed)
 print(head(ed))
 
