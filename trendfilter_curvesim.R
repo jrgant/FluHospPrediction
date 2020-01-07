@@ -116,13 +116,13 @@ lapply(tf_seas, summary)
 
 # Predict
 # predict the weekly count (y) and error (tau) for each season
-pred_fun <- function(x, y, lambda_val) {
-  predict(y, x.new = x, lambda = y$lambda[lambda_val])
+pred_fun <- function(xvar, y, lambda_val) {
+  predict(y, new.data = xvar, lambda = y$lambda[lambda_val])
 }
 
 # @NOTE 2019-08-21:
 #   All subsequent trendfilter predictions use the lambda set here.
-sel_lambda <- 20
+sel_lambda <- 25
 
 # %%
 # @TODO 2019-08-12:
@@ -144,7 +144,7 @@ tf_pred <- lapply(
     list(
       dat = data.frame(
         season = x,
-        week = 1:length(pred.hosp),
+        weekint = 1:length(pred.hosp),
         pred.hosp = as.vector(pred.hosp),
         obs.hosp1,
         obs.hosp2,
