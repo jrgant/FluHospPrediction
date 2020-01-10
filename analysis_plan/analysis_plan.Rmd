@@ -1,0 +1,296 @@
+---
+title: "Predicting Seasonal Influenza Hospitalizations"
+
+author:
+- Jason R. Gantenberg, Andrew R. Zullo, Chanelle J. Howe, Ashley Naimi (invite), Kevin W. McConeghy
+- "_Author list tentative_"
+
+date: "Last updated: `r Sys.Date()`"
+
+output:
+  word_document:
+    reference_docx: word_styles.docx
+
+bibliography: flurefs.bib
+link-citations: no
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+pacman::p_load(tidyverse, data.table)
+emp <- fread(here::here("data", "empdat.csv"))
+setDT(emp)
+```
+
+# Motivation
+
+- Influenza forecasting is still a maturing science [@Reich2019-uk].
+
+- Developing forecasting accuracy and capacity is a central component to efficient outbreak response and promises to be so for the foreseeable future [@George2019-rx].
+
+- Recently, the focus on influenza forecasting has been growing thanks in part to the FluView competitions sponsored by the Centers for Disease Control and Prevention in the United States [@Reich2019-uk; @Biggerstaff2018-ns].
+
+- Most of the newest work in influenza forecasting focuses on modeling influenza-like illness [@Reich2019-uk; @Biggerstaff2018-ns; @Biggerstaff2018-gt; @McGowan2019-ph; @Kandula2018-sq; @Brooks2015-fl].
+
+- Focus on hospitalizations has been more limited, though forecasting models for influenza-related hospitalization have been developed [@Kandula2019-tg].
+
+- Existing models have omitted variables that could potentially improve forecasts.
+
+- The number of empirical seasons available to use in forecasts and/or other models of influenza-related hospitalization is limited, with quality surveillance data existing only since the 2003--04 flu season.
+
+
+## Objective/Rationale
+
+- Our primary aim is to conduct a prediction-based simulation study to determine which of a set of candidate models and variable sets most closely fits a distribution of simulated hospitalization curves. These curves can be thought of as hypothetical national-level hospitalization curves that could be but perhaps have not been realized [@Brooks2015-fl].
+
+- By simulating an arbitrarily large number of hospitalization curves, we circumvent the limitations of the small sample of empirical (i.e., realized) hospitalization curves available for the purposes of model-fitting, presuming we are willing to assume the simulated distribution adequately represents the space of possible future hospitalization curves.
+
+- Our ultimate goal is to identify candidate models and variable sets that may improve in-season forecasts of weekly influenza-related hospitalizations. The current study is an initial step to determine whether more complex models could, in principle, meaningfully improve predictions and/or forecasts of seasonal influenza hospitalizations, to guide public health practitioners in concentrating their efforts (e.g., toward communication, vaccination, etc.) during the flu season.
+
+- Should the current approach prove fruitful, future work would focus on applying a similar approach to predicting age- and Human Health and Services Region-specific influenza hospitalization rates and/or adapting the approach to produce in-season forecasts in the future.
+
+# Background
+
+## _MMWR_ Weeks
+
+All weeks will be specified based on the _MMWR_ Week convention [@Centers_for_Disease_Control_and_Prevention_undated-pu]. Referred to as "epiweeks", _MMWR_ weeks are integer values assigned to each week of the year, ranging from 1--53 [@Centers_for_Disease_Control_and_Prevention_undated-pu]. A typical flu season begins in epiweek 40. The CDC releases influenza hospitalization rates for epiweeks 40--17. For the purposes of our analysis, we will renumber these epiweeks as 1--31.
+
+# General approach
+
+1. Fit a linear trend filter model [@Kim2009-bz; @Tibshirani2014-tr; @Brooks2015-fl] to empirical FluSurv-NET hospitalization data for the seasons 2003–2004 through 2017–2018 (omitting pandemic year 2009--10), based in part on the approach described by Brooks et al. [@Brooks2015-fl].
+
+1. Simulate _N_ hypothetical influenza hospitalization curves using the empirical Bayes approach described in _Curve fitting and simulation_.
+
+1. For each candidate statistical model, find the set of variables that results in the best fit to the distribution of hypothetical influenza hospitalization curves.
+
+1. Compare the best-fitting model for each model type against pre-specified target parameters to determine which candidate statistical model performs best across these targets.
+
+# Prediction targets
+
+For each of the following target parameters--each of them aggregate surveillance measures at the national level--we will calculate the root mean squared errors (RMSE) and relative bias for each of the best-fitting candidate statistical model types:
+
+1. _Peak height_ = highest rate of hospitalizations in a single week
+1. _Peak week_ = the week during which this peak height occurred
+1. _Total hospitalizations_ = the cumulative rate of hospitalizations in the season
+
+
+These targets follow in part from [@Brooks2015-fl], who focused on influenza-like illness rather than hospitalizations.
+
+```{r emphypfig, echo = FALSE, fig.width = 7.5, fig.align = "center", fig.cap = "Empirical and simulated hospitalization curves. $\\lambda$ index refers to the position of one in a vector of trend filter penalties tested for each season. The actual value $\\lambda$ varies by season."}
+
+knitr::include_graphics("curve_grid.jpg", auto_pdf = FALSE)
+```
+
+# Curve fitting and simulation
+
+We will simulate hypothetical influenza hospitalization curves using a modified version of the curve-fitting approach described by Brooks et al. [@Brooks2015-fl].
+
+First, using the `glmgen` [@Brooks2015-fl] package in R, we fit a linear trend filter [@Kim2009-bz; @Tibshirani2014-tr; @Brooks2015-fl] to each empirical hospitalization curve released by the CDC [@Centers_for_Disease_Control_and_Prevention2016-nr], beginning with the 2003--2004 season and omitting the 2009--2010 pandemic flu season.
+
+For each season $s$ and week $i$, Brooks et al. [@Brooks2015-fl] conceptualize a seasonal influenza curve as some function plus noise^[Brook et al. use their method to forecast a current flu season's weighted influenza-like illness (wILI) percent, where $b$ represents the current season's epidemic threshold for wILI. Because our hospitalization rate curves have a lower bound of 0, we drop $b$ from the original equation.]:
+
+$$y^s_i = f^s (i) + \epsilon^s_i, \epsilon \sim N(0, \tau^s),$$
+
+where
+
+```{r, results="asis"}
+if (knitr::is_html_output() | knitr::is_latex_output()) {
+  cat("$$f^s (i) = \\frac{\\theta}{\\text{max}_j f(j)} \\left[ f \\left( \\frac{i - \\mu}{v} + \\genfrac{}{}{0pt}{}{\\text{arg max }{j}} f (j) \\right) \\right].$$")
+} else {
+  cat("$$f^s (i) = \\frac{\\theta}{\\text{max}_j f(j)} \\left[ f \\left( \\frac{i - \\mu}{v} + \\substack{\\text{arg max }{j} \\\\ f(j) } \\right) \\right].$$")
+}
+```
+
+For each empirical season $s$, we fit a quadratic trend filter and average the residuals over $i$ to estimate $\tau^s$:
+
+```{r, results="asis"}
+if (knitr::is_html_output() | knitr::is_latex_output()) {
+  cat("$$\\left( \\hat{\\tau}^s \\right)^2 = \\genfrac{}{}{0pt}{}{\\text{avg}}{i} \\left[ y^s_i - \\hat{f}^s (i) \\right]^2.$$")
+} else {
+  cat("$$( \\hat{\\tau}^s )^2 = \\substack{ \\text{avg} \\\\ i } [ y^s_i - \\hat{f}^s (i) ]^2.$$")
+}
+```
+
+We use the fitted trend filters in the curve simulation procedure as $f(j)$, where $j$ represents the week indicator in the trend filter model used to predict the hospitalization rate in week _j_,^[In the Brooks paper, what $j$ stood for was not defined explicitly. After studying the paper in detail and simulating my own curves, I believe the only sensible interpretation is the one provided in this analysis plan.] introducing noise for each simulated weekly hospitalization count based this estimate of $\tau^2$.
+
+We alter the original curve formula to impose a lower bound of 0 on the hospitalization rate via the following transformation of $\hat{y}^s_i$, denoted below as $\hat{z}^s_i$:
+
+$$\hat{z}^s_i = 0.5 \bigg( | \hat{y}^s_i | + \hat{y}^s_i \bigg)$$
+
+
+## Parameters in linear trend filter
+
+The hypothetical influenza hospitalization curves are simulated using the following sampling scheme for each parameter used to simulate the hospitalization rate in week $i$, using the shape of season $s$ as a starting point ($y^s_i$). Note that all notation included below either is adapted from or appears in [@Brooks2015-fl].
+
+$$\langle f, o, \nu, \theta, \mu \rangle$$
+
+```{r}
+tibble::tribble(
+  ~Parameter,
+  ~Description,
+
+  "Shape",
+  "$f \\sim U \\{ \\hat{f} : \\text{historical season } s \\}$",
+
+  "Noise",
+  "$\\sigma \\sim U \\{\\hat{\\tau}^s \\text{ : historical season } s \\}$",
+
+  "Peak height",
+  "$\\theta \\sim U\\left[\\theta_m , \\theta_M\\right]$",
+
+  "Pacing",
+  "$\\nu \\sim U[0.75, 1.25]$, stretches the curve around the peak week"
+) %>%
+  knitr::kable()
+```
+
+Regarding peak height, Brooks et al. say they get "unbiased estimators" for the minimum ($\theta_m$) and maximum ($\theta_M$) peak heights, respectively. However, given their notation does not seem to indicate that these parameters are estimates, I am using the observed minimum and maximum heights from the CDC data.
+
+
+
+# Base Case Model
+
+## Historical average
+
+- Fit a loess model to the training set to get the expected influenza-related hospitalization rate at each week
+
+# Candidate Models
+
+## Linear regression model
+
+- Functional form of integer week: propose a quadratic function for the relationship between week and hospitalization rate.
+
+- Propose all other variables.
+
+General form:
+
+$$\hat{y} = \beta_0 + \beta_1 i + \beta_2 i^2 + ... + \beta_p L_p + \epsilon, \epsilon \sim N(0, \hat{\sigma}^2)$$
+
+where $\hat{y}$ = expected hospitalization rate, $\beta$ = regression coefficient, $i$ = integer week of flu season, $p$ = number of model paramaters proposed, $L$ = non-integer week variable, $\epsilon$ = model error term.
+
+## Linear model with polynomial splines
+
+- Fit polynomial splines [@Harrell2015-cd] for the relationship between week and hospitalization rate.
+
+- Restricted quadratic splines with 5 knots.
+
+- Propose all other variables
+
+General form [@Howe2011-xs]:
+
+```{r spine-eq}
+knitr::include_graphics("spline-eq.png")
+```
+
+<!-- $$
+\hat{y} = \beta_0 + \beta_1 i
+  + \beta_2 \left[ (i - I_1)^2_{+} - (i - I_k)^2_{+} \right]
+  + \beta_3 \left[ (i - I_2)^2_{+} - (i - I_k)^2_{+} \right] + ...
+  + \beta_k \left[ (i - I_{k-1})^2_{+} - (i - I_k)^2_{+} \right]
+  + \zeta_1 L_1 + ... + \zeta L_p
+$$ -->
+
+where $\hat{y}$ = expected hospitalization rate, $\beta$ = regression coefficients for intercept and spline terms, $\zeta$ = regression coefficients for other, non-spline, predictor variables, $p$ = number of non-spline predictor variables
+
+## Generalized additive model (Prophet)
+
+This model will be implemented using the R package _prophet_ [@Taylor2018-pl], which implements a generalized additive modeling approach developed by engineers at Facebook, Inc.
+
+The general form of the equation that will be fit to the hypothetical influenza hospitalization curves:
+
+$$y(t)= g(t) + ... + h(t) + \epsilon_t,$$
+
+where $g(t)$ models nonperiod trends and $h(t)$ stands for a vector of holidays or other events that are known to correlate with flu hospitalization [@Brooks2015-fl]. As with the other candidate models, the Prophet model will include additional model terms included to improve fit.
+
+
+## Model terms
+
+The following model terms will be entered as predictor variables to be considered for each model:
+
+```{r variable-table, layout = 'l-page'}
+tibble::tribble(
+  ~Variable,
+  ~`Lags/Transformations`,
+  ~Definition,
+  ~`Format/Domain/Source`,
+
+  "Week",
+  "$i, i^2$, restricted cubic splines",
+  "Integer week of flu season",
+  "Epiweeks 40--17 (renumbered 1--31). Corresponds approximately to beginning of October through the end of April.",
+
+  "Influenza hospitalizations",
+  "$T_{i-1}, T_{i-2}, T_{i-3}$",
+  "Prior weeks' influenza hospitalization rates",
+  "[@Centers_for_Disease_Control_and_Prevention_undated-vt]",
+
+  "Temperature",
+  "$T_{i}, T_{i-1}, T_{i-2}$",
+  "Average weekly temperature, 2003–2019",
+  "U.S. Climate Reference Network [@Diamond2013-pt]",
+
+  "Relative humidity",
+  "$RH_{i}, RH_{i-1}, RH_{i-2}$",
+  "Average weekly relative humidity, 2003–2019",
+  "U.S. Climate Reference Network [@Diamond2013-pt]",
+
+  "Christmas",
+  "Binary",
+  "A given epiweek is designated as a Christmas holiday if Christmas has ever fallen within that epiweek.",
+  paste0(paste(unique(emp[xmas == 1, .(weekint)]), sep = ","), " / ", "[@Grolemund2011-js; @Brooks2015-fl; @Taylor2018-pl]"),
+
+  "Thanksgiving",
+  "Binary",
+  "A given epiweek is designated as a Thanksgiving holiday if Thanksgiving has ever fallen within that epiweek.",
+  paste0(paste(unique(emp[thanksgiving == 1, .(weekint)]), sep = ","), " / ", "[@Wikipedia_contributors2019-mb; @Brooks2015-fl; @Taylor2018-pl]"),
+
+  "Viral activity",
+  "$V_{i}, V_{i-1}, V_{i-2}$",
+  "Percent of outpatient visits for influenza-like illness with confirmed influenza infection",
+  "National Respiratory and Enteric Virus Surveillance System (NREVSS)"
+) %>% knitr::kable()
+```
+
+
+# Model Fitting and Selection
+
+The best-fitting model for each class of candidate models will be selected using the following algorithm [@Austin2004-hu; @Harrell2015-cd]:
+
+1. Split the hypothetical hospitalization curves into a training set ($N_{train} = 5,000$) and a test set ($N_{test} = 5,000$).
+
+1. For each candidate model, draw 1,000 bootstrap replicates of size $N_{train}$ from the training set.
+
+   1. Within each bootstrap replicate, begin with a model containing all candidate variables, and select the best-fitting model using backwards stepwise selection based on the Akaike Information Criterion (AIC) [@Akaike1998-ll].
+
+   1. Calculate root mean squared error (RMSE) and relative bias (RB) in the training set.
+
+1. Fit each of the candidate models to the test set, and calculate the RMSE and RB.
+
+1. Repeat for each of three definitions of the best-fitting variable sets within each class of models---variables selected in 100%, 80%, and 60% of bootstrap samples [@Austin2004-hu].
+
+For each target parameter $p$ and hospitalization curve $c$:
+
+$$RMSE_{cp} = \left( \frac{1}{N} \sum^N (\hat{y}_p - y_{cp})^2 \right)^{0.5}$$
+
+$$RB_{cp} = \frac{1}{N} \sum^N \frac{\text{RMSE}_p}{y_{cp}}$$
+
+# Sensitivity Analysis
+
+_Challenge_
+
+The composition of institutions reflected in the FluSurv-NET has changed over time [@Centers_for_Disease_Control_and_Prevention_undated-vt; @Kandula2019-tg], meaning the FluSurv-NET estimates for influenza-related hospitalizations may not be comparable across time. \bigskip
+
+_Response_
+
+Redo the analysis three times: one for each set of years in which the same participating institutions reported flu data to CDC. See [@Centers_for_Disease_Control_and_Prevention_undated-vt] for more information.
+
+# Limitations
+
+- We are not explicitly taking a forecasting approach, so the variables and models selected as part of this exercise may not translate directly to the forecasting case.
+
+- If the simulation procedure does not capture the distribution of possible seasonal hospitalization curves accurately, the prediction approach taken may not be valid for the stated purposes.
+
+- While most variables would be available to forecasters producing in-season forecasts, we used wILI, which are corrected estimates of wILI issued by the CDC. Forecasters would have access only to real-time ILI counts. In addition, forecasters would have access to hospitalization rates from FluSurv-NET, which undergo weekly correction [@Kandula2019-tg].
+
+# References
