@@ -1,0 +1,7 @@
+# Predicting Flu Hospitalizations Paper
+
+Package directory (two levels deep):
+
+```{r}
+fs::dir_tree(recurse = 2)
+```
