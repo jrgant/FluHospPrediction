@@ -9,6 +9,8 @@ simcrv <- function(
                    hstdat = ed,
                    predfits = tf_pred,
                    fitseas = tf_seas,
+                   nu.min = 0.75,
+                   mu.max = 1.25,
                    lamb_val = 25) {
 
   # sample shape (f)
@@ -35,7 +37,7 @@ simcrv <- function(
   mu <- runif(1, min(peakdist$pkweek), max(peakdist$pkweek))
 
   # pacing (nu)
-  nu <- runif(1, 0.75, 1.25)
+  nu <- runif(1, nu.min, nu.max)
 
   slist <- list(
     "season" = s,
