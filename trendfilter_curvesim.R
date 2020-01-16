@@ -9,20 +9,7 @@
 
 # %% Load packages ---------------------------------------------------------
 
-# %% Setup
-pacman::p_load(
-  glmgen,
-  ggplot2,
-  ggthemes,
-  viridis,
-  purrr,
-  tidyr,
-  data.table,
-  forcats
-)
-
-# grab functions
-source("R/simcrv_funs.R")
+library(FluHospPrediction)
 
 # data directories
 rawdir <- here::here("data", "raw")
@@ -45,7 +32,9 @@ ed[, lapply(.SD, is.na)] %>%
 ed <- ed[season != "2009-10"]
 table(ed$season)
 
+
 # View Historical Curves ------------------------------------------------
+
 sublab <- "2003–2019, excludes 2009–2010 season"
 sourcecap <- "Source: FluSurv-NET"
 
@@ -283,13 +272,16 @@ edsim <- rbind(edsum, simsum)
 theme_set(theme_clean())
 
 ggplot(edsim, aes(x = data, y = pkht)) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(title = "Peak height")
 
 ggplot(edsim, aes(x = data, y = pkweekint)) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(title = "Peak week")
 
 ggplot(edsim, aes(x = data, y = cumhosp)) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(title = "Cumulative hospitalizations")
 
 # %%
 # view curves

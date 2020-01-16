@@ -1,7 +1,12 @@
 # %% Delete Unneeded USCRN Station Data --------------------------------------
 
 # @NOTE
-# This section was run only once, after initial download of the USCRN data.
+
+# This section was run only once, after initial download of the USCRN data and
+# before the analysis was converted to an R package.
+
+# If attempting to re-run this code after downloading the full USCRN data
+# directory, load library(FluHospPrediction) at the top of this file.
 
 datadir <- here::here("data", "uscrn")
 years <- 2003:2019

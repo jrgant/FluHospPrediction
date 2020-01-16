@@ -1,23 +1,6 @@
-# %% Setup -------------------------------------------------------------------
-
-pacman::p_load(
-  rvest,
-  stringr,
-  readr,
-  dplyr,
-  data.table,
-  stringr,
-  forcats,
-  here,
-  lubridate,
-  rnoaa,
-  ggplot2
-)
-
-rawdatadir <- "data/raw"
-
-
 # %% Set Global Options -------------------------------------------------------
+
+library(FluHospPrediction)
 
 ## set data.table print options
 options(datatable.print.topn = 10)

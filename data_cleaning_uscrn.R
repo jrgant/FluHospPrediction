@@ -1,15 +1,6 @@
 # %% Setup ---------------------------------------------------------------------
 
-pacman::p_load(
-  data.table,
-  magrittr,
-  stringr,
-  summarytools,
-  lubridate,
-  ggplot2,
-  ggridges,
-  ggthemes
-)
+library(FluHospPrediction)
 
 # %% Climate Data -------------------------------------------------------------
 
