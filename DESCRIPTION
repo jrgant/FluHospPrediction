@@ -8,6 +8,25 @@ Authors@R:
            email = "jason.gantenberg@gmail.com",
            comment = c(ORCID = "0000-0002-8144-4273"))
 Description: This package contains code and documentation to reproduce the studies described in [FILL IN PAPER TITLE].
+Depends:
+    R (>= 3.6),
+    data.table,
+    rvest,
+    stringr,
+    readr,
+    dplyr,
+    forcats,
+    here,
+    lubridate,
+    ggplot2,
+    ggthemes,
+    ggridges,
+    summarytools,
+    magrittr,
+    glmgen,
+    viridis,
+    purrr,
+    tidyr
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
