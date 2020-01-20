@@ -80,15 +80,20 @@ whsp_rt <- fread(hsp_rates, col.names = whsp_rt_cols, quote = "") %>%
   # drop age-specific rates and two variables
   .[agecat == "Overall", -c("catchment", "network")] %>%
   .[, mmwr_week := as.character(mmwr_week)] %>%
+  .[, weekint := match(mmwr_week, epiweek_levels)]
+
+print(whsp_rt)
+
+whsp_all <- whsp_rt %>%
   merge(., whsp_ct[, c("season", "mmwr_week", "weekint")],
-        by = c("season", "mmwr_week"),
+        by = c("season", "mmwr_week", "weekint"),
         all.x = TRUE) %>%
   # remove out-of-sample weeks
   tidyr::drop_na(.) %>%
   # order by season and factor-ordered mmwr_week
   .[order(season, factor(mmwr_week, epiweek_levels, epiweek_labels))]
 
-print(whsp_rt)
+print(whsp_all)
 
 # check weekint matching with mmwr_week
 whsp_rt[, .N, by = c("weekint", "mmwr_week")]
