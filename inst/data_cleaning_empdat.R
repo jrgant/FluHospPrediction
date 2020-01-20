@@ -1,6 +1,6 @@
 # %% Set Global Options -------------------------------------------------------
 
-library(FluHospPrediction)
+suppressMessages(library(FluHospPrediction))
 
 ## set data.table print options
 options(datatable.print.topn = 10)
@@ -230,25 +230,20 @@ dfSummary(comb)
 clco_sharedyear <- unique(clin$year)[unique(clin$year) %in% unique(comb$year)]
 clco_sharedyear
 
-table(clin[year == clco_sharedyear, week] %in%
-  comb[year == clco_sharedyear, week])
+table(clin[year == clco_sharedyear, week] %in% comb[year == clco_sharedyear, week])
 
 select_vrlcols <- c("year", "week", "percent positive")
 
-viral <- rbind(comb[, ..select_vrlcols], clin[, ..select_vrlcols]) %>%
-
+viral <- rbind(comb[, ..select_vrlcols], 
+               clin[, ..select_vrlcols]) %>%
   # subset to desired epiweeks
   .[week %in% c(40:53, 1:17), ] %>%
-
   # drop pandemic flu season
   .[!((year == 2009 & week %in% 40:53) | (year == 2010 & week %in% 1:17))] %>%
-
   # drop seasons prior to 2003
   .[year >= 2003 & !(year == 2003 & week %in% 1:17)] %>%
-
   # assign integer week
   .[, weekint := epiweek_labels[match(week, epiweek_levels)]] %>%
-
   # label flu season
   .[, season := case_when(
         weekint %in% 1:14 ~ paste(
@@ -257,7 +252,6 @@ viral <- rbind(comb[, ..select_vrlcols], clin[, ..select_vrlcols]) %>%
         weekint %in% 15:31 ~ paste(
           year - 1, str_extract(year, "[0-9]{2}$"),  sep = "-")
           )] %>%
-
   # rename variables
   .[, .(season,
         year,
@@ -347,39 +341,66 @@ print(tg_epiweeks)
 
 # %% Merge Empirical Data ------------------------------------------------------
 
-# merge all weekly data
-
 # select columns from datasets to merge
 sel_ctcols <- c(
   "season",
   "weekint",
+  "mmwr_week",
   paste0("flu.", c("a", "b", "ab", "unk", "tot"))
 )
 
-# %% Merge Hospitalizions and ILI Data
-flumerge <-
-  whsp_eip_rt %>%
+# Merge Hospitalizations and ILI Data
+flumerge_full <- 
+  whsp_eip_rt[!is.na(weekint)] %>%
     merge(., ili_dat[, -c("year", "mmwr_week")],
-      by = c("season", "weekint"),
-      all.x = TRUE)
+          by = c("season", "weekint"),
+          all.x = TRUE) %>%
+    merge(., viral[, -c("year", "mmwr_week")],
+          by = c("season", "weekint"),
+          all.x = TRUE) %>%
+    .[!season == "2009-10"]
 
-names(flumerge)
-print(flumerge)
+names(flumerge_full)
+print(flumerge_full)
+
+fluweek_sum <- 
+  flumerge_full[, .(cumrates = mean(cumrates),
+                    weekrate = mean(weekrate),
+                    pct_weighted_ili = mean(pct_weighted_ili),
+                    viralact = mean(viral_flupct)), 
+                by = .(weekint, mmwr_week)]
+
+print(fluweek_sum)
 
 
-outmerge <- flumerge %>%
+# FULL DATA BY SEASON AND EPIWEEK
+
+out_full <- flumerge_full %>%
   # create holiday indicators
   .[, xmas := mmwr_week %in% xmas_epiweeks] %>%
   .[, thanksgiving := mmwr_week %in% tg_epiweeks] %>%
   # create squared weekint
   .[, weekint2 := weekint^2]
 
-flumerge
+print(out_full)
+
+
+# WEEKLY SUMMARIES
+
+outweek_sum <- fluweek_sum %>%
+  # create holiday indicators
+  .[, xmas := mmwr_week %in% xmas_epiweeks] %>%
+  .[, thanksgiving := mmwr_week %in% tg_epiweeks] %>%
+  # create squared weekint
+  .[, weekint2 := weekint^2]
+
+print(outweek_sum)
 
 
 # %% Write Data to Files -------------------------------------------------------
 
 # Merged data
-fwrite(outmerge, here::here("data", "cleaned", "empdat.csv"))
+fwrite(out_full, here::here("data", "cleaned", "empdat.csv"))
 
 # Weekly averages
+fwrite(outweek_sum, here::here("data", "cleaned", "empdat_weeksum.csv"))
