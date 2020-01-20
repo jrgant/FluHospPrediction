@@ -6,10 +6,20 @@ library(FluHospPrediction)
 options(datatable.print.topn = 10)
 options(datatable.print.class = TRUE)
 
+## labeling of epiweeks and seasons
+epiweek_levels <- paste(c(40:53, 1:17))
+epiweek_labels <- 1:31
+cbind(epiweek_levels, epiweek_labels)
+
+
+seas_levels <- paste(2003:2018, str_extract(2004:2019, "[0-9]{2}$"), sep = "-")
+print(seas_levels)
+
+
 # %% Empirical Hospitalization Counts -----------------------------------------
 
 # %%
-hsp_file <- here::here(rawdatadir, "flu", "Weekly_Data_Counts.csv")
+hsp_file <- here::here(rawdir, "flu", "Weekly_Data_Counts.csv")
 
 hsp_names <- c(
   "season",
@@ -19,12 +29,6 @@ hsp_names <- c(
   "flu.ab",
   "flu.unk"
 )
-
-# Label epiweeks and seasons
-epiweek_levels <- paste(c(40:53, 1:17))
-epiweek_labels <- 1:31
-seas_levels <- paste(2003:2018, str_extract(2004:2019, "[0-9]{2}$"), sep = "-")
-print(seas_levels)
 
 # whsp_ct = weekly hospitalization counts
 whsp_ct <- fread(hsp_file, col.names = hsp_names)
@@ -54,7 +58,7 @@ whsp_ct[, .N, by = c("season", "year")]
 # %% Empirical Hospitalization Rates -------------------------------------------
 
 # %%
-hsp_rates <- here::here(rawdatadir, "flu",
+hsp_rates <- here::here(rawdir, "flu",
                         "FluSurveillance_EIP_Entire Network_Data.csv")
 
 whsp_rt_cols <- c(
@@ -68,9 +72,10 @@ whsp_rt_cols <- c(
   "weekrate"
 )
 
-# NOTE 2019-08-21:
-#   A warning is thrown when fread() gets to the CDC disclaimer text contained
-#   in the csv file. Benign.
+# @NOTE:
+# - A warning is thrown when fread() gets to the CDC disclaimer text contained
+#   in the .csv file: benign.
+
 whsp_rt <- fread(hsp_rates, col.names = whsp_rt_cols, quote = "") %>%
   # drop age-specific rates and two variables
   .[agecat == "Overall", -c("catchment", "network")] %>%
@@ -91,7 +96,7 @@ whsp_rt[, .N, by = c("weekint", "mmwr_week")]
 
 # %% ILINet Data --------------------------------------------------------------
 
-ili_file <- here::here(rawdatadir, "flu", "ILINET.csv")
+ili_file <- here::here(rawdir, "flu", "ILINET.csv")
 ili_dat  <- fread(ili_file)
 
 # %% Select columns
@@ -169,18 +174,134 @@ ggplot(ili_dat, aes(x = weekint, y = as.numeric(mmwr_week))) +
   theme_minimal() +
   theme(strip.text = element_text(face = "bold"))
 
-# %%
 ilisum <- ili_dat[, .(mn_pct_wgt_ili = mean(pct_weighted_ili),
                       mn_pct_unwgt_ili = mean(pct_unweighted_ili)), weekint]
 ilisum
 
-# %% ILI Percent
+# ILI Percent
 ggplot(ilisum, aes(x = weekint)) +
   geom_line(aes(y = mn_pct_wgt_ili, linetype = "weighted")) +
   geom_line(aes(y = mn_pct_unwgt_ili, linetype = "unweighted")) +
   labs(title = "Weighted vs. Unweighted ILI %") +
   theme_minimal()
 
+
+
+# %% Viral Activity -----------------------------------------------------------
+
+# @SOURCE:
+
+# National Center for Immunization and Respiratory Diseases (NCIRD). U.S.
+# Influenza Surveillance System: Purpose and Methods [Internet]. Centers for
+# Disease Control and Prevention. 2019 [cited 2020 Jan 9]. Available from:
+# https://www.cdc.gov/flu/weekly/overview.htm
+
+# @NOTE:
+
+# - For seasons prior to 2015-2016, clinical laboratory data were combined
+#   with data from public health laboratories (comb dataset)
+# - CDC notes that public health labs often receive reports from clinical labs,
+#   so the combined stats contain some overlap
+# - Clinical labs are preferred (see Source above)
+# - For 2015-16 onward, use clinical labs only
+# - Use combined estimates for prior seasons due to lack of breakouts by
+#   clinical vs. public labs
+
+vrl <- list.files(paste0(rawdir, "/flu"), "^WHO", full.names = T)
+
+print(vrl)
+
+clin <- fread(vrl[[1]])   # clinical labs, 2015-16 onward
+comb <- fread(vrl[[2]])   # combined clinical + public health, before 2015-16
+
+names(clin) <- tolower(names(clin))
+names(comb) <- tolower(names(comb))
+
+str(clin)
+str(comb)
+
+st_options(dfSummary.graph.col = F)
+dfSummary(clin)
+dfSummary(comb)
+
+
+## check for time overlap in clinical and combined datasets
+clco_sharedyear <- unique(clin$year)[unique(clin$year) %in% unique(comb$year)]
+clco_sharedyear
+
+table(clin[year == clco_sharedyear, week] %in%
+  comb[year == clco_sharedyear, week])
+
+select_vrlcols <- c("year", "week", "percent positive")
+
+viral <- rbind(comb[, ..select_vrlcols], clin[, ..select_vrlcols]) %>%
+
+  # subset to desired epiweeks
+  .[week %in% c(40:53, 1:17), ] %>%
+
+  # drop pandemic flu season
+  .[!((year == 2009 & week %in% 40:53) | (year == 2010 & week %in% 1:17))] %>%
+
+  # drop seasons prior to 2003
+  .[year >= 2003 & !(year == 2003 & week %in% 1:17)] %>%
+
+  # assign integer week
+  .[, weekint := epiweek_labels[match(week, epiweek_levels)]] %>%
+
+  # label flu season
+  .[, season := case_when(
+        weekint %in% 1:14 ~ paste(
+          year, str_extract(year + 1, "[0-9]{2}$"), sep = "-"
+          ),
+        weekint %in% 15:31 ~ paste(
+          year - 1, str_extract(year, "[0-9]{2}$"),  sep = "-")
+          )] %>%
+
+  # rename variables
+  .[, .(season,
+        year,
+        mmwr_week = week,
+        weekint,
+        viral_flupct = `percent positive`)
+        ]
+
+
+
+viral[year == 2009, range(mmwr_week)]
+viral[year == 2010, range(mmwr_week)]
+
+print(viral, topn = 50)
+
+theme_set(theme_clean())
+
+ggplot(viral,
+       aes(x = weekint,
+           y = viral_flupct,
+           col = factor(season))) +
+  geom_line() +
+  labs(title = "Percent positive for flu")
+
+# view flupct by week
+
+ggplot(viral, aes(x = viral_flupct,
+                  y = factor(weekint),
+                  fill = ..x..)) +
+  geom_density_ridges_gradient(
+    scale = 0.95,
+    jittered_points = T,
+    point_shape = "|",
+    position = position_points_jitter(height = 0)) +
+  scale_fill_viridis_c(name = "Percent positive") +
+  labs(x = "Percent of specimens positive for influenza",
+       y = "Week (integer)") +
+  theme_ridges(center = T)
+
+viral_dat <- viral[, .(mean_vflupct = mean(viral_flupct)), weekint]
+
+viral_dat
+
+ggplot(viral_dat, aes(x = weekint, y = mean_vflupct)) +
+  geom_line()
 
 # %% Holiday Epiweeks ---------------------------------------------------------
 
@@ -223,7 +344,7 @@ print(tg_dates)
 tg_epiweeks <- range(lubridate::epiweek(tg_dates))
 print(tg_epiweeks)
 
-# %% Save Empirical Data ------------------------------------------------------
+# %% Merge Empirical Data ------------------------------------------------------
 
 # merge all weekly data
 # dt1: whsp_ct
@@ -248,13 +369,11 @@ flumerge <-
       by = c("season", "weekint"),
       all.x = TRUE)
 
-print(flumerge)
-
-
 names(flumerge)
 print(flumerge)
 
-flumerge %>%
+
+outmerge <- flumerge %>%
   # create holiday indicators
   .[, xmas := mmwr_week %in% xmas_epiweeks] %>%
   .[, thanksgiving := mmwr_week %in% tg_epiweeks] %>%
@@ -263,5 +382,10 @@ flumerge %>%
 
 flumerge
 
-# %% Write Merged Data
-fwrite(flumerge, here::here("data", "cleaned", "empdat.csv"))
+
+# %% Write Data to Files -------------------------------------------------------
+
+# Merged data
+fwrite(outmerge, here::here("data", "cleaned", "empdat.csv"))
+
+# Weekly averages
