@@ -57,7 +57,8 @@ Influenza Hospitalization Surveillance Network**. *Emerg Infect Dis.*
 <http://dx.doi.org/10.3201/eid2109.141912>
 
 **FluView: Influenza Hospitalization Surveillance Network**, Centers for
-Disease Control and Prevention. WEBSITE.
+Disease Control and Prevention. WEBSITE. (Emerging Infections Program
+data)
 
 ### WHO/NREVSS Viral Activity
 

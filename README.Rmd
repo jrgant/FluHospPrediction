@@ -31,7 +31,7 @@ All code files are stored in the /inst directory.
 
 Chaves SS, Lynfield R, Lindegren ML, Bresee J, Finelli L. **The US Influenza Hospitalization Surveillance Network**. _Emerg Infect Dis._ 2015 Sep;21(9):1543–50. Available from: http://dx.doi.org/10.3201/eid2109.141912
 
-**FluView: Influenza Hospitalization Surveillance Network**, Centers for Disease Control and Prevention. WEBSITE.
+**FluView: Influenza Hospitalization Surveillance Network**, Centers for Disease Control and Prevention. WEBSITE. (Emerging Infections Program data)
 
 
 ### WHO/NREVSS Viral Activity
