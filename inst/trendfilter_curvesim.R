@@ -9,7 +9,7 @@
 
 # %% Load packages ---------------------------------------------------------
 
-library(FluHospPrediction)
+suppressMessages(library(FluHospPrediction))
 
 # data directories
 rawdir <- here::here("data", "raw")
@@ -36,7 +36,7 @@ table(ed$season)
 # View Historical Curves ------------------------------------------------
 
 sublab <- "2003–2019, excludes 2009–2010 season"
-sourcecap <- "Source: FluSurv-NET"
+sourcecap <- "Source: FluSurv-NET (Emerging Infections Program)"
 
 theme_tweak <-
     theme_clean(base_size = 15) +
@@ -53,7 +53,6 @@ theme_tweak <-
 emp_hosp <- ggplot(ed, aes(x = weekint, y = weekrate)) +
   geom_line(
     aes(group = season),
-    size = 1,
     alpha = 0.4
   ) +
   labs(
@@ -368,23 +367,29 @@ lapply(hhc_splits, nrow)
 # Summaries Over Seasons
 
 # training set
-lapply(hhc_splits$train, summary)
-
-lapply(hhc_splits$test, summary)
+train_targets <- lapply(hhc_splits$train, summary)[-c(1, 3, 6, 7)]
 
 hhc$train <- list(
   trainset = hhc$outhc[cid %in% train_cids, ],
   trainset_sum = hhc_splits[["train"]],
-  train_targets = target_params[["train"]]
+  train_targets = list(pkht = train_targets$pkht,
+                       pkwk_int = train_targets$pkwk_int,
+                       cumhosp = train_targets$cumhosp)
 )
+
+print(hhc$train)
+
+# test set
+test_targets <- lapply(hhc_splits$test, summary)[-c(1, 3, 6, 7)]
 
 hhc$test <- list(
   testset = hhc$outhc[cid %in% test_cids, ],
   testset_sum = hhc_splits[["test"]],
-  test_targets = target_params[["test"]]
+  test_targets = list(pkht = test_targets$pkht,
+                      pkwk_int = test_targets$pkwk_int,
+                      cumhosp = test_targets$cumhosp)
 )
 
-print(hhc$train)
 print(hhc$test)
 
 
@@ -406,7 +411,8 @@ train_pkhts <- hhc$train$trainset_sum %>%
 
 train_pkhts
 
-p <- ggplot(hhc$train$trainset_sum) + theme_minimal()
+p <- ggplot(hhc$train$trainset_sum) + 
+  theme_minimal()
 
 # %%
 p +
@@ -416,14 +422,7 @@ p +
 # %% View and Write Plots ------------------------------------------------
 
 library(grid)
-library(gridExtra)
+suppressMessages(library(gridExtra))
 
 curve_grid <- grid.arrange(emp_hosp, emp_cumr, hyp_hosp_p, nrow = 1)
 grid::grid.draw(curve_grid)
-
-## plots
-ggsave("analysis_plan/curve_grid.pdf", curve_grid,
-       width = 3, height = 1, scale = 6)
-
-ggsave("analysis_plan/curve_grid.jpg", curve_grid,
-       width = 3, height = 1, scale = 6)
