@@ -36,7 +36,7 @@ fs::dir_tree(recurse = 2)
 
 ## Code files
 
-All code files will be found in the /inst
+All code files are stored in the /inst
 directory.
 
 | File                                | Description                                                                                                                                                                  |
