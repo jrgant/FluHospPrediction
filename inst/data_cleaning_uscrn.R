@@ -134,7 +134,8 @@ comp_crn <- crnsub[
   epiweek %in% selweek &
     # drop pandemic flu weeks
     !(year == 2009 & epiweek %in% 38:53) &
-    !(year == 2010 & epiweek %in% 1:17),
+    !(year == 2010 & epiweek %in% 1:17) &
+    state %in% eip_states, # subset to analysis epiweeks, seasons, and states
   .(wbanno,
     state,
     epiweek,
@@ -155,7 +156,7 @@ lapply(setNames(selweek, selweek),
        function(x) comp_crn[epiweek == x, unique(year)])
 
 
-# FLUSURV-NET STATES MISSING FROM USCRN DATA
+# EIP STATES MISSING FROM USCRN DATA
 
 # @TODO 2019-12-10:
 #  - Connecticut and Maryland not represented in USCRN
@@ -164,7 +165,7 @@ lapply(setNames(selweek, selweek),
 #  - Go back and pull the CRN data needed
 
 states_in_data <- unique(comp_crn$state)
-missing_states <- all_states[!all_states %in% states_in_data]
+missing_states <- eip_states[!eip_states %in% states_in_data]
 print(missing_states)
 
 
@@ -224,8 +225,10 @@ state_t_miss <- comp_crn[,
   state]
 
 state_t_miss
+
 state_t_miss %>%
-  ggplot(aes(x = forcats::fct_reorder(state, prop_missing), y = prop_missing)) +
+  ggplot(aes(x = forcats::fct_reorder(state, prop_missing),
+             y = prop_missing)) +
   geom_point() +
   geom_segment(
     aes(x = state, 
