@@ -16,52 +16,9 @@ seas_levels <- paste(2003:2018, str_extract(2004:2019, "[0-9]{2}$"), sep = "-")
 print(seas_levels)
 
 
-# %% Empirical Hospitalization Counts -----------------------------------------
+# %% Empirical Hospitalization Rates (FluSurv-NET) -----------------------------
 
-# %%
-hsp_file <- here::here("data", "raw", "flu", "Weekly_Data_Counts.csv")
-
-hsp_names <- c(
-  "season",
-  "mmwr_yr_epiweek",
-  "flu.a",
-  "flu.b",
-  "flu.ab",
-  "flu.unk"
-)
-
-# whsp_ct = weekly hospitalization counts
-whsp_ct <- fread(hsp_file, col.names = hsp_names)
-print(whsp_ct)
-
-# format variables
-whsp_ct %>%
-  .[, ":="(year = str_extract(mmwr_yr_epiweek, "^[0-9]{4}"),
-            mmwr_yr = str_extract(season, "^[0-9]{4}"),
-            mmwr_week = str_extract(mmwr_yr_epiweek, "[0-9]{1,2}$"))] %>%
-  .[, ":="(weekint = match(mmwr_week, epiweek_levels))] %>%
-  .[, flu.tot := rowSums(.SD, na.rm = TRUE),
-                 .SDcols = paste0("flu.", c("a", "b", "ab", "unk"))]
-
-print(whsp_ct)
-
-# check recoding
-
-# %%
-# @NOTE 2019-08-21:
-#   MMWR weeks < 40 are out of sample, so NAs are expected
-whsp_ct[, .N, by = c("mmwr_yr_epiweek", "mmwr_yr")]
-whsp_ct[, .N, by = c("mmwr_yr_epiweek", "mmwr_week")]
-whsp_ct[, .N, by = c("mmwr_week", "weekint")]
-whsp_ct[, .N, by = c("season", "year")]
-
-# %% Empirical Hospitalization Rates -------------------------------------------
-
-# %%
-hsp_rates <- here::here("data", "raw", "flu",
-                        "FluSurveillance_EIP_Entire Network_Data.csv")
-
-whsp_rt_cols <- c(
+hsp_rate_cols <- c(
   "catchment",
   "network",
   "season",
@@ -72,31 +29,69 @@ whsp_rt_cols <- c(
   "weekrate"
 )
 
-# @NOTE:
-# - A warning is thrown when fread() gets to the CDC disclaimer text contained
-#   in the .csv file: benign.
+hsp_fsn_rates <- here::here("data", "raw", "flu",
+                            "FluSurveillance_FluSurv-NET_Entire Network_Data.csv")
 
-whsp_rt <- fread(hsp_rates, col.names = whsp_rt_cols, quote = "") %>%
-  # drop age-specific rates and two variables
-  .[agecat == "Overall", -c("catchment", "network")] %>%
+whsp_fsn_rt <- fread(hsp_fsn_rates,
+                     col.names = hsp_rate_cols,
+                     quote = "") %>%
   .[, mmwr_week := as.character(mmwr_week)] %>%
   .[, weekint := match(mmwr_week, epiweek_levels)]
 
-print(whsp_rt)
+print(whsp_fsn_rt)
 
-whsp_all <- whsp_rt %>%
-  merge(., whsp_ct[, c("season", "mmwr_week", "weekint")],
-        by = c("season", "mmwr_week", "weekint"),
-        all.x = TRUE) %>%
-  # remove out-of-sample weeks
-  tidyr::drop_na(.) %>%
-  # order by season and factor-ordered mmwr_week
-  .[order(season, factor(mmwr_week, epiweek_levels, epiweek_labels))]
+dfSummary(whsp_fsn_rt) %>% view
 
-print(whsp_all)
 
-# check weekint matching with mmwr_week
-whsp_rt[, .N, by = c("weekint", "mmwr_week")]
+# %% Empirical Hospitalization Rates (EIP) -------------------------------------
+
+hsp_eip_rates <- here::here("data", "raw", "flu",
+                            "FluSurveillance_EIP_Entire Network_Data.csv")
+
+# @NOTE:
+# - A warning is thrown when fread() gets to the CDC disclaimer text contained
+#   in the .csv file.
+# - The warning is BENIGN.
+
+whsp_eip_rt <- fread(hsp_eip_rates,
+                     col.names = hsp_rate_cols,
+                     quote = "") %>%
+  # drop age-specific rates and two variables
+  .[agecat == "Overall", -c("catchment", "network")] %>%
+  .[, ":="(network = "EIP",
+           mmwr_week = as.character(mmwr_week),
+           weekint = match(mmwr_week, epiweek_levels))]
+
+whsp_eip_rt
+
+print(whsp_eip_rt)
+
+
+# %% Compare FluSurv-NET to EIP (2009-2019) ------------------------------------
+
+grabcols <- c("season", "mmwr_week", "weekint", "weekrate", "cumrates")
+
+hsp_rate_compare <- whsp_fsn_rt[whsp_eip_rt, 
+                                on = c("season", "mmwr_week", "weekint")] %>%
+  .[, ratediff := weekrate - i.weekrate] %>%
+  .[!is.na(weekrate)]
+
+summary(hsp_rate_compare$ratediff)
+
+
+# @NOTE
+# - FluSurv-NET and EIP provide very similar hospitalization rates
+# - Stick with EIP
+# - Consider including the plot below in a supplement to demonstrate the
+#   similarity
+
+hsp_rate_compare[!is.na(weekint)] %>%
+  ggplot(aes(x = ratediff,
+             y = factor(weekint))) +
+  geom_density_ridges() +
+  geom_vline(aes(xintercept = 0), col = "red") +
+  labs(x = "Rate difference (per 100,000)") +
+  theme_ridges()
 
 
 # %% ILINet Data --------------------------------------------------------------
@@ -145,16 +140,14 @@ ili_dat[, season :=
 ili_dat <- ili_dat[season != "2002-03"]
 
 # Check number of weeks for each season
-ct_seas_n <- whsp_ct[, .(hosp_ct = .N), season]
-rt_seas_n <- whsp_rt[, .(hosp_rt = .N), season]
+rt_seas_n <- whsp_eip_rt[, .(hosp_rt = .N), season]
 il_seas_n <- ili_dat[, .(ili = .N), season]
 
-# @BUG 2019-11-03
-#   - 2008-09: number of weeks in season don't match across hosp and ILI dfs
-#   - 2009-10: also mismatched, but pandemic influenza season (to be dropped)
-merge(ct_seas_n, rt_seas_n, by = "season") %>%
-  merge(., il_seas_n, by = "season") %>%
-  .[, check := (hosp_ct + hosp_rt + ili) / hosp_ct == 3] %>%
+# @NOTE 
+# - season 2009-10: extra epiweeks in FluSurv-NET, but pandemic influenza 
+#   season, to be dropped anyway
+merge(rt_seas_n, il_seas_n, by = "season") %>%
+  .[, check := (hosp_rt + ili) / hosp_rt == 2] %>%
   print
 
 print(ili_dat)
@@ -180,7 +173,8 @@ ggplot(ili_dat, aes(x = weekint, y = as.numeric(mmwr_week))) +
   theme(strip.text = element_text(face = "bold"))
 
 ilisum <- ili_dat[, .(mn_pct_wgt_ili = mean(pct_weighted_ili),
-                      mn_pct_unwgt_ili = mean(pct_unweighted_ili)), weekint]
+                      mn_pct_unwgt_ili = mean(pct_unweighted_ili)), 
+                    by = weekint]
 ilisum
 
 # ILI Percent
@@ -189,7 +183,6 @@ ggplot(ilisum, aes(x = weekint)) +
   geom_line(aes(y = mn_pct_unwgt_ili, linetype = "unweighted")) +
   labs(title = "Weighted vs. Unweighted ILI %") +
   theme_minimal()
-
 
 
 # %% Viral Activity -----------------------------------------------------------
@@ -212,7 +205,10 @@ ggplot(ilisum, aes(x = weekint)) +
 # - Use combined estimates for prior seasons due to lack of breakouts by
 #   clinical vs. public labs
 
-vrl <- list.files(paste0(rawdir, "/flu"), "^WHO", full.names = T)
+vrl <- list.files(
+  here::here("data", "raw", "flu"), pattern = "^WHO",
+  full.names = T
+  )
 
 print(vrl)
 
@@ -270,8 +266,6 @@ viral <- rbind(comb[, ..select_vrlcols], clin[, ..select_vrlcols]) %>%
         viral_flupct = `percent positive`)
         ]
 
-
-
 viral[year == 2009, range(mmwr_week)]
 viral[year == 2010, range(mmwr_week)]
 
@@ -307,6 +301,7 @@ viral_dat
 
 ggplot(viral_dat, aes(x = weekint, y = mean_vflupct)) +
   geom_line()
+
 
 # %% Holiday Epiweeks ---------------------------------------------------------
 
@@ -349,12 +344,10 @@ print(tg_dates)
 tg_epiweeks <- range(lubridate::epiweek(tg_dates))
 print(tg_epiweeks)
 
+
 # %% Merge Empirical Data ------------------------------------------------------
 
 # merge all weekly data
-# dt1: whsp_ct
-# dt2: whsp_rt
-# dt2: cdc_svr
 
 # select columns from datasets to merge
 sel_ctcols <- c(
@@ -365,11 +358,7 @@ sel_ctcols <- c(
 
 # %% Merge Hospitalizions and ILI Data
 flumerge <-
-  whsp_rt %>%
-    merge(., whsp_ct[, ..sel_ctcols],
-      by = c("season", "weekint"),
-      all.x = TRUE
-    ) %>%
+  whsp_eip_rt %>%
     merge(., ili_dat[, -c("year", "mmwr_week")],
       by = c("season", "weekint"),
       all.x = TRUE)
