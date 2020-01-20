@@ -182,8 +182,12 @@ ggplot(wbanno_t_miss[, wbanno := factor(wbanno)],
   aes(x = forcats::fct_reorder(wbanno, prop_missing),
       y = prop_missing)) +
   geom_point(size = 0.8) +
-  geom_segment(aes(x = wbanno, xend = wbanno,
-                   y = 0, yend = prop_missing)) +
+  geom_segment(
+    aes(x = wbanno,
+        xend = wbanno,
+        y = 0,
+        yend = prop_missing)
+    ) +
   labs(title = temp_title,
        y = miss_ylab,
        x = stn_xlab) +
@@ -198,11 +202,13 @@ epiweek_t_miss <- comp_crn[,
 boxplot(epiweek_t_miss$prop_missing)
 summary(epiweek_t_miss$prop_missing)
 
-ggplot(epiweek_t_miss, aes(x = weekint, y = prop_missing)) +
+ggplot(epiweek_t_miss, 
+       aes(x = weekint, 
+           y = prop_missing)) +
   geom_point(size = 0.8) +
   geom_smooth() +
   labs(title = temp_title,
-       y = temp_ylab,
+       y = miss_ylab,
        x = week_xlab)
 
 
@@ -221,8 +227,12 @@ state_t_miss
 state_t_miss %>%
   ggplot(aes(x = forcats::fct_reorder(state, prop_missing), y = prop_missing)) +
   geom_point() +
-  geom_segment(aes(x = state, xend = state,
-                   y = 0, yend = prop_missing)) +
+  geom_segment(
+    aes(x = state, 
+        xend = state,
+        y = 0,
+        yend = prop_missing)
+    ) +
   labs(title = temp_title,
        y = miss_ylab,
        x = state_xlab,
@@ -261,7 +271,9 @@ epiweek_rh_miss
 boxplot(epiweek_rh_miss$prop_missing)
 summary(epiweek_rh_miss$prop_missing)
 
-ggplot(epiweek_rh_miss, aes(x = weekint, y = prop_missing)) +
+ggplot(epiweek_rh_miss, 
+       aes(x = weekint,
+           y = prop_missing)) +
   geom_point(size = 0.8) +
   geom_smooth() +
   labs(title = humd_title,
@@ -316,7 +328,8 @@ rh_missing %>%
 # https://www.weather.gov/media/epz/wxcalc/tempConvert.pdf
 
 # @TODO 2019-11-26
-#  - May need to transform temperature and relative humidity distributions to #    calculate mean and 95% confidence interval
+#  - May need to transform temperature and relative humidity distributions to 
+#    calculate mean and 95% confidence interval
 #  - For each epiweek, confidence intervals should use sandwich estimator due
 #    to multiple observations from climate stations (based on daily readings)
 
@@ -369,23 +382,42 @@ print(rh_avg)
 
 # TEMPERATURE
 
-ggplot(temps, aes(x = epiweek, y = t_daily_avg_f)) +
+ggplot(temps, 
+       aes(x = epiweek,
+           y = t_daily_avg_f)
+       ) +
   geom_point(size = 0.3, alpha = 0.04) +
   geom_point(data = temps[, .(mnt = mean(t_daily_avg_f)), epiweek],
-             aes(x = epiweek, y = mnt, col = "mean"))
+             aes(x = epiweek, 
+                 y = mnt,
+                 col = "mean"))
 
-ggplot(temps, aes(x = t_daily_avg_f, y = factor(weekint), fill = ..x..)) +
+ggplot(temps, 
+       aes(x = t_daily_avg_f,
+           y = factor(weekint),
+           fill = ..x..)
+       ) +
   geom_density_ridges_gradient() +
   scale_fill_viridis_c()
 
 # RELATIVE HUMIDITY
 
-ggplot(rh, aes(x = epiweek, y = rh_daily_avg)) +
-  geom_point(size = 0.3, alpha = 0.4) +
+ggplot(rh,
+       aes(x = epiweek,
+           y = rh_daily_avg)
+       ) +
+  geom_point(size = 0.3,
+             alpha = 0.4) +
   geom_point(data = rh[, .(mnt = mean(rh_daily_avg)), epiweek],
-             aes(x = epiweek, y = mnt, col = "mean"))
+             aes(x = epiweek,
+                 y = mnt,
+                 col = "mean"))
 
-ggplot(rh, aes(x = rh_daily_avg, y = factor(weekint), fill = ..x..)) +
+ggplot(rh, 
+       aes(x = rh_daily_avg,
+           y = factor(weekint),
+           fill = ..x..)
+       ) +
   geom_density_ridges_gradient() +
   scale_fill_viridis_c()
 
