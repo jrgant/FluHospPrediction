@@ -19,7 +19,7 @@ print(seas_levels)
 # %% Empirical Hospitalization Counts -----------------------------------------
 
 # %%
-hsp_file <- here::here(rawdir, "flu", "Weekly_Data_Counts.csv")
+hsp_file <- here::here("data", "raw", "flu", "Weekly_Data_Counts.csv")
 
 hsp_names <- c(
   "season",
@@ -58,7 +58,7 @@ whsp_ct[, .N, by = c("season", "year")]
 # %% Empirical Hospitalization Rates -------------------------------------------
 
 # %%
-hsp_rates <- here::here(rawdir, "flu",
+hsp_rates <- here::here("data", "raw", "flu",
                         "FluSurveillance_EIP_Entire Network_Data.csv")
 
 whsp_rt_cols <- c(
@@ -96,7 +96,7 @@ whsp_rt[, .N, by = c("weekint", "mmwr_week")]
 
 # %% ILINet Data --------------------------------------------------------------
 
-ili_file <- here::here(rawdir, "flu", "ILINET.csv")
+ili_file <- here::here("data", "raw", "flu", "ILINET.csv")
 ili_dat  <- fread(ili_file)
 
 # %% Select columns
