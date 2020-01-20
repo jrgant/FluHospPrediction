@@ -8,7 +8,7 @@
 # If attempting to re-run this code after downloading the full USCRN data
 # directory, load library(FluHospPrediction) at the top of this file.
 
-datadir <- here::here("data", "uscrn")
+datadir <- here::here("data", "raw", "uscrn")
 years <- 2003:2019
 
 # List all files originally downloaded from FTP
