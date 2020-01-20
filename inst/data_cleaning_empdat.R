@@ -23,7 +23,7 @@ hsp_file <- here::here("data", "raw", "flu", "Weekly_Data_Counts.csv")
 
 hsp_names <- c(
   "season",
-  "mmwr_yrweek",
+  "mmwr_yr_epiweek",
   "flu.a",
   "flu.b",
   "flu.ab",
@@ -34,12 +34,12 @@ hsp_names <- c(
 whsp_ct <- fread(hsp_file, col.names = hsp_names)
 print(whsp_ct)
 
-# %%
+# format variables
 whsp_ct %>%
-  .[, ":=" (year = str_extract(mmwr_yrweek, "^[0-9]{4}"),
+  .[, ":="(year = str_extract(mmwr_yr_epiweek, "^[0-9]{4}"),
             mmwr_yr = str_extract(season, "^[0-9]{4}"),
-            mmwr_week = str_extract(mmwr_yrweek, "[0-9]{1,2}$"))] %>%
-  .[, ":=" (weekint = match(mmwr_week, epiweek_levels))] %>%
+            mmwr_week = str_extract(mmwr_yr_epiweek, "[0-9]{1,2}$"))] %>%
+  .[, ":="(weekint = match(mmwr_week, epiweek_levels))] %>%
   .[, flu.tot := rowSums(.SD, na.rm = TRUE),
                  .SDcols = paste0("flu.", c("a", "b", "ab", "unk"))]
 
@@ -50,8 +50,8 @@ print(whsp_ct)
 # %%
 # @NOTE 2019-08-21:
 #   MMWR weeks < 40 are out of sample, so NAs are expected
-whsp_ct[, .N, by = c("mmwr_yrweek", "mmwr_yr")]
-whsp_ct[, .N, by = c("mmwr_yrweek", "mmwr_week")]
+whsp_ct[, .N, by = c("mmwr_yr_epiweek", "mmwr_yr")]
+whsp_ct[, .N, by = c("mmwr_yr_epiweek", "mmwr_week")]
 whsp_ct[, .N, by = c("mmwr_week", "weekint")]
 whsp_ct[, .N, by = c("season", "year")]
 
