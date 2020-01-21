@@ -27,10 +27,12 @@ fs::dir_tree(recurse = 2)
     ## |   \-- 05_create_analysis_dataset.R
     ## +-- LICENSE.md
     ## +-- man
+    ## |   +-- calendar_mgmt.Rd
     ## |   +-- simcrv.Rd
     ## |   \-- simdist.Rd
     ## +-- NAMESPACE
     ## +-- R
+    ## |   +-- epiweek_match.R
     ## |   \-- simcrv_funs.R
     ## +-- README.md
     ## \-- README.Rmd
@@ -79,9 +81,9 @@ National Center for Immunization and Respiratory Diseases (NCIRD).
 
 ### USCRN Temperature and Relative Humidity
 
-Diamond HJ, Karl TR, Palecki MA, Baker CB, Bell JE, Leeper RD, et al.
-**U.S. Climate Reference Network after One Decade of Operations: Status
-and Assessment**. *Bull Am Meteorol Soc* 2013;94:485–98.
+Diamond HJ, Karl TR, Palecki MA, Baker CB, Bell JE, Leeper RD, et
+al. **U.S. Climate Reference Network after One Decade of Operations:
+Status and Assessment**. *Bull Am Meteorol Soc* 2013;94:485–98.
 <doi:10.1175/BAMS-D-12-00170.1>.
 
 ### Historical Thanksgiving Dates
