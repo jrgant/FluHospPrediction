@@ -250,49 +250,43 @@ table(clin[year == clco_sharedyear, week] %in% comb[year == clco_sharedyear, wee
 
 select_vrlcols <- c("year", "week", "percent positive")
 
-viral <- rbind(comb[, ..select_vrlcols], 
+viral_dat <- rbind(comb[, ..select_vrlcols], 
                clin[, ..select_vrlcols]) %>%
-  # subset to desired epiweeks
-  .[week %in% c(40:53, 1:17), ] %>%
-  # drop pandemic flu season
-  .[!((year == 2009 & week %in% 40:53) | (year == 2010 & week %in% 1:17))] %>%
-  # drop seasons prior to 2003
-  .[year >= 2003 & !(year == 2003 & week %in% 1:17)] %>%
-  # assign integer week
-  .[, weekint := epiweek_labels[match(week, epiweek_levels)]] %>%
-  # label flu season
+  .[, weekint := assign_weekint(week)] %>%
   .[, season := case_when(
-        weekint %in% 1:14 ~ paste(
-          year, str_extract(year + 1, "[0-9]{2}$"), sep = "-"
-          ),
-        weekint %in% 15:31 ~ paste(
-          year - 1, str_extract(year, "[0-9]{2}$"),  sep = "-")
-          )] %>%
-  # rename variables
-  .[, .(season,
-        year,
-        mmwr_week = week,
-        weekint,
-        viral_flupct = `percent positive`)
-        ]
+          weekint <= 13 ~ paste(year, 
+                                str_extract(year + 1, "[0-9]{2}$"), 
+                                sep = "-"),
+          weekint >= 14 ~ paste(year - 1, 
+                                str_extract(year, "[0-9]{2}$"), 
+                                sep = "-")
+    )] %>%
+  # filter to desired seasons and weeks
+  .[season %in% season_levels() & 
+      season != "2009-10" & 
+      weekint %in% -2:30] %>%
+  .[, .(season, 
+        mmwr_week = week, 
+        weekint, 
+        viral_flupct = `percent positive`)] %>%
+  .[, ":="(viral_flupct_lag1 = shift(viral_flupct, type = "lag"),
+           viral_flupct_lag2 = shift(viral_flupct, n = 2, type = "lag"))] %>%
+  # drop negative weeks
+  .[weekint >= 0]
 
-viral[year == 2009, range(mmwr_week)]
-viral[year == 2010, range(mmwr_week)]
+print(viral_dat)
 
-print(viral, topn = 50)
-
-theme_set(theme_clean())
-
-ggplot(viral,
+ggplot(viral_dat,
        aes(x = weekint,
            y = viral_flupct,
            col = factor(season))) +
   geom_line() +
-  labs(title = "Percent positive for flu")
+  labs(title = "Percent positive for flu") +
+  theme_ridges()
 
 # view flupct by week
 
-ggplot(viral, aes(x = viral_flupct,
+ggplot(viral_dat, aes(x = viral_flupct,
                   y = factor(weekint),
                   fill = ..x..)) +
   geom_density_ridges_gradient(
@@ -304,13 +298,6 @@ ggplot(viral, aes(x = viral_flupct,
   labs(x = "Percent of specimens positive for influenza",
        y = "Week (integer)") +
   theme_ridges(center = T)
-
-viral_dat <- viral[, .(mean_vflupct = mean(viral_flupct)), weekint]
-
-viral_dat
-
-ggplot(viral_dat, aes(x = weekint, y = mean_vflupct)) +
-  geom_line()
 
 
 # %% Holiday Epiweeks ---------------------------------------------------------
@@ -368,23 +355,24 @@ sel_ctcols <- c(
 # Merge Hospitalizations and ILI Data
 flumerge_full <- 
   whsp_eip_rt[!is.na(weekint)] %>%
-    merge(., ili_dat[, -c("year", "mmwr_week")],
-          by = c("season", "weekint"),
+    merge(., ili_dat,
+          by = c("season", "weekint", "mmwr_week"),
           all.x = TRUE) %>%
-    merge(., viral[, -c("year", "mmwr_week")],
-          by = c("season", "weekint"),
+    merge(., viral,
+          by = c("season", "weekint", "mmwr_week"),
           all.x = TRUE) %>%
     .[!season == "2009-10"]
 
 names(flumerge_full)
 print(flumerge_full)
 
-fluweek_sum <- 
-  flumerge_full[, .(cumrates = mean(cumrates),
-                    weekrate = mean(weekrate),
-                    pct_weighted_ili = mean(pct_weighted_ili),
-                    viralact = mean(viral_flupct)), 
-                by = .(weekint, mmwr_week)]
+sumvars <- c("cumrates", "weekrate",
+             "pctw_ili", "pctw_ili_lag1", "pctw_ili_lag2",
+             "viral_flupct", "viral_flupct_lag1", "viral_flupct_lag2")
+
+fluweek_sum <- flumerge_full[, lapply(.SD, function(x) round(mean(x), 3)),
+                               by = .(weekint, mmwr_week),
+                               .SDcols = sumvars]
 
 print(fluweek_sum)
 
