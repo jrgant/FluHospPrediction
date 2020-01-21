@@ -6,15 +6,6 @@ suppressMessages(library(FluHospPrediction))
 options(datatable.print.topn = 10)
 options(datatable.print.class = TRUE)
 
-## labeling of epiweeks and seasons
-epiweek_levels <- paste(c(40:53, 1:17))
-epiweek_labels <- 1:31
-cbind(epiweek_levels, epiweek_labels)
-
-
-seas_levels <- paste(2003:2018, str_extract(2004:2019, "[0-9]{2}$"), sep = "-")
-print(seas_levels)
-
 
 # %% Empirical Hospitalization Rates (FluSurv-NET) -----------------------------
 
@@ -35,8 +26,7 @@ hsp_fsn_rates <- here::here("data", "raw", "flu",
 whsp_fsn_rt <- fread(hsp_fsn_rates,
                      col.names = hsp_rate_cols,
                      quote = "") %>%
-  .[, mmwr_week := as.character(mmwr_week)] %>%
-  .[, weekint := match(mmwr_week, epiweek_levels)]
+  .[, weekint := assign_weekint(mmwr_week)]
 
 print(whsp_fsn_rt)
 
@@ -59,10 +49,7 @@ whsp_eip_rt <- fread(hsp_eip_rates,
   # drop age-specific rates and two variables
   .[agecat == "Overall", -c("catchment", "network")] %>%
   .[, ":="(network = "EIP",
-           mmwr_week = as.character(mmwr_week),
-           weekint = match(mmwr_week, epiweek_levels))]
-
-whsp_eip_rt
+           weekint = assign_weekint(mmwr_week))]
 
 print(whsp_eip_rt)
 
@@ -99,7 +86,7 @@ hsp_rate_compare[!is.na(weekint)] %>%
 ili_file <- here::here("data", "raw", "flu", "ILINET.csv")
 ili_dat  <- fread(ili_file)
 
-# %% Select columns
+# clean up column names
 
 ili_colnames <-
   names(ili_dat) %>%
@@ -110,61 +97,78 @@ ili_colnames <-
   str_replace_all("\\-", "to")
 
 print(ili_colnames)
-names(ili_dat) <- ili_colnames
+
+# select columns
 
 ili_col_select <-
   ili_colnames %>%
-  .[!grepl("region|age", .)]
+  .[!grepl("region|age", .) & grepl("year|week|^pct", .)]
 
+names(ili_dat) <- ili_colnames
 ili_dat <- ili_dat[, ..ili_col_select]
+
 setnames(ili_dat, "week", "mmwr_week")
+setnames(ili_dat, "pct_weighted_ili", "pctw_ili")
+setnames(ili_dat, "pct_unweighted_ili", "pctunw_ili")
 print(ili_dat)
 
-# %% Merge ILI
+# add variables and sort
 
-# create a season variable that conforms to the hospitalization dataset format
 ili_dat <-
   ili_dat %>%
-    .[, mmwr_week := as.character(mmwr_week)] %>%
-    .[, weekint := match(mmwr_week, epiweek_levels)] %>%
-    filter(year %in% 2003:2019 & mmwr_week %in% epiweek_levels) %>%
+    .[, weekint := assign_weekint(mmwr_week)] %>%
+    .[year %in% 2003:2019 & weekint %in% -2:30] %>%
     setDT
 
 print(ili_dat)
 
+# check ranges
+
+ili_dat[, .(range_weekint = range(weekint), 
+            range_epiweek = range(mmwr_week))]
+
 ili_dat[, season :=
-  ifelse(weekint %in% 1:14,
+  ifelse(weekint %in% -2:13,
     paste0(year, "-", str_extract(year + 1, "[0-9]{2}$")),
     paste0(year - 1, "-", str_extract(year, "[0-9]{2}$")))]
 
-ili_dat <- ili_dat[season != "2002-03"]
+ili_dat <- ili_dat[!season %in% c("2002-03", "2009-10")]
+
+# create lag variables
+ili_dat[, ":="(pctw_ili_lag1 = shift(pctw_ili, type = "lag"),
+               pctw_ili_lag2 = shift(pctw_ili, n = 2, type = "lag"))]
+
+
+ili_dat <- ili_dat[
+  weekint %in% 0:30,
+  .(season, mmwr_week, weekint, pctunw_ili, pctw_ili, pctw_ili_lag1, pctw_ili_lag2)
+  ]
+print(ili_dat)
+
+
+# %% Check ILI weeks vs. Hospitalization Weeks ------------------------------
 
 # Check number of weeks for each season
+
 rt_seas_n <- whsp_eip_rt[, .(hosp_rt = .N), season]
 il_seas_n <- ili_dat[, .(ili = .N), season]
 
 # @NOTE 
 # - season 2009-10: extra epiweeks in FluSurv-NET, but pandemic influenza 
 #   season, to be dropped anyway
+
 merge(rt_seas_n, il_seas_n, by = "season") %>%
   .[, check := (hosp_rt + ili) / hosp_rt == 2] %>%
   print
-
-print(ili_dat)
-
-
-# check weeks
-ili_dat[, .N, mmwr_week] %>%
-  .[order(factor(mmwr_week, epiweek_levels, epiweek_labels))]
-
-ili_dat[, .N, year]
 
 # max(N) -- should be 1
 ili_dat[, .N, c("season", "mmwr_week", "weekint")][, max(N)]
 
 # %% Plot to Check Proper weekint labeling
 
-ggplot(ili_dat, aes(x = weekint, y = as.numeric(mmwr_week))) +
+ili_dat[, .N, .(weekint, mmwr_week)]
+
+ggplot(ili_dat, aes(x = factor(weekint), y = mmwr_week)) +
   geom_point(size = 0.4) +
   geom_vline(aes(xintercept = 14.5), color = "red") +
   labs(caption = "Separation looks good") +
@@ -172,17 +176,29 @@ ggplot(ili_dat, aes(x = weekint, y = as.numeric(mmwr_week))) +
   theme_minimal() +
   theme(strip.text = element_text(face = "bold"))
 
-ilisum <- ili_dat[, .(mn_pct_wgt_ili = mean(pct_weighted_ili),
-                      mn_pct_unwgt_ili = mean(pct_unweighted_ili)), 
+ilisum <- ili_dat[, .(mn_pctunw_ili = mean(pctunw_ili),
+                      mn_pctw_ili = mean(pctw_ili),
+                      mn_pctw_ili_lag1 = mean(pctw_ili_lag1),
+                      mn_pctw_ili_lag2 = mean(pctw_ili_lag2)), 
                     by = weekint]
 ilisum
 
 # ILI Percent
 ggplot(ilisum, aes(x = weekint)) +
-  geom_line(aes(y = mn_pct_wgt_ili, linetype = "weighted")) +
-  geom_line(aes(y = mn_pct_unwgt_ili, linetype = "unweighted")) +
-  labs(title = "Weighted vs. Unweighted ILI %") +
-  theme_minimal()
+  geom_line(aes(y = mn_pctw_ili, linetype = "weighted")) +
+  geom_line(aes(y = mn_pctunw_ili, linetype = "unweighted")) +
+  labs(title = "Weighted vs. Unweighted ILI %",
+       y = "") +
+  theme_ridges()
+
+# Lagged ILIs (weighted)
+ggplot(ilisum, aes(x = weekint)) +
+  geom_line(aes(y = mn_pctw_ili, linetype = "lag = 0")) +
+  geom_line(aes(y = mn_pctw_ili_lag1, linetype = "lag = 1")) +
+  geom_line(aes(y = mn_pctw_ili_lag2, linetype = "lag = 2")) +
+  labs(title = "Inspect Weighted ILI % Lags",
+       y = "") +
+  theme_ridges()
 
 
 # %% Viral Activity -----------------------------------------------------------
