@@ -10,7 +10,7 @@
 #' @describeIn calendar_mgmt Assign an integer label based on epiweek.
 #' @export
 assign_weekint <- function(epiweek) {
-  ((epiweek >= 40) * (epiweek - 40)) + ((epiweek <= 39) * (epiweek + 14))
+  ((epiweek >= 40) * (epiweek - 40)) + ((epiweek <= 39) * (epiweek + 13))
 }
 
 #' @describeIn calendar_mgmt Return a vector of season labels. Standardizes the 
