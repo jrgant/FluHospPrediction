@@ -17,6 +17,6 @@ assign_weekint <- function(epiweek) {
 #' assignment of flu season labels (e.g., 2008-09).
 #' @export
 
-seas_levels <- function() {
+season_levels <- function() {
   paste(2003:2018, str_extract(2004:2019, "[0-9]{2}$"), sep = "-")
 }
