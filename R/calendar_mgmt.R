@@ -10,7 +10,7 @@
 #' @describeIn calendar_mgmt Assign an integer label based on epiweek.
 #' @export
 assign_weekint <- function(epiweek) {
-  out <- I(epiweek %in% 1:17) * (epiweek + 13) + I(epiweek %in% 18:53) * (epiweek - 40)
+  out <- I(epiweek %in% 1:17) * (epiweek + 12) + I(epiweek %in% 18:52) * (epiweek - 40)
   as.integer(out)
 }
 

@@ -26,12 +26,12 @@ hsp_fsn_rates <- here::here("data", "raw", "flu",
 whsp_fsn_rt <- fread(hsp_fsn_rates,
                      col.names = hsp_rate_cols,
                      quote = "") %>%
+  .[mmwr_week != 53] %>%
   .[, weekint := assign_weekint(mmwr_week)]
 
-print(whsp_fsn_rt)
+print(whsp_fsn_rt, topn = 50)
 
-dfSummary(whsp_fsn_rt) %>% view
-
+dfSummary(whsp_fsn_rt, graph.col = F)
 
 # %% Empirical Hospitalization Rates (EIP) -------------------------------------
 
@@ -48,10 +48,11 @@ whsp_eip_rt <- fread(hsp_eip_rates,
                      quote = "") %>%
   # drop age-specific rates and two variables
   .[agecat == "Overall", -c("catchment", "network")] %>%
+  .[mmwr_week != 53] %>%
   .[, ":="(network = "EIP",
            weekint = assign_weekint(mmwr_week))]
 
-print(whsp_eip_rt)
+print(whsp_eip_rt, topn = 50)
 
 
 # %% Compare FluSurv-NET to EIP (2009-2019) ------------------------------------
@@ -61,7 +62,7 @@ grabcols <- c("season", "mmwr_week", "weekint", "weekrate", "cumrates")
 hsp_rate_compare <- whsp_fsn_rt[whsp_eip_rt, 
                                 on = c("season", "mmwr_week", "weekint")] %>%
   .[, ratediff := weekrate - i.weekrate] %>%
-  .[!is.na(weekrate)]
+  .[!is.na(weekrate) & !mmwr_week %in% 35:39]
 
 summary(hsp_rate_compare$ratediff)
 
@@ -114,13 +115,13 @@ print(ili_dat)
 
 # add variables and sort
 
-ili_dat <-
-  ili_dat %>%
+ili_dat <- ili_dat %>%
+    .[mmwr_week != 53] %>%
     .[, weekint := assign_weekint(mmwr_week)] %>%
-    .[year %in% 2003:2019 & weekint %in% -2:30] %>%
-    setDT
+    .[year %in% 2003:2019 & weekint %in% -2:29]
+    
 
-print(ili_dat)
+print(ili_dat, topn = 50)
 
 # check ranges
 
@@ -128,10 +129,11 @@ ili_dat[, .(range_weekint = range(weekint),
             range_epiweek = range(mmwr_week))]
 
 ili_dat[, season :=
-  ifelse(weekint %in% -2:13,
+  ifelse(weekint %in% -2:12,
     paste0(year, "-", str_extract(year + 1, "[0-9]{2}$")),
     paste0(year - 1, "-", str_extract(year, "[0-9]{2}$")))]
 
+# drop out-of-sample season and pandemic flu season
 ili_dat <- ili_dat[!season %in% c("2002-03", "2009-10")]
 
 # create lag variables
@@ -143,7 +145,8 @@ ili_dat <- ili_dat[
   weekint %in% 0:30,
   .(season, mmwr_week, weekint, pctunw_ili, pctw_ili, pctw_ili_lag1, pctw_ili_lag2)
   ]
-print(ili_dat)
+
+print(ili_dat, topn = 50)
 
 
 # %% Check ILI weeks vs. Hospitalization Weeks ------------------------------
@@ -220,19 +223,20 @@ select_vrlcols <- c("year", "week", "percent positive")
 
 viral_dat <- rbind(comb[, ..select_vrlcols], 
                clin[, ..select_vrlcols]) %>%
+  .[week != 53] %>%
   .[, weekint := assign_weekint(week)] %>%
   .[, season := case_when(
-          weekint <= 13 ~ paste(year, 
+          weekint <= 12 ~ paste(year, 
                                 str_extract(year + 1, "[0-9]{2}$"), 
                                 sep = "-"),
-          weekint >= 14 ~ paste(year - 1, 
+          weekint >= 13 ~ paste(year - 1, 
                                 str_extract(year, "[0-9]{2}$"), 
                                 sep = "-")
     )] %>%
   # filter to desired seasons and weeks
   .[season %in% season_levels() & 
       season != "2009-10" & 
-      weekint %in% -2:30] %>%
+      weekint %in% -2:29] %>%
   .[, .(season, 
         mmwr_week = week, 
         weekint, 
@@ -240,15 +244,16 @@ viral_dat <- rbind(comb[, ..select_vrlcols],
   .[, ":="(viral_flupct_lag1 = shift(viral_flupct, type = "lag"),
            viral_flupct_lag2 = shift(viral_flupct, n = 2, type = "lag"))] %>%
   # drop negative weeks
-  .[weekint >= 0]
+  .[weekint >= 0] %>%
+  .[order(season, weekint)]
 
-print(viral_dat)
+print(viral_dat, topn = 50)
 
 ggplot(viral_dat,
        aes(x = weekint,
-           y = viral_flupct,
-           col = factor(season))) +
+           y = viral_flupct)) +
   geom_line() +
+  facet_wrap(~season) +
   labs(title = "Percent positive for flu") +
   theme_ridges()
 
@@ -321,12 +326,12 @@ sel_ctcols <- c(
 )
 
 # Merge Hospitalizations and ILI Data
-flumerge_full <- 
+flumerge_full <-
   whsp_eip_rt[!is.na(weekint)] %>%
     merge(., ili_dat,
           by = c("season", "weekint", "mmwr_week"),
           all.x = TRUE) %>%
-    merge(., viral,
+    merge(., viral_dat,
           by = c("season", "weekint", "mmwr_week"),
           all.x = TRUE) %>%
     .[!season == "2009-10"]
