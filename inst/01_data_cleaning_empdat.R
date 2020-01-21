@@ -168,38 +168,6 @@ ili_dat[, .N, c("season", "mmwr_week", "weekint")][, max(N)]
 
 ili_dat[, .N, .(weekint, mmwr_week)]
 
-ggplot(ili_dat, aes(x = factor(weekint), y = mmwr_week)) +
-  geom_point(size = 0.4) +
-  geom_vline(aes(xintercept = 14.5), color = "red") +
-  labs(caption = "Separation looks good") +
-  facet_wrap(~season) +
-  theme_minimal() +
-  theme(strip.text = element_text(face = "bold"))
-
-ilisum <- ili_dat[, .(mn_pctunw_ili = mean(pctunw_ili),
-                      mn_pctw_ili = mean(pctw_ili),
-                      mn_pctw_ili_lag1 = mean(pctw_ili_lag1),
-                      mn_pctw_ili_lag2 = mean(pctw_ili_lag2)), 
-                    by = weekint]
-ilisum
-
-# ILI Percent
-ggplot(ilisum, aes(x = weekint)) +
-  geom_line(aes(y = mn_pctw_ili, linetype = "weighted")) +
-  geom_line(aes(y = mn_pctunw_ili, linetype = "unweighted")) +
-  labs(title = "Weighted vs. Unweighted ILI %",
-       y = "") +
-  theme_ridges()
-
-# Lagged ILIs (weighted)
-ggplot(ilisum, aes(x = weekint)) +
-  geom_line(aes(y = mn_pctw_ili, linetype = "lag = 0")) +
-  geom_line(aes(y = mn_pctw_ili_lag1, linetype = "lag = 1")) +
-  geom_line(aes(y = mn_pctw_ili_lag2, linetype = "lag = 2")) +
-  labs(title = "Inspect Weighted ILI % Lags",
-       y = "") +
-  theme_ridges()
-
 
 # %% Viral Activity -----------------------------------------------------------
 
