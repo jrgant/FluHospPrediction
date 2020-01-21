@@ -11,6 +11,7 @@ fs::dir_tree(recurse = 2)
     ## +-- data
     ## |   +-- cleaned
     ## |   |   +-- empdat.csv
+    ## |   |   +-- empdat_weeksum.csv
     ## |   |   +-- hypothetical-curves.Rds
     ## |   |   \-- uscrn.csv
     ## |   \-- raw
@@ -19,11 +20,11 @@ fs::dir_tree(recurse = 2)
     ## +-- DESCRIPTION
     ## +-- FluHospPrediction.Rproj
     ## +-- inst
-    ## |   +-- data_cleaning_empdat.R
-    ## |   +-- data_cleaning_uscrn.R
-    ## |   +-- data_cleaning_uscrn_dropscript.R
-    ## |   +-- data_create_analytic.R
-    ## |   \-- trendfilter_curvesim.R
+    ## |   +-- 01_data_cleaning_empdat.R
+    ## |   +-- 02_data_cleaning_uscrn_dropscript.R
+    ## |   +-- 03_data_cleaning_uscrn.R
+    ## |   +-- 04_simulate_hospcurves.R
+    ## |   \-- 05_create_analysis_dataset.R
     ## +-- LICENSE.md
     ## +-- man
     ## |   +-- simcrv.Rd
@@ -78,9 +79,9 @@ National Center for Immunization and Respiratory Diseases (NCIRD).
 
 ### USCRN Temperature and Relative Humidity
 
-Diamond HJ, Karl TR, Palecki MA, Baker CB, Bell JE, Leeper RD, et
-al. **U.S. Climate Reference Network after One Decade of Operations:
-Status and Assessment**. *Bull Am Meteorol Soc* 2013;94:485–98.
+Diamond HJ, Karl TR, Palecki MA, Baker CB, Bell JE, Leeper RD, et al.
+**U.S. Climate Reference Network after One Decade of Operations: Status
+and Assessment**. *Bull Am Meteorol Soc* 2013;94:485–98.
 <doi:10.1175/BAMS-D-12-00170.1>.
 
 ### Historical Thanksgiving Dates
