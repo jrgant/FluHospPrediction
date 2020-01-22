@@ -26,8 +26,18 @@ hsp_fsn_rates <- here::here("data", "raw", "flu",
 whsp_fsn_rt <- fread(hsp_fsn_rates,
                      col.names = hsp_rate_cols,
                      quote = "") %>%
-  .[mmwr_week != 53] %>%
-  .[, weekint := assign_weekint(mmwr_week)]
+  # drop mmwr weeks out of sample
+  .[mmwr_week != 53 & !mmwr_week %in% 35:39] %>%
+  .[, ":="(network = "EIP",
+           weekint = assign_weekint(mmwr_week))] %>%
+  # create lag variables
+  .[, ":="(weekrate_lag1 = shift(weekrate, type = "lag"),
+           weekrate_lag2 = shift(weekrate, n = 2, type = "lag"))] %>%
+  # # assign first lag values as 0 (no data before epiweek 40)
+  .[, ":="(weekrate_lag1 = ifelse(is.na(weekrate_lag1), 0, weekrate_lag1),
+           weekrate_lag2 = ifelse(is.na(weekrate_lag2), 0, weekrate_lag2)),
+    by = season]
+  
 
 print(whsp_fsn_rt, topn = 50)
 
@@ -48,9 +58,17 @@ whsp_eip_rt <- fread(hsp_eip_rates,
                      quote = "") %>%
   # drop age-specific rates and two variables
   .[agecat == "Overall", -c("catchment", "network")] %>%
-  .[mmwr_week != 53] %>%
+  # drop mmwr weeks out of sample
+  .[mmwr_week != 53 & !mmwr_week %in% 35:39] %>%
   .[, ":="(network = "EIP",
-           weekint = assign_weekint(mmwr_week))]
+           weekint = assign_weekint(mmwr_week))] %>%
+  # create lag variables
+  .[, ":="(weekrate_lag1 = shift(weekrate, type = "lag"),
+           weekrate_lag2 = shift(weekrate, n = 2, type = "lag")),
+    by = season] %>%
+  # # assign first lag values as 0 (no data before epiweek 40)
+  .[, ":="(weekrate_lag1 = ifelse(is.na(weekrate_lag1), 0, weekrate_lag1),
+           weekrate_lag2 = ifelse(is.na(weekrate_lag2), 0, weekrate_lag2))]
 
 print(whsp_eip_rt, topn = 50)
 
@@ -62,7 +80,7 @@ grabcols <- c("season", "mmwr_week", "weekint", "weekrate", "cumrates")
 hsp_rate_compare <- whsp_fsn_rt[whsp_eip_rt, 
                                 on = c("season", "mmwr_week", "weekint")] %>%
   .[, ratediff := weekrate - i.weekrate] %>%
-  .[!is.na(weekrate) & !mmwr_week %in% 35:39]
+  .[!is.na(weekrate)]
 
 summary(hsp_rate_compare$ratediff)
 
@@ -111,6 +129,8 @@ ili_dat <- ili_dat[, ..ili_col_select]
 setnames(ili_dat, "week", "mmwr_week")
 setnames(ili_dat, "pct_weighted_ili", "pctw_ili")
 setnames(ili_dat, "pct_unweighted_ili", "pctunw_ili")
+
+str(ili_dat)
 print(ili_dat)
 
 # add variables and sort
@@ -120,7 +140,7 @@ ili_dat <- ili_dat %>%
     .[, weekint := assign_weekint(mmwr_week)] %>%
     .[year %in% 2003:2019 & weekint %in% -2:29]
     
-
+str(ili_dat)
 print(ili_dat, topn = 50)
 
 # check ranges
@@ -138,8 +158,8 @@ ili_dat <- ili_dat[!season %in% c("2002-03", "2009-10")]
 
 # create lag variables
 ili_dat[, ":="(pctw_ili_lag1 = shift(pctw_ili, type = "lag"),
-               pctw_ili_lag2 = shift(pctw_ili, n = 2, type = "lag"))]
-
+               pctw_ili_lag2 = shift(pctw_ili, n = 2, type = "lag")),
+        by = season]
 
 ili_dat <- ili_dat[
   weekint %in% 0:30,
@@ -242,35 +262,13 @@ viral_dat <- rbind(comb[, ..select_vrlcols],
         weekint, 
         viral_flupct = `percent positive`)] %>%
   .[, ":="(viral_flupct_lag1 = shift(viral_flupct, type = "lag"),
-           viral_flupct_lag2 = shift(viral_flupct, n = 2, type = "lag"))] %>%
+           viral_flupct_lag2 = shift(viral_flupct, n = 2, type = "lag")),
+    by = season] %>%
   # drop negative weeks
   .[weekint >= 0] %>%
   .[order(season, weekint)]
 
 print(viral_dat, topn = 50)
-
-ggplot(viral_dat,
-       aes(x = weekint,
-           y = viral_flupct)) +
-  geom_line() +
-  facet_wrap(~season) +
-  labs(title = "Percent positive for flu") +
-  theme_ridges()
-
-# view flupct by week
-
-ggplot(viral_dat, aes(x = viral_flupct,
-                  y = factor(weekint),
-                  fill = ..x..)) +
-  geom_density_ridges_gradient(
-    scale = 0.95,
-    jittered_points = T,
-    point_shape = "|",
-    position = position_points_jitter(height = 0)) +
-  scale_fill_viridis_c(name = "Percent positive") +
-  labs(x = "Percent of specimens positive for influenza",
-       y = "Week (integer)") +
-  theme_ridges(center = T)
 
 
 # %% Holiday Epiweeks ---------------------------------------------------------
@@ -336,10 +334,10 @@ flumerge_full <-
           all.x = TRUE) %>%
     .[!season == "2009-10"]
 
-names(flumerge_full)
-print(flumerge_full)
+str(flumerge_full)
+print(flumerge_full, topn = 50)
 
-sumvars <- c("cumrates", "weekrate",
+sumvars <- c("cumrates", "weekrate", "weekrate_lag1", "weekrate_lag2",
              "pctw_ili", "pctw_ili_lag1", "pctw_ili_lag2",
              "viral_flupct", "viral_flupct_lag1", "viral_flupct_lag2")
 
@@ -347,8 +345,8 @@ fluweek_sum <- flumerge_full[, lapply(.SD, function(x) round(mean(x), 3)),
                                by = .(weekint, mmwr_week),
                                .SDcols = sumvars]
 
-print(fluweek_sum)
-
+str(fluweek_sum)
+print(fluweek_sum, topn = 50)
 
 # FULL DATA BY SEASON AND EPIWEEK
 
@@ -359,6 +357,7 @@ out_full <- flumerge_full %>%
   # create squared weekint
   .[, weekint2 := weekint^2]
 
+str(out_full)
 print(out_full)
 
 
@@ -371,6 +370,7 @@ outweek_sum <- fluweek_sum %>%
   # create squared weekint
   .[, weekint2 := weekint^2]
 
+str(outweek_sum)
 print(outweek_sum)
 
 
@@ -404,7 +404,19 @@ ggplot(outweek_sum, aes(x = weekint, y = cumrates)) +
   labs(title = "Average cumulative hospitalization rates",
        y = rate_lab)
 
-# WEIGHTED ILI, WEEKLY
+# HOSPITALIZATION RATES AND LAGS, WEEKLY
+
+ggplot(melt(outweek_sum,
+            id.vars = "weekint", 
+            measure.vars = c("weekrate", "weekrate_lag1", "weekrate_lag2"), 
+            variable.name = "lagtype")) +
+  geom_line(aes(x = weekint,
+                y = value,
+                linetype = lagtype)) +
+  labs(title = "Hospitalization rates",
+       y = rate_lab)
+
+# WEIGHTED ILI AND LAGS, WEEKLY
 
 ggplot(melt(outweek_sum,
             id.vars = "weekint", 
@@ -416,6 +428,8 @@ ggplot(melt(outweek_sum,
   labs(title = "Weighted ILI %",
        y = "%")
 
+# VIRAL ACTIVITY AND LAGS, WEEKLY 
+
 ggplot(melt(outweek_sum,
             id.vars = "weekint", 
             measure.vars = c("viral_flupct", "viral_flupct_lag1", "viral_flupct_lag2"), 
@@ -423,8 +437,9 @@ ggplot(melt(outweek_sum,
   geom_line(aes(x = weekint,
                 y = value,
                 linetype = lagtype)) +
-  labs(title = "Weighted ILI %",
+  labs(title = "Viral Activity %",
        y = "%")
+
 
 # %% Write Data to Files -------------------------------------------------------
 
