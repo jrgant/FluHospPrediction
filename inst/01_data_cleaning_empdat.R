@@ -374,6 +374,58 @@ outweek_sum <- fluweek_sum %>%
 print(outweek_sum)
 
 
+
+# %% Plots ------------------------------------------------------------------
+
+theme_set(theme_ridges())
+rate_lab <- "rates per 100,000"
+
+# HOSPITALIZATION RATES, WEEKLY
+
+ggplot(outweek_sum, aes(x = weekint, y = weekrate)) +
+  geom_line(data = out_full, 
+            aes(x = weekint, 
+                y = weekrate,
+                group = season), 
+            col = "gray") +
+  geom_line(size = 1) +
+  labs(title = "Average weekly hospitalization rates", 
+       y = rate_lab)
+
+# HOSPITALIZATION RATES, CUMULATIVE
+
+ggplot(outweek_sum, aes(x = weekint, y = cumrates)) +
+  geom_line(data = out_full, 
+            aes(x = weekint, 
+                y = cumrates,
+                group = season), 
+            col = "gray") +
+  geom_line(size = 1) +
+  labs(title = "Average cumulative hospitalization rates",
+       y = rate_lab)
+
+# WEIGHTED ILI, WEEKLY
+
+ggplot(melt(outweek_sum,
+            id.vars = "weekint", 
+            measure.vars = c("pctw_ili", "pctw_ili_lag1", "pctw_ili_lag2"), 
+            variable.name = "lagtype")) +
+  geom_line(aes(x = weekint,
+                y = value,
+                linetype = lagtype)) +
+  labs(title = "Weighted ILI %",
+       y = "%")
+
+ggplot(melt(outweek_sum,
+            id.vars = "weekint", 
+            measure.vars = c("viral_flupct", "viral_flupct_lag1", "viral_flupct_lag2"), 
+            variable.name = "lagtype")) +
+  geom_line(aes(x = weekint,
+                y = value,
+                linetype = lagtype)) +
+  labs(title = "Weighted ILI %",
+       y = "%")
+
 # %% Write Data to Files -------------------------------------------------------
 
 # Merged data
