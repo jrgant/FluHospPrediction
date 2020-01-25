@@ -1,6 +1,5 @@
 #' Simulate a hospitalization curve
 
-
 #' @param print.plot Logical. Print a plot of the simulated curve. Default: FALSE
 #' @param print.samples Logical. Print stochastically sampled parameters as the function runs. Default: FALSE
 #' @param print.eq Logical. Print values calculated using the modified formula from Brooks et al (see Details). Default: FALSE 
@@ -38,7 +37,7 @@ simcrv <- function(
                    fitseas = tf_seas,
                    nu.min = 0.75,
                    nu.max = 1.25,
-                   lamb_val = 25) {
+                   lambda_index = 25) {
 
   # sample shape (f)
   s <- sample(unique(hstdat$season), 1)
@@ -84,7 +83,7 @@ simcrv <- function(
 
   f <- predict(fitseas[[s]],
     x.new = arg_f,
-    lambda = fitseas[[s]]$lambda[lamb_val]
+    lambda = fitseas[[s]]$lambda[lambda_index]
   )
 
   err <- rnorm(n = length(f), 0, sd = sqrt(sigma))
@@ -200,4 +199,59 @@ simdist <- function(nreps,
   } else {
     outhc
   }
+}
+
+
+#' Predict hospitalization curves based on observed seasons
+#' 
+#' @param hosp_obs A list containing the hospitalization rate data frames. One
+#'    dataset per list item.
+#' @param tf_list A list containing trend filter fits to observed seasons. One
+#'    fit per list item.
+#' @param tf_lambda_index Set which lambda parameter to feed to trend filter.
+#' 
+#' @return Trend filter weekly hospitalization rate predictions for each observed
+#'         season. 
+#'         
+#' @rdname predcurves
+#' @export predict_curves
+
+predict_curves <- function(hosp_obs, 
+                           tf_list,
+                           tf_lambda_index = 25) {
+  
+  lapply(setNames(names(tf_list), names(tf_list)), function(x) {
+    
+    get_lambda <- tf_list[[x]]$lambda[tf_lambda_index]
+    
+    pred.hosp <- predict(object = tf_list[[x]],
+                         xvar = hosp_obs[[x]]$x,
+                         lambda = get_lambda)
+    
+    obs.hosp1 <- tf_list[[x]]$y
+    obs.hosp2 <- hosp_obs[[x]]$weekrate
+    check.obs <- obs.hosp1 - obs.hosp2
+    
+    # calculate tau^2 for each season
+    sqerr <- (as.vector(pred.hosp) - obs.hosp1)^2
+    
+    if (sum(check.obs) != 0) stop("Observed hospitalizations don't match!")
+    
+    list(
+      dat = data.frame(
+        season = x,
+        weekint = 1:length(pred.hosp),
+        pred.hosp = as.vector(pred.hosp),
+        obs.hosp1,
+        obs.hosp2,
+        check.obs,
+        sqerr
+      ),
+      # take the mean of the squared error
+      mean.tau.sq = mean(sqerr),
+      tau = sqrt(mean(sqerr)),
+      # record lambda value used for predictions
+      lambda = get_lambda
+    )
+  })
 }

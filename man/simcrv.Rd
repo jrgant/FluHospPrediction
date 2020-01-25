@@ -7,7 +7,7 @@
 simcrv(print.plot = FALSE, print.samples = FALSE, print.eq = FALSE,
   verbose = FALSE, peakdist = dist_peaks, hstdat = ed,
   predfits = tf_pred, fitseas = tf_seas, nu.min = 0.75,
-  nu.max = 1.25, lamb_val = 25)
+  nu.max = 1.25, lambda_index = 25)
 }
 \arguments{
 \item{print.plot}{Logical. Print a plot of the simulated curve. Default: FALSE}

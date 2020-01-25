@@ -104,49 +104,13 @@ lapply(tf_seas, summary)
 
 # Predict
 # predict the weekly count (y) and error (tau) for each season
-pred_fun <- function(xvar, y, lambda_val) {
-  predict(y, new.data = xvar, lambda = y$lambda[lambda_val])
-}
 
-# @NOTE 2019-08-21:
-#   All subsequent trendfilter predictions use the lambda set here.
-sel_lambda <- 25
+sel_lambda <- 25  # choose lambda index (same for each trendfilter fit)
+                  # used from here forward
 
-# %%
-# @TODO 2019-08-12:
-#   Consider making this a function to call from R/simcrv_funs.R
-tf_pred <- lapply(
-  setNames(names(tf_seas), names(tf_seas)),
-  function(x, lambda_insert = sel_lambda) {
-
-    pred.hosp <- pred_fun(seas_obs[[x]]$x, tf_seas[[x]], lambda_insert)
-    obs.hosp1 <- tf_seas[[x]]$y
-    obs.hosp2 <- seas_obs[[x]]$weekrate
-    check.obs <- obs.hosp1 - obs.hosp2
-
-    # calculate tau^2 for each season
-    sqerr <- (as.vector(pred.hosp) - obs.hosp1)^2
-
-    if (sum(check.obs) != 0) stop("Observed hospitalizations don't match!")
-
-    list(
-      dat = data.frame(
-        season = x,
-        weekint = 1:length(pred.hosp),
-        pred.hosp = as.vector(pred.hosp),
-        obs.hosp1,
-        obs.hosp2,
-        check.obs,
-        sqerr
-      ),
-      # take the mean of the squared error
-      mean.tau.sq = mean(sqerr),
-      tau = sqrt(mean(sqerr)),
-      # record lambda value used for predictions
-      lambda = lambda_insert
-    )
-  }
-)
+tf_pred <- predict_curves(hosp_obs = seas_obs,
+                          tf_list = tf_seas,
+                          tf_lambda_index = sel_lambda)
 
 sapply(tf_pred, function(x) class(x$dat))
 print(tf_pred)
@@ -154,8 +118,8 @@ print(tf_pred)
 # %%
 # @NOTE: Suppressing 'unequal factor levels' warnings.
 #        A benign side effect of using dplyr::bind_rows().
-tfp <- suppressWarnings(map_dfr(tf_pred, function(x) x[[1]]))
-setDT(tfp)
+
+tfp <- rbindlist(lapply(tf_pred, function(x) x[[1]]))
 
 # plot predictions vs. empirical data
 tf_pred_plotlist <- lapply(unique(tfp$season), function(x) {
@@ -221,7 +185,7 @@ hhc <- suppressWarnings(
     seed = 1983745,
     gimme = "everything",
     sim_args = list(
-      lamb_val = sel_lambda,
+      lambda_index = sel_lambda,
       hstdat = ed
     )
   )
@@ -419,10 +383,7 @@ p +
   geom_density(aes(x = pkht), color = "gray", fill = "lightgray") +
   geom_jitter(aes(x = pkht, y = 0), height = 0.01, size = 0.2)
 
+
 # %% View and Write Plots ------------------------------------------------
 
-library(grid)
-suppressMessages(library(gridExtra))
-
-curve_grid <- grid.arrange(emp_hosp, emp_cumr, hyp_hosp_p, nrow = 1)
-grid::grid.draw(curve_grid)
+curve_grid <- grid.arrange(emp_hosp, emp_cumr, hyp_hosp_p, nrow = 3)
