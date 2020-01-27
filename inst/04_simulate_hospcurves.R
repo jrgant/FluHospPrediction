@@ -149,8 +149,6 @@ tf_pred_plotlist <- lapply(unique(tfp$season), function(x) {
 
 tf_pred_plotlist
 
-
-
 # Generate hypothetical curves -----------------------------------------
 
 # %%
@@ -165,8 +163,6 @@ dist_peaks <-
 print(dist_peaks)
 
 # Generate Hypothetical Curves ------------------------------------------
-
-library(tictoc)
 
 # number of curves to simulate
 reps <- 10000

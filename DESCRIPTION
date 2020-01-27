@@ -27,7 +27,8 @@ Depends:
     viridis,
     purrr,
     tidyr,
-    gridExtra
+    gridExtra,
+    tictoc
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
