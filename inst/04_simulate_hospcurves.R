@@ -87,7 +87,8 @@ emp_cumr <- ggplot(ed, aes(x = weekint, y = cumrates)) +
 
 emp_cumr
 
-# Quadratic Trend Filter ------------------------------------------------
+
+# %% Trend Filter -----------------------------------------------------------
 
 # Split Observed Seasons
 # each gets its own data.frame
@@ -96,17 +97,24 @@ print(seas_obs)
 
 # run trendfilter on each observed season
 tf_seas <- lapply(seas_obs, function(x) {
-  trendfilter(x = x$weekint, y = x$weekrate, k = 1, family = "gaussian")
+  
+  trendfilter(x = x$weekint,
+              y = x$weekrate,
+              k = 1,
+              family = "gaussian")
 })
 
 # view model summaries
 lapply(tf_seas, summary)
 
-# Predict
+
+# %% Predict ----------------------------------------------------------------
+
 # predict the weekly count (y) and error (tau) for each season
 
-sel_lambda <- 25  # choose lambda index (same for each trendfilter fit)
-                  # used from here forward
+# choose lambda index (same for each trendfilter fit)
+# used from here forward
+sel_lambda <- 25  
 
 tf_pred <- predict_curves(hosp_obs = seas_obs,
                           tf_list = tf_seas,
@@ -153,8 +161,7 @@ tf_pred_plotlist
 
 # %%
 # record peak weeks ()
-dist_peaks <-
-  ed[, .(
+dist_peaks <- ed[, .(
     pkhosp = max(weekrate),
     pkweek = weekint[weekrate == max(weekrate)]
     ),
@@ -188,43 +195,38 @@ hhc <- suppressWarnings(
 )
 toc()
 
-
-# %%
 names(hhc)
 head(hhc$hc)
 
-# check to make sure each season has 31 predicted periods
+# check to make sure each season has 30 predicted periods
 veclengths <- sapply(hhc$hc, function(x) length(x$eq$arg_f))
-table(veclengths == 31)
-
-# map prediction to i (1:31)
-hhc$outhc[, weekint := rep(1:31, length(unique(cid)))]
-print(hhc$outhc, topn = 40)
+table(veclengths == 30)
 
 names(ed)
-edsum <-
-  ed[, .(pkht = max(weekrate),
-         pkweekint = weekint[weekrate == max(weekrate)],
-         cumhosp = sum(weekrate)),
-     by = .(cid = season)] %>%
-  # in some cases, peak height was the same across weeks
-  # in all such cases, weeks were adjacent (take average peak week)
-  .[, .(pkht = mean(pkht),
-        pkweekint = mean(pkweekint),
-        cumhosp = mean(cumhosp)),
-    by = cid] %>%
-  .[, data := "empirical"]
 
-edsum
+edsum <- ed[, .(pkht = max(weekrate),
+                pkweekint = weekint[weekrate == max(weekrate)],
+                cumhosp = sum(weekrate)),
+            by = .(cid = season)] %>%
+            # in some cases, peak height was the same across weeks
+            # in all such cases, weeks were adjacent (take average peak week)
+            .[, .(pkht = mean(pkht),
+                  pkweekint = mean(pkweekint),
+                  cumhosp = mean(cumhosp)),
+              by = cid] %>%
+            .[, data := "empirical"]
+
+print(edsum)
 
 names(hhc$outhc)
+
 simsum <-
   hhc$outhc[, .(pkht = max(prediction),
                 pkweekint = weekint[prediction == max(prediction)],
                 cumhosp = sum(prediction)), by = .(cid = as.character(cid))] %>%
   .[, data := "simulated"]
 
-simsum
+print(simsum)
 
 edsim <- rbind(edsum, simsum)
 
@@ -274,7 +276,7 @@ hyp_hosp_p
 
 # @NOTE 2019-09-26:
 #  Run some summaries on the hypothetical curves to check for errors
-#  May still want to choose different lambda or conduct sensitivy around lambda
+#  May still want to choose different lambda or conduct sensitivity around lambda
 ggplot(hhc$outhc[weekint == 1, ], aes(x = prediction)) +
   geom_density() +
   labs(
@@ -284,11 +286,11 @@ ggplot(hhc$outhc[weekint == 1, ], aes(x = prediction)) +
 
 summary(hhc$outhc$prediction[hhc$outhc$weekint == 1])
 
-# Check for unrealistic predictions weekint 1 and 31
-hhc$outhc[weekint == 1, .(max = max(prediction),
+# Check for unrealistic predictions weekint 0 and 29
+hhc$outhc[weekint == 0, .(max = max(prediction),
                           min = min(prediction))]
 
-hhc$outhc[weekint == 31, .(max = max(prediction),
+hhc$outhc[weekint == 29, .(max = max(prediction),
                            min = min(prediction))]
 
 # Training and Test Sets ------------------------------------------------
@@ -369,15 +371,17 @@ train_pkhts <- hhc$train$trainset_sum %>%
         melt
 
 
-train_pkhts
+print(train_pkhts)
 
 p <- ggplot(hhc$train$trainset_sum) + 
   theme_minimal()
 
-# %%
-p +
-  geom_density(aes(x = pkht), color = "gray", fill = "lightgray") +
-  geom_jitter(aes(x = pkht, y = 0), height = 0.01, size = 0.2)
+p + geom_density(aes(x = pkht),
+                 color = "gray",
+                 fill = "lightgray") +
+    geom_jitter(aes(x = pkht, y = 0),
+                height = 0.01,
+                size = 0.2)
 
 
 # %% View and Write Plots ------------------------------------------------

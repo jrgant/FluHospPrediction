@@ -43,13 +43,13 @@ simcrv <- function(
   s <- sample(unique(hstdat$season), 1)
   max_j <- peakdist[, pkhosp[season == s]]
 
-  # one season had peak hospitalizations occur in two separate weeks
+  # 4 seasons had peak hospitalization rates occur in multiple weeks
   # to account for this, we sample one of the peak weeks at random for that
   # season
   pkw <- peakdist[, pkweek[season == s]]
   argmax_j <- ifelse(
     length(pkw) > 1,
-    pkw[sample(x = c(1, 2), size = 1)],
+    pkw[sample(x = 1:length(pkw), size = 1)],
     pkw
   )
 
@@ -79,7 +79,7 @@ simcrv <- function(
 
   # Calculate curve equation
   t1 <- theta / max_j
-  arg_f <- (1:31 - mu) / nu + argmax_j
+  arg_f <- (predfits[[s]]$dat$weekint - mu) / nu + argmax_j
 
   f <- predict(fitseas[[s]],
     x.new = arg_f,
@@ -163,29 +163,29 @@ simdist <- function(nreps,
                     seed = 1971,
                     gimme = NULL,
                     check = FALSE,
-                    nrow = 10,
+                    check_nrow = 10,
                     sim_args = list()) {
   set.seed(seed)
 
   hc <- replicate(nreps,
-    do.call("simcrv",
-      args = sim_args
-    ),
+    do.call("simcrv", args = sim_args),
     simplify = FALSE
   )
 
   outhc <-
     sapply(hc, function(x) {
-      data.frame(week = x$eq$arg_f, prediction = x$eq$fi_tf)
+      dt <- data.table(week = x$eq$arg_f, prediction = x$eq$fi_tf)
+      
+      # assign simulation id
+      dt[, weekint := min(.I):max(.I) - 1]
     },
     simplify = FALSE
     ) %>%
     rbindlist
 
-  setDT(outhc)
-  outhc[, cid := rep(1:nreps, each = 31)]
+  outhc[, cid := rep(1:nreps, each = length(unique(weekint)))]
 
-  if (check) print(outhc, topn = nrow)
+  if (check) print(outhc, topn = check_nrow)
 
   if (!is.null(gimme)) {
     if (gimme == "everything") {
@@ -232,22 +232,23 @@ predict_curves <- function(hosp_obs,
     obs.hosp2 <- hosp_obs[[x]]$weekrate
     check.obs <- obs.hosp1 - obs.hosp2
     
+    if (sum(check.obs) != 0) stop("Observed hospitalizations don't match!")
+    
     # calculate tau^2 for each season
     sqerr <- (as.vector(pred.hosp) - obs.hosp1)^2
     
-    if (sum(check.obs) != 0) stop("Observed hospitalizations don't match!")
     
     list(
-      dat = data.frame(
+      dat = data.table(
         season = x,
-        weekint = 1:length(pred.hosp),
+        weekint = 1:length(pred.hosp) - 1,
         pred.hosp = as.vector(pred.hosp),
         obs.hosp1,
         obs.hosp2,
         check.obs,
         sqerr
       ),
-      # take the mean of the squared error
+      # take the mean of the squared error across weeks
       mean.tau.sq = mean(sqerr),
       tau = sqrt(mean(sqerr)),
       # record lambda value used for predictions
