@@ -1,6 +1,6 @@
 # %% Setup ---------------------------------------------------------------------
 
-library(FluHospPrediction)
+suppressMessages(library(FluHospPrediction))
 
 # %% Climate Data -------------------------------------------------------------
 
@@ -25,8 +25,9 @@ library(FluHospPrediction)
 
 datadir <- here::here("data", "raw", "uscrn")
 
-# Global epiweek selection
-selweek <- c(38:53, 1:17)
+# Global epiweek selection 
+# (omits epiweek 53, as we're not counting the extra week in leap years)
+selweek <- c(38:52, 1:17)
 
 # Set global ggplot2 theme
 theme_set(theme_clean())
@@ -76,15 +77,14 @@ varnames <- c(varinfo[1, ], "state") %>% unlist
 varnames
 
 names(crn) <- tolower(varnames)
-crn
+print(crn)
 
 crnsub <- crn[, .(wbanno,
                   state,
                   lst_date,
                   t_daily_avg,
                   rh_daily_avg)]
-crnsub
-
+print(crnsub)
 summary(crnsub)
 
 # Replace -9999 with NA
@@ -92,19 +92,16 @@ nasub <- names(crnsub)[grepl("daily", names(crnsub))]
 
 crnsub[, c(nasub) := lapply(.SD, function(x) {
   ifelse(x == -9999, NA, x)
-  }
-  ), .SDcols = nasub]
+  }), .SDcols = nasub]
 
 # Supplement date information
 crnsub[, `:=`(year = as.numeric(str_extract(lst_date, "^20[0-9]{2}")),
-              epiweek = epiweek(ymd(lst_date)))]
+              epiweek = epiweek(ymd(lst_date)))] %>%
+     .[, weekint := assign_weekint(epiweek)]
 
-crnsub[, weekint := ifelse(epiweek %in% (37:53), epiweek - 39, epiweek + 14)]
-
-crnsub
-
+print(crnsub, topn = 50)
+print(crnsub[epiweek == 52])
 sort(unique(crnsub$epiweek))
-
 sort(unique(crnsub$weekint))
 
 # %% Missing Data Checks ------------------------------------------------------
@@ -144,12 +141,11 @@ comp_crn <- crnsub[
     t_daily_avg,
     rh_daily_avg)]
 
-tibble::glimpse(comp_crn)
-
+str(comp_crn)
 sort(unique(comp_crn$epiweek))
 
-# check all weekint in -1:31
-range(sort(unique(comp_crn$weekint)))
+# check all weekint in -2:29
+range(sort(unique(comp_crn$weekint))) == c(-2, 29)
 
 # check correct omission of pandemic flu weeks
 lapply(setNames(selweek, selweek),
@@ -174,15 +170,15 @@ print(missing_states)
 wbanno_t_miss <- comp_crn %>%
   .[, .(prop_missing = mean(is.na(t_daily_avg))), wbanno]
 
-tibble::glimpse(wbanno_t_miss)
+str(wbanno_t_miss)
 
 boxplot(wbanno_t_miss$prop_missing)
 summary(wbanno_t_miss$prop_missing)
 
 ggplot(wbanno_t_miss[, wbanno := factor(wbanno)],
-  aes(x = forcats::fct_reorder(wbanno, prop_missing),
-      y = prop_missing)) +
-  geom_point(size = 0.8) +
+       aes(x = forcats::fct_reorder(wbanno, prop_missing),
+           y = prop_missing)) +
+  geom_point() +
   geom_segment(
     aes(x = wbanno,
         xend = wbanno,
@@ -206,8 +202,11 @@ summary(epiweek_t_miss$prop_missing)
 ggplot(epiweek_t_miss, 
        aes(x = weekint, 
            y = prop_missing)) +
-  geom_point(size = 0.8) +
-  geom_smooth() +
+  geom_point(size = 1) +
+  geom_segment(aes(xend = weekint,
+                   y = 0,
+                   yend = prop_missing)) +
+  coord_cartesian(ylim = c(0, 0.05)) +
   labs(title = temp_title,
        y = miss_ylab,
        x = week_xlab)
@@ -224,7 +223,7 @@ state_t_miss <- comp_crn[,
   .(prop_missing = mean(is.na(t_daily_avg))),
   state]
 
-state_t_miss
+print(state_t_miss)
 
 state_t_miss %>%
   ggplot(aes(x = forcats::fct_reorder(state, prop_missing),
@@ -248,7 +247,7 @@ state_t_miss %>%
 wbanno_rh_miss <- comp_crn[,
   .(prop_missing = mean(is.na(rh_daily_avg))), wbanno]
 
-wbanno_rh_miss
+print(wbanno_rh_miss)
 
 boxplot(wbanno_rh_miss$prop_missing)
 summary(wbanno_rh_miss$prop_missing)
@@ -269,16 +268,16 @@ ggplot(wbanno_rh_miss[, wbanno := factor(wbanno)],
 
 epiweek_rh_miss <- comp_crn[, .(prop_missing = mean(is.na(rh_daily_avg))),
                               keyby = weekint]
-epiweek_rh_miss
+print(epiweek_rh_miss)
 
 boxplot(epiweek_rh_miss$prop_missing)
 summary(epiweek_rh_miss$prop_missing)
 
-ggplot(epiweek_rh_miss, 
+ggplot(epiweek_rh_miss,
        aes(x = weekint,
            y = prop_missing)) +
-  geom_point(size = 0.8) +
-  geom_smooth() +
+  geom_point() +
+  geom_segment(aes(xend = weekint, y = 0.5, yend = prop_missing )) +
   labs(title = humd_title,
        y = miss_ylab,
        x = week_xlab)
@@ -316,8 +315,8 @@ rh_missing <- comp_crn[, missing := ifelse(is.na(rh_daily_avg), 1, 0)]
 
 rh_missing %>%
   .[, .(prop_missing = mean(missing)), .(state, weekint)] %>%
-  ggplot(aes(x = factor(weekint),
-             y = prop_missing)) +
+  ggplot(aes(x = weekint, y = prop_missing)) +
+  geom_point() +
   geom_segment(aes(x = weekint, xend = weekint,
                    y = 0, yend = prop_missing)) +
   facet_wrap(~ state) +
@@ -340,19 +339,17 @@ temps <- comp_crn[!is.na(t_daily_avg) & (epiweek %in% selweek),
                 .(wbanno, epiweek, weekint, state, t_daily_avg)] %>%
               # calculate fahrenheit
               .[, t_daily_avg_f := (9 / 5) * t_daily_avg + 32] %>%
-              .[order(epiweek)]
+              .[order(weekint)]
 
-temps
+print(temps)
 
 temps[, freq(weekint)] %>% print
-
-temps[, epiweek := factor(epiweek, levels = selweek)]
 
 temps_avg <-
   temps[, .(mean_tempf = mean(t_daily_avg_f),
             sd_tempf = sd(t_daily_avg_f),
             n = .N),
-          keyby = epiweek] %>%
+          keyby = weekint] %>%
       .[, mean_tempf_lag1 := shift(mean_tempf, type = "lag")] %>%
       .[, mean_tempf_lag2 := shift(mean_tempf, n = 2, type = "lag")]
 
@@ -363,66 +360,39 @@ print(temps_avg)
 
 rh <- comp_crn[!is.na(rh_daily_avg) & (epiweek %in% selweek),
                .(epiweek, weekint, rh_daily_avg)] %>%
-               .[order(epiweek)]
-
-rh[, .N, epiweek]
-
-rh[, epiweek := factor(epiweek, levels = selweek)]
+               .[order(weekint)]
 
 rh_avg <-
   rh[, .(mean_rh = mean(rh_daily_avg),
          sd_rh = sd(rh_daily_avg),
          n = .N),
-         keyby = epiweek] %>%
+         keyby = weekint] %>%
     .[, mean_rh_lag1 := shift(mean_rh, type = "lag")] %>%
     .[, mean_rh_lag2 := shift(mean_rh, n = 2, type = "lag")]
 
-
-
 print(rh_avg)
+
 
 # %% Plot Climate Data --------------------------------------------------------
 
 # TEMPERATURE
 
-ggplot(temps, 
-       aes(x = epiweek,
-           y = t_daily_avg_f)
-       ) +
-  geom_point(size = 0.3, alpha = 0.04) +
-  geom_point(data = temps[, .(mnt = mean(t_daily_avg_f)), epiweek],
-             aes(x = epiweek, 
-                 y = mnt,
-                 col = "mean"))
-
-ggplot(temps, 
+ggplot(temps,
        aes(x = t_daily_avg_f,
            y = factor(weekint),
-           fill = ..x..)
-       ) +
+           fill = ..x..)) +
   geom_density_ridges_gradient() +
   scale_fill_viridis_c()
 
 # RELATIVE HUMIDITY
 
-ggplot(rh,
-       aes(x = epiweek,
-           y = rh_daily_avg)
-       ) +
-  geom_point(size = 0.3,
-             alpha = 0.4) +
-  geom_point(data = rh[, .(mnt = mean(rh_daily_avg)), epiweek],
-             aes(x = epiweek,
-                 y = mnt,
-                 col = "mean"))
-
 ggplot(rh, 
        aes(x = rh_daily_avg,
            y = factor(weekint),
-           fill = ..x..)
-       ) +
+           fill = ..x..)) +
   geom_density_ridges_gradient() +
   scale_fill_viridis_c()
+
 
 # %% Merge Data and Write -----------------------------------------------------
 
@@ -441,8 +411,10 @@ cbind(names(temps_avg), names(rh_avg))
 dropfrotemp <- c("sd_tempf", "n")
 dropfrorh <- c("sd_rh", "n")
 
-uscrn <- merge(temps_avg[!epiweek %in% 38:39] %>% .[, (dropfrotemp) := NULL],
-               rh_avg[!epiweek %in% 38:39] %>% .[, (dropfrorh) := NULL],
-               by = "epiweek")
+uscrn <- merge(temps_avg[!weekint %in% -2:-1] %>% .[, (dropfrotemp) := NULL],
+               rh_avg[!weekint %in% -2:-1] %>% .[, (dropfrorh) := NULL],
+               keyby = weekint)
+
+print(uscrn)
 
 fwrite(uscrn, here::here("data", "cleaned", "uscrn.csv"))
