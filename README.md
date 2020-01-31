@@ -4,14 +4,12 @@
 ## Installation
 
 Before installing this package, users will need to install the `glmgen`
-package, which is not on CRAN but is a dependency of this analysis
-package:
+package, which is not on CRAN but is a dependency:
 
 ``` r
 library(remotes)
-
 remotes::install_github("statsmaths/glmgen", subdir = "R_pkg/glmgen")
-remotes::install__github("jrgant/FluHospPrediction")
+remotes::install_github("jrgant/FluHospPrediction")
 ```
 
 ## Package directory (two levels deep):
