@@ -145,7 +145,7 @@ str(comp_crn)
 sort(unique(comp_crn$epiweek))
 
 # check all weekint in -2:29
-range(sort(unique(comp_crn$weekint))) == c(-2, 29)
+range(sort(unique(comp_crn$weekint))) == c(-1, 30)
 
 # check correct omission of pandemic flu weeks
 lapply(setNames(selweek, selweek),
@@ -202,7 +202,7 @@ summary(epiweek_t_miss$prop_missing)
 ggplot(epiweek_t_miss, 
        aes(x = weekint, 
            y = prop_missing)) +
-  geom_point(size = 1) +
+  geom_point() +
   geom_segment(aes(xend = weekint,
                    y = 0,
                    yend = prop_missing)) +
@@ -229,12 +229,10 @@ state_t_miss %>%
   ggplot(aes(x = forcats::fct_reorder(state, prop_missing),
              y = prop_missing)) +
   geom_point() +
-  geom_segment(
-    aes(x = state, 
+  geom_segment(aes(x = state, 
         xend = state,
         y = 0,
-        yend = prop_missing)
-    ) +
+        yend = prop_missing)) +
   labs(title = temp_title,
        y = miss_ylab,
        x = state_xlab,
@@ -255,11 +253,11 @@ summary(wbanno_rh_miss$prop_missing)
 ggplot(wbanno_rh_miss[, wbanno := factor(wbanno)],
   aes(x = forcats::fct_reorder(wbanno, prop_missing),
       y = prop_missing)) +
-  geom_point(size = 0.8) +
+  geom_point() +
   geom_segment(aes(x = wbanno, xend = wbanno,
                    y = 0, yend = prop_missing)) +
   labs(title = humd_title,
-       y= miss_ylab,
+       y = miss_ylab,
        x = stn_xlab) +
   theme(axis.text.x = element_blank())
 
@@ -411,8 +409,8 @@ cbind(names(temps_avg), names(rh_avg))
 dropfrotemp <- c("sd_tempf", "n")
 dropfrorh <- c("sd_rh", "n")
 
-uscrn <- merge(temps_avg[!weekint %in% -2:-1] %>% .[, (dropfrotemp) := NULL],
-               rh_avg[!weekint %in% -2:-1] %>% .[, (dropfrorh) := NULL],
+uscrn <- merge(temps_avg[!weekint %in% -1:0] %>% .[, (dropfrotemp) := NULL],
+               rh_avg[!weekint %in% -1:0] %>% .[, (dropfrorh) := NULL],
                keyby = weekint)
 
 print(uscrn)
