@@ -23,6 +23,11 @@ hsp_rate_cols <- c(
 hsp_fsn_rates <- here::here("data", "raw", "flu",
                             "FluSurveillance_FluSurv-NET_Entire Network_Data.csv")
 
+# @NOTE:
+# - A warning is thrown when fread() gets to the CDC disclaimer text contained
+#   in the .csv file.
+# - The warning is BENIGN.
+
 whsp_fsn_rt <- fread(hsp_fsn_rates,
                      col.names = hsp_rate_cols,
                      quote = "") %>%
@@ -75,10 +80,15 @@ print(whsp_eip_rt, topn = 50)
 
 # %% Compare FluSurv-NET to EIP (2009-2019) ------------------------------------
 
-grabcols <- c("season", "mmwr_week", "weekint", "weekrate", "cumrates")
+grabcols <- c("season",
+              "mmwr_week",
+              "weekint",
+              "weekrate",
+              "cumrates")
 
-hsp_rate_compare <- whsp_fsn_rt[whsp_eip_rt, 
-                                on = c("season", "mmwr_week", "weekint")] %>%
+hsp_rate_compare <- whsp_fsn_rt[
+    whsp_eip_rt, 
+    on = c("season", "mmwr_week", "weekint")] %>%
   .[, ratediff := weekrate - i.weekrate] %>%
   .[!is.na(weekrate)]
 
@@ -138,7 +148,7 @@ print(ili_dat)
 ili_dat <- ili_dat %>%
     .[mmwr_week != 53] %>%
     .[, weekint := assign_weekint(mmwr_week)] %>%
-    .[year %in% 2003:2019 & weekint %in% -2:29]
+    .[year %in% 2003:2019 & weekint %in% -1:30]
     
 str(ili_dat)
 print(ili_dat, topn = 50)
@@ -149,7 +159,7 @@ ili_dat[, .(range_weekint = range(weekint),
             range_epiweek = range(mmwr_week))]
 
 ili_dat[, season :=
-  ifelse(weekint %in% -2:12,
+  ifelse(weekint %in% -1:13,
     paste0(year, "-", str_extract(year + 1, "[0-9]{2}$")),
     paste0(year - 1, "-", str_extract(year, "[0-9]{2}$")))]
 
@@ -162,7 +172,7 @@ ili_dat[, ":="(pctw_ili_lag1 = shift(pctw_ili, type = "lag"),
         by = season]
 
 ili_dat <- ili_dat[
-  weekint %in% 0:30,
+  weekint %in% 1:30,
   .(season, mmwr_week, weekint, pctunw_ili, pctw_ili, pctw_ili_lag1, pctw_ili_lag2)
   ]
 
@@ -246,17 +256,17 @@ viral_dat <- rbind(comb[, ..select_vrlcols],
   .[week != 53] %>%
   .[, weekint := assign_weekint(week)] %>%
   .[, season := case_when(
-          weekint <= 12 ~ paste(year, 
+          weekint <= 13 ~ paste(year, 
                                 str_extract(year + 1, "[0-9]{2}$"), 
                                 sep = "-"),
-          weekint >= 13 ~ paste(year - 1, 
+          weekint >= 14 ~ paste(year - 1, 
                                 str_extract(year, "[0-9]{2}$"), 
                                 sep = "-")
     )] %>%
   # filter to desired seasons and weeks
   .[season %in% season_levels() & 
       season != "2009-10" & 
-      weekint %in% -2:29] %>%
+      weekint %in% -1:30] %>%
   .[, .(season, 
         mmwr_week = week, 
         weekint, 
@@ -264,8 +274,8 @@ viral_dat <- rbind(comb[, ..select_vrlcols],
   .[, ":="(viral_flupct_lag1 = shift(viral_flupct, type = "lag"),
            viral_flupct_lag2 = shift(viral_flupct, n = 2, type = "lag")),
     by = season] %>%
-  # drop negative weeks
-  .[weekint >= 0] %>%
+  # drop out-of-sample weeks
+  .[weekint >= 1] %>%
   .[order(season, weekint)]
 
 print(viral_dat, topn = 50)
@@ -285,10 +295,10 @@ holyrs <- seq(2003, 2018, 1) %>% .[. != 2009]
 
 # get epiweeks for Christmas
 xmas <- sapply(paste(holyrs, "12", "25", sep = "-"), lubridate::epiweek)
-xmas
+print(xmas)
 
 xmas_epiweeks <- range(xmas)
-xmas_epiweeks
+print(xmas_epiweeks)
 
 # get epiweeks for Thanksgiving
 # Date range for Thanksgiving: Nov. 22-28
@@ -299,7 +309,7 @@ tg_wiki <- read_html(tg_url) %>%
   html_table() %>%
   .[[1]]
 
-tg_wiki
+print(tg_wiki)
 
 tg_dates <- lapply(1:length(tg_wiki), function(x) {
   paste(na.omit(tg_wiki[[x]]), 11,
@@ -337,7 +347,8 @@ flumerge_full <-
 str(flumerge_full)
 print(flumerge_full, topn = 50)
 
-sumvars <- c("cumrates", "weekrate", "weekrate_lag1", "weekrate_lag2",
+sumvars <- c("cumrates", 
+             "weekrate", "weekrate_lag1", "weekrate_lag2",
              "pctw_ili", "pctw_ili_lag1", "pctw_ili_lag2",
              "viral_flupct", "viral_flupct_lag1", "viral_flupct_lag2")
 
@@ -372,7 +383,6 @@ outweek_sum <- fluweek_sum %>%
 
 str(outweek_sum)
 print(outweek_sum)
-
 
 
 # %% Plots ------------------------------------------------------------------

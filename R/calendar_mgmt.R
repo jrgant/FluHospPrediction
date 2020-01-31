@@ -6,11 +6,12 @@
 #' Epiweeks are the same as MMWR Weeks: 
 #'    https://wwwn.cdc.gov/nndss/document/MMWR_Week_overview.pdf
 
-#' @param epiweek Numeric. An epiweek: [1, 53]
+#' @param epiweek Numeric. An epiweek: [1, 52]
 #' @describeIn calendar_mgmt Assign an integer label based on epiweek.
 #' @export
+
 assign_weekint <- function(epiweek) {
-  out <- I(epiweek %in% 1:17) * (epiweek + 12) + I(epiweek %in% 18:52) * (epiweek - 40)
+  out <- I(epiweek %in% 1:17) * (epiweek + 13) + I(epiweek %in% 18:52) * (epiweek - 39)
   as.integer(out)
 }
 
