@@ -10,6 +10,7 @@
 # %% Load packages ----------------------------------------------------------
 
 suppressMessages(library(FluHospPrediction))
+library(tictoc)
 
 # data directories
 rawdir <- here::here("data", "raw")
@@ -155,7 +156,6 @@ tf_pred_plotlist <- lapply(unique(tfp$season), function(x) {
 tf_pred_plotlist
 
 
-
 # %% Generate hypothetical curves -------------------------------------------
 
 # record peak weeks
@@ -182,7 +182,7 @@ tic(paste0("Curve simulations (n = ", reps, ")"))
 #        hospitalizations outside the range of observed weeks, which is what (in
 #        part) produces the curve shifts necessary to generate the hypothetical 
 #        hospitalization curves. We map the predictions by index to the weekint
-#        range [0, 29].
+#        range.
 hhc <- suppressWarnings(
   simdist(
     nreps = reps,
@@ -252,22 +252,17 @@ simsub <- 15
 # every time this code block is run, a different subset of simulations
 # is sampled at random
 hyp_hosp_p <-
-  ggplot(
-    hhc$outhc[cid %in% sample(cid, size = simsub)],
-    aes(x = weekint, y = prediction)
-  ) +
-  geom_line(
-    aes(group = cid, color = factor(cid)),
-    alpha = 0.6
-  ) +
+  ggplot(hhc$outhc[cid %in% sample(cid, size = simsub)],
+         aes(x = weekint,
+             y = prediction)) +
+  geom_line(aes(group = cid, color = factor(cid)),
+            alpha = 0.6) +
   coord_cartesian(y = c(0, 10)) +
-  labs(
-    x = "Week",
-    y = "Predicted hospitalizations (per 100,000)",
-    title = "Hypothetical Hospitalization Curves",
-    subtitle = paste(simsub, "simulations"),
-    caption = paste0("Linear trend filter \u03BB", " = ", sel_lambda)
-  ) +
+  labs(x = "Week",
+       y = "Predicted hospitalizations (per 100,000)",
+       title = "Hypothetical Hospitalization Curves",
+       subtitle = paste(simsub, "simulations"),
+       caption = paste0("Linear trend filter \u03BB", " = ", sel_lambda)) +
   theme_tweak +
   theme(legend.position = "none")
 
@@ -287,11 +282,11 @@ ggplot(hhc$outhc[weekint == 1, ], aes(x = prediction)) +
 
 summary(hhc$outhc$prediction[hhc$outhc$weekint == 1])
 
-# Check for unrealistic predictions weekint 0 and 29
-hhc$outhc[weekint == 0, .(max = max(prediction),
+# Check for unrealistic predictions at start and end of season
+hhc$outhc[weekint == 1, .(max = max(prediction),
                           min = min(prediction))]
 
-hhc$outhc[weekint == 29, .(max = max(prediction),
+hhc$outhc[weekint == 30, .(max = max(prediction),
                            min = min(prediction))]
 
 # Training and Test Sets ------------------------------------------------
@@ -356,13 +351,12 @@ hhc$test <- list(
 print(hhc$test)
 
 
-# Write Hypothetical Curves ---------------------------------------------
+# %% Write Hypothetical Curves ----------------------------------------------
 
-# %%
 saveRDS(hhc, paste0(clndir, "/hypothetical-curves.Rds"))
 
 
-# %% Visualize Training Set Curves --------------------------------------
+# %% Visualize Training Set Curves ------------------------------------------
 
 train_pkhts <- hhc$train$trainset_sum %>%
   .[, .(median = median(pkht),

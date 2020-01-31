@@ -177,7 +177,7 @@ simdist <- function(nreps,
       dt <- data.table(week = x$eq$arg_f, prediction = x$eq$fi_tf)
       
       # assign simulation id
-      dt[, weekint := min(.I):max(.I) - 1]
+      dt[, weekint := min(.I):max(.I)]
     },
     simplify = FALSE
     ) %>%
