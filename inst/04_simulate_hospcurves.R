@@ -7,7 +7,7 @@
 # 2015;11:e1004382. doi:10.1371/journal.pcbi.1004382.
 
 
-# %% Load packages ---------------------------------------------------------
+# %% Load packages ----------------------------------------------------------
 
 suppressMessages(library(FluHospPrediction))
 
@@ -15,9 +15,10 @@ suppressMessages(library(FluHospPrediction))
 rawdir <- here::here("data", "raw")
 clndir <- here::here("data", "cleaned")
 
-# Load data -------------=----------------------------------------------
 
-# %% Setup
+# %% Load data -------------------------------------------------------------
+
+# Setup
 ed <- fread(paste0(clndir, "/empdat.csv"))
 class(ed)
 print(head(ed))
@@ -28,12 +29,12 @@ ed[, lapply(.SD, is.na)] %>%
   melt %>%
   print
 
-# %% Drop Pandemic Flu
+# Drop Pandemic Flu
 ed <- ed[season != "2009-10"]
 table(ed$season)
 
 
-# View Historical Curves ------------------------------------------------
+# %% View Historical Curves -------------------------------------------------
 
 sublab <- "2003–2019, excludes 2009–2010 season"
 sourcecap <- "Source: FluSurv-NET (Emerging Infections Program)"
@@ -123,10 +124,6 @@ tf_pred <- predict_curves(hosp_obs = seas_obs,
 sapply(tf_pred, function(x) class(x$dat))
 print(tf_pred)
 
-# %%
-# @NOTE: Suppressing 'unequal factor levels' warnings.
-#        A benign side effect of using dplyr::bind_rows().
-
 tfp <- rbindlist(lapply(tf_pred, function(x) x[[1]]))
 
 # plot predictions vs. empirical data
@@ -157,10 +154,11 @@ tf_pred_plotlist <- lapply(unique(tfp$season), function(x) {
 
 tf_pred_plotlist
 
-# Generate hypothetical curves -----------------------------------------
 
-# %%
-# record peak weeks ()
+
+# %% Generate hypothetical curves -------------------------------------------
+
+# record peak weeks
 dist_peaks <- ed[, .(
     pkhosp = max(weekrate),
     pkweek = weekint[weekrate == max(weekrate)]
@@ -169,19 +167,22 @@ dist_peaks <- ed[, .(
 
 print(dist_peaks)
 
-# Generate Hypothetical Curves ------------------------------------------
+
+# %% Generate Hypothetical Curves ------------------------------------------
 
 # number of curves to simulate
 reps <- 10000
 
-# %% Simulate Curves
-# time the simulations
+# Simulate Curves
+# time the simulations (not required)
 tic(paste0("Curve simulations (n = ", reps, ")"))
 
 # @NOTE: Suppressing warnings for predictions out of range. Expected behavior
 #        due to the curve stretching. R is being asked to predict
-#        hospitalizations outside the range [1, 31]. We restrict the prediction
-#        time periods and plots to this range.
+#        hospitalizations outside the range of observed weeks, which is what (in
+#        part) produces the curve shifts necessary to generate the hypothetical 
+#        hospitalization curves. We map the predictions by index to the weekint
+#        range [0, 29].
 hhc <- suppressWarnings(
   simdist(
     nreps = reps,
