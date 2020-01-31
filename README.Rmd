@@ -4,6 +4,18 @@ output: github_document
 
 # Predicting Flu Hospitalizations Paper
 
+## Installation
+
+Before installing this package, users will need to install the `glmgen` package, which is not on CRAN but is a dependency of this analysis package:
+
+```{r, eval = F}
+
+library(remotes)
+
+remotes::install_github("statsmaths/glmgen", subdir = "R_pkg/glmgen")
+remotes::install__github("jrgant/FluHospPrediction")
+```
+
 ## Package directory (two levels deep):
 
 ```{r}
@@ -25,7 +37,6 @@ All code files are stored in the /inst directory.
 
 
 ## Data Sources
-
 
 ### FluSurv-NET
 

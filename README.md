@@ -1,6 +1,19 @@
 
 # Predicting Flu Hospitalizations Paper
 
+## Installation
+
+Before installing this package, users will need to install the `glmgen`
+package, which is not on CRAN but is a dependency of this analysis
+package:
+
+``` r
+library(remotes)
+
+remotes::install_github("statsmaths/glmgen", subdir = "R_pkg/glmgen")
+remotes::install__github("jrgant/FluHospPrediction")
+```
+
 ## Package directory (two levels deep):
 
 ``` r
@@ -28,11 +41,12 @@ fs::dir_tree(recurse = 2)
     ## +-- LICENSE.md
     ## +-- man
     ## |   +-- calendar_mgmt.Rd
+    ## |   +-- predcurves.Rd
     ## |   +-- simcrv.Rd
     ## |   \-- simdist.Rd
     ## +-- NAMESPACE
     ## +-- R
-    ## |   +-- epiweek_match.R
+    ## |   +-- calendar_mgmt.R
     ## |   \-- simcrv_funs.R
     ## +-- README.md
     ## \-- README.Rmd
@@ -81,9 +95,9 @@ National Center for Immunization and Respiratory Diseases (NCIRD).
 
 ### USCRN Temperature and Relative Humidity
 
-Diamond HJ, Karl TR, Palecki MA, Baker CB, Bell JE, Leeper RD, et
-al. **U.S. Climate Reference Network after One Decade of Operations:
-Status and Assessment**. *Bull Am Meteorol Soc* 2013;94:485–98.
+Diamond HJ, Karl TR, Palecki MA, Baker CB, Bell JE, Leeper RD, et al.
+**U.S. Climate Reference Network after One Decade of Operations: Status
+and Assessment**. *Bull Am Meteorol Soc* 2013;94:485–98.
 <doi:10.1175/BAMS-D-12-00170.1>.
 
 ### Historical Thanksgiving Dates
