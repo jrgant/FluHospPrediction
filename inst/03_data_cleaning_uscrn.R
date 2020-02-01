@@ -415,4 +415,8 @@ uscrn <- merge(temps_avg[!weekint %in% -1:0] %>% .[, (dropfrotemp) := NULL],
 
 print(uscrn)
 
-fwrite(uscrn, here::here("data", "cleaned", "uscrn.csv"))
+
+saveRDS(list(temps = temps, relhumid = rh), 
+        here::here("data", "cleaned", "uscrn.Rds"))
+
+fwrite(uscrn, here::here("data", "cleaned", "uscrn_sum.csv"))
