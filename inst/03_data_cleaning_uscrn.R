@@ -25,7 +25,7 @@ suppressMessages(library(FluHospPrediction))
 
 datadir <- here::here("data", "raw", "uscrn")
 
-# Global epiweek selection 
+# Global epiweek selection
 # (omits epiweek 53, as we're not counting the extra week in leap years)
 selweek <- c(38:52, 1:17)
 
@@ -199,8 +199,8 @@ epiweek_t_miss <- comp_crn[,
 boxplot(epiweek_t_miss$prop_missing)
 summary(epiweek_t_miss$prop_missing)
 
-ggplot(epiweek_t_miss, 
-       aes(x = weekint, 
+ggplot(epiweek_t_miss,
+       aes(x = weekint,
            y = prop_missing)) +
   geom_point() +
   geom_segment(aes(xend = weekint,
@@ -229,7 +229,7 @@ state_t_miss %>%
   ggplot(aes(x = forcats::fct_reorder(state, prop_missing),
              y = prop_missing)) +
   geom_point() +
-  geom_segment(aes(x = state, 
+  geom_segment(aes(x = state,
         xend = state,
         y = 0,
         yend = prop_missing)) +
@@ -328,7 +328,7 @@ rh_missing %>%
 # https://www.weather.gov/media/epz/wxcalc/tempConvert.pdf
 
 # @TODO 2019-11-26
-#  - May need to transform temperature and relative humidity distributions to 
+#  - May need to transform temperature and relative humidity distributions to
 #    calculate mean and 95% confidence interval
 #  - For each epiweek, confidence intervals should use sandwich estimator due
 #    to multiple observations from climate stations (based on daily readings)
@@ -384,7 +384,7 @@ ggplot(temps,
 
 # RELATIVE HUMIDITY
 
-ggplot(rh, 
+ggplot(rh,
        aes(x = rh_daily_avg,
            y = factor(weekint),
            fill = ..x..)) +
@@ -415,8 +415,10 @@ uscrn <- merge(temps_avg[!weekint %in% -1:0] %>% .[, (dropfrotemp) := NULL],
 
 print(uscrn)
 
+# write
+saveRDS(comp_crn, here::here("data", "cleaned", "uscrn-include-missing.Rds"))
 
-saveRDS(list(temps = temps, relhumid = rh), 
+saveRDS(list(temps = temps, relhumid = rh),
         here::here("data", "cleaned", "uscrn.Rds"))
 
 fwrite(uscrn, here::here("data", "cleaned", "uscrn_sum.csv"))
