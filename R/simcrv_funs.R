@@ -2,7 +2,7 @@
 
 #' @param print.plot Logical. Print a plot of the simulated curve. Default: FALSE
 #' @param print.samples Logical. Print stochastically sampled parameters as the function runs. Default: FALSE
-#' @param print.eq Logical. Print values calculated using the modified formula from Brooks et al (see Details). Default: FALSE 
+#' @param print.eq Logical. Print values calculated using the modified formula from Brooks et al (see Details). Default: FALSE
 #' @param verbose Logical. Equivalent to setting both \code{print.samples} and \code{print.eq} to TRUE. Default: FALSE.
 #' @param peakdist Observed peak hospitalizations (height and week) from FluSurv-NET.
 #' @param hstdat Observed hospitalization curves from FluSurv-NET.
@@ -11,16 +11,16 @@
 #' @param nu.min Numeric. Minimum for random uniform draw governing simulated curve shifting.
 #' @param nu.max Numeric. Maximum for random uniform draw governing simulated curve shifting.
 
-#' @return Simulated curve depicting weekly hospitalization rates during a 
-#'    hypothetical flu season. Returns a list containing two nested lists, one 
+#' @return Simulated curve depicting weekly hospitalization rates during a
+#'    hypothetical flu season. Returns a list containing two nested lists, one
 #'    storing sampled values from random draws, and one storing the results of
 #'    feeding these values into the curve generating function.
 
-#' @details Methods adapted from: 
-#' 
-#'    Brooks LC, Farrow DC, Hyun S, Tibshirani RJ, Rosenfeld R. Flexible Modeling 
-#'    of Epidemics with an Empirical Bayes Framework. PLoS Comput Biol. 
-#'    2015 Aug;11(8):e1004382. 
+#' @details Methods adapted from:
+#'
+#'    Brooks LC, Farrow DC, Hyun S, Tibshirani RJ, Rosenfeld R. Flexible Modeling
+#'    of Epidemics with an Empirical Bayes Framework. PLoS Comput Biol.
+#'    2015 Aug;11(8):e1004382.
 #'    Available from: http://dx.doi.org/10.1371/journal.pcbi.1004382
 
 #' @import data.table
@@ -54,7 +54,8 @@ simcrv <- function(
   )
 
   # sample noise (sigma)
-  sigma <- predfits[[s]]$tau
+  sn <- sample(unique(hstdat$season), 1)
+  sigma <- predfits[[sn]]$tau
 
   # peak height (theta)
   theta <- runif(1, min(peakdist$pkhosp), max(peakdist$pkhosp))
@@ -138,20 +139,20 @@ simcrv <- function(
 #' @param nreps Numeric. Number of hypothetical hospitalization curves to generate.
 #' @param seed Numeric. Set random number generator seed.
 #' @param gimme Character. Can take three values: NULL, "everything", or "hc". NULL returns
-#'    a data.frame containing the simulated hospitalization curves, labeled with a 
+#'    a data.frame containing the simulated hospitalization curves, labeled with a
 #'    run id; "everything" returns both the full results of \code{simcrv()} and the
 #'    labeled simulations; "hc" returns only the results of \code{simcrv()}. Default:
 #'    NULL
 #' @param check Logical. Print preview of data.table containing labeled hypothetical
 #'    hospitalization curves.
 #' @param nrow Numeric. If \code{check = TRUE}, choose number of rows to preview.
-#'    Because functions use data.table, \code{nrow} applies at both the head and the 
+#'    Because functions use data.table, \code{nrow} applies at both the head and the
 #'    tail of the dataset. In other words, setting \code{nrow} to 10 would print 10
 #'    rows from the beginning of the dataset and 10 rows from the end of it.
 #' @param sim_args List. A list of arguments to pass to \code{simcrv} via \code{do.call}.
 #'    See \code{?do.call} for more information.
-#'    
-#'    
+#'
+#'
 #' @return A set of simulated hospitalization curves numbering \code{nreps}.
 #'
 #' @seealso \code{\link{simcrv}}
@@ -175,7 +176,7 @@ simdist <- function(nreps,
   outhc <-
     sapply(hc, function(x) {
       dt <- data.table(week = x$eq$arg_f, prediction = x$eq$fi_tf)
-      
+
       # assign simulation id
       dt[, weekint := min(.I):max(.I)]
     },
@@ -203,41 +204,41 @@ simdist <- function(nreps,
 
 
 #' Predict hospitalization curves based on observed seasons
-#' 
+#'
 #' @param hosp_obs A list containing the hospitalization rate data frames. One
 #'    dataset per list item.
 #' @param tf_list A list containing trend filter fits to observed seasons. One
 #'    fit per list item.
 #' @param tf_lambda_index Set which lambda parameter to feed to trend filter.
-#' 
+#'
 #' @return Trend filter weekly hospitalization rate predictions for each observed
-#'         season. 
-#'         
+#'         season.
+#'
 #' @rdname predcurves
 #' @export predict_curves
 
-predict_curves <- function(hosp_obs, 
+predict_curves <- function(hosp_obs,
                            tf_list,
                            tf_lambda_index = 25) {
-  
+
   lapply(setNames(names(tf_list), names(tf_list)), function(x) {
-    
+
     get_lambda <- tf_list[[x]]$lambda[tf_lambda_index]
-    
+
     pred.hosp <- predict(object = tf_list[[x]],
                          xvar = hosp_obs[[x]]$x,
                          lambda = get_lambda)
-    
+
     obs.hosp1 <- tf_list[[x]]$y
     obs.hosp2 <- hosp_obs[[x]]$weekrate
     check.obs <- obs.hosp1 - obs.hosp2
-    
+
     if (sum(check.obs) != 0) stop("Observed hospitalizations don't match!")
-    
+
     # calculate tau^2 for each season
     sqerr <- (as.vector(pred.hosp) - obs.hosp1)^2
-    
-    
+
+
     list(
       dat = data.table(
         season = x,
