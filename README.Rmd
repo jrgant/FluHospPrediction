@@ -23,16 +23,8 @@ fs::dir_tree(recurse = 2, regexp = "interim", invert = T)
 
 ## Code files
 
-All code files are stored in the /inst directory.
-
-| File | Description |
-| :------------------------------- | :---------------------------------------------------------------------------------------------- |
-| data_cleaning_empdat.R           | Clean empirical influenza data (ILINet, FluSurv-NET, WHO/NREVSS viral activity), and incorporate data on holidays (Thanksgiving, Christmas). |
-| data_cleaning_uscrn_dropscript.R | Drop unneeded files from full FTP download of United States Climate Research Network (USCRN) station data. |
-| data_cleaning_uscrn.R            | Clean USCRN data and format for merge into simulated hospitalization curve data. |
-| data_create_analytic.R           |... in progress ... create analytic dataset |
-| trendfilter_curvesim.R           | Fit trend filters to observed hospitalization curves and simulate hypothetical hospitalization curves based on these fits and the curve generation procedure. See `?simcrv`. |
-
+- All analytic code files are stored in /inst directory.
+- Functions to handle calendar date management and curve simulation located in /R
 
 ## Data Sources
 
