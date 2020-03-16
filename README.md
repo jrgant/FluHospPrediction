@@ -13,7 +13,8 @@ package, which is not on CRAN but is a dependency:
 
 ```{r, eval = F}
 library(remotes)
-remotes::install_github("statsmaths/glmgen", subdir = "R_pkg/glmgen") remotes::install_github("jrgant/FluHospPrediction")
+remotes::install_github("statsmaths/glmgen", subdir = "R_pkg/glmgen")
+remotes::install_github("jrgant/FluHospPrediction")
 ```
 
 Package directory (two levels deep):
