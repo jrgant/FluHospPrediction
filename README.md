@@ -60,33 +60,3 @@ Influenza Hospitalization Surveillance Network**. *Emerg Infect Dis.*
 **FluView: Influenza Hospitalization Surveillance Network**, Centers for
 Disease Control and Prevention. WEBSITE. (Emerging Infections Program
 data)
-
-### WHO/NREVSS Viral Activity
-
-National Center for Immunization and Respiratory Diseases (NCIRD).
-**U.S. Influenza Surveillance System: Purpose and Methods**
-\[Internet\]. Centers for Disease Control and Prevention. 2019 \[cited
-2020 Jan 9\]. Available from:
-<https://www.cdc.gov/flu/weekly/overview.htm>
-
-### ILINet
-
-National Center for Immunization and Respiratory Diseases (NCIRD).
-**U.S. Influenza Surveillance System: Purpose and Methods**
-\[Internet\]. Centers for Disease Control and Prevention. 2019 \[cited
-2020 Jan 9\]. Available from:
-<https://www.cdc.gov/flu/weekly/overview.htm>
-
-### USCRN Temperature and Relative Humidity
-
-Diamond HJ, Karl TR, Palecki MA, Baker CB, Bell JE, Leeper RD, et al.
-**U.S. Climate Reference Network after One Decade of Operations: Status
-and Assessment**. *Bull Am Meteorol Soc* 2013;94:485–98.
-<doi:10.1175/BAMS-D-12-00170.1>.
-
-### Historical Thanksgiving Dates
-
-Wikipedia contributors. **Thanksgiving (United States)**. In:
-*Wikipedia, The Free Encyclopedia* \[Internet\]. 30 Dec 2019 \[cited 10
-Jan 2020\]. Available:
-<https://en.wikipedia.org/w/index.php?title=Thanksgiving_(United_States)&oldid=933219107>
