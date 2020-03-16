@@ -10,7 +10,6 @@ emp <- fread(paste0(clndir, "/empdat_weeksum.csv"))
 sim <- readRDS(paste0(clndir, "/hypothetical-curves.Rds"))
 
 str(emp)
-str(crn)
 
 str(sim$outhc)
 str(sim$train$trainset)
