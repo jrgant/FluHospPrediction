@@ -16,8 +16,8 @@ remotes::install_github("jrgant/FluHospPrediction")
 
 ## Package directory (two levels deep):
 
-```{r}
-fs::dir_tree(recurse = 2)
+```{r, echo = F}
+fs::dir_tree(recurse = 2, regexp = "interim", invert = T)
 ```
 
 
