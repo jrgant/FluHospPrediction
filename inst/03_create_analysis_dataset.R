@@ -82,9 +82,13 @@ simd_bycid <- dcast(
   value.var = c("hosprate_100k", "cumhosp_100k")
 )
 
-dat <- merge(simd_bycid, targets, by = "cid")
-head(dat)
+dat_long <- merge(simd, targets, by = "cid")
+dat_wide <- merge(simd_bycid, targets, by = "cid")
+
+head(dat_long)
+head(dat_wide)
 
 # %% WRITE DATASET -------------------------------------------------------------
 
-fwrite(dat, here::here("data", "cleaned", "analysis_dataset.csv"))
+fwrite(dat_long, here::here("data", "cleaned", "analysis_dataset_long.csv"))
+fwrite(dat_wide, here::here("data", "cleaned", "analysis_dataset_wide.csv"))
