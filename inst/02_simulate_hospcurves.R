@@ -24,16 +24,15 @@ ed <- fread(paste0(clndir, "/empdat.csv"))
 class(ed)
 print(head(ed))
 
+# Drop Pandemic Flu
+ed <- ed[season != "2009-10"]
+table(ed$season)
+
 # check for missing data (all 0 = no missing data)
 ed[, lapply(.SD, is.na)] %>%
   .[, lapply(.SD, sum)] %>%
   melt %>%
   print
-
-# Drop Pandemic Flu
-ed <- ed[season != "2009-10"]
-table(ed$season)
-
 
 # %% View Historical Curves -------------------------------------------------
 
@@ -99,16 +98,16 @@ print(seas_obs)
 
 # run trendfilter on each observed season
 tf_seas <- lapply(seas_obs, function(x) {
-
-  trendfilter(x = x$weekint,
-              y = x$weekrate,
-              k = 1,
-              family = "gaussian")
+  trendfilter(
+    x = x$weekint,
+    y = x$weekrate,
+    k = 1,
+    family = "gaussian"
+  )
 })
 
 # view model summaries
 lapply(tf_seas, summary)
-
 
 # %% Predict ----------------------------------------------------------------
 
@@ -118,9 +117,11 @@ lapply(tf_seas, summary)
 # used from here forward
 sel_lambda <- 25
 
-tf_pred <- predict_curves(hosp_obs = seas_obs,
-                          tf_list = tf_seas,
-                          tf_lambda_index = sel_lambda)
+tf_pred <- predict_curves(
+  hosp_obs = seas_obs,
+  tf_list = tf_seas,
+  tf_lambda_index = sel_lambda
+)
 
 sapply(tf_pred, function(x) class(x$dat))
 print(tf_pred)
@@ -218,7 +219,6 @@ edsum <- ed[, .(pkht = max(weekrate),
             .[, data := "empirical"]
 
 print(edsum)
-
 names(hhc$outhc)
 
 simsum <-
@@ -262,7 +262,11 @@ hyp_hosp_p <-
        y = "Predicted hospitalizations (per 100,000)",
        title = "Hypothetical Hospitalization Curves",
        subtitle = paste(simsub, "simulations"),
-       caption = paste0("Linear trend filter \u03BB", " = ", sel_lambda)) +
+       caption = paste0(
+         "Linear trend filter \u03BB index",
+         " = ", sel_lambda
+         )
+      ) +
   theme_tweak +
   theme(legend.position = "none")
 
@@ -289,95 +293,16 @@ hhc$outhc[weekint == 1, .(max = max(prediction),
 hhc$outhc[weekint == 30, .(max = max(prediction),
                            min = min(prediction))]
 
-# Training and Test Sets ------------------------------------------------
-
-# %%
-# split hypothetical curves into training and test sets
-# summarize training and test sets
-hhc_sets <- c("train", "test")
-train_cids <- with(hhc$outhc, min(cid):(0.5 * max(cid)))
-test_cids <- with(hhc$outhc, unique(cid[!cid %in% train_cids]))
-
-# check ranges
-cat("Range of training set simulation IDs:", range(train_cids), "\n")
-cat("Range of test set simulation IDs:", range(test_cids), "\n")
-
-# split simulated curves
-hhc_splits <- lapply(setNames(hhc_sets, hhc_sets), function(x) {
-  if (x == "train") {
-    df <- hhc$outhc[cid %in% train_cids, ]
-  } else {
-      df <- hhc$outhc[cid %in% test_cids, ]
-  }
-
-  # summarize hypothetical curves by prediction target
-  df[, .(pkht = max(prediction),
-         pkwk = week[prediction == max(prediction)],
-         pkwk_int = weekint[prediction == max(prediction)],
-         cumhosp = max(cumsum(prediction)),
-         n = .N),
-     by = "cid"]
-})
-
-lapply(hhc_splits, nrow)
-
-# %%
-# Summaries Over Seasons
-
-# training set
-train_targets <- lapply(hhc_splits$train, summary)[-c(1, 3, 6, 7)]
-
-hhc$train <- list(
-  trainset = hhc$outhc[cid %in% train_cids, ],
-  trainset_sum = hhc_splits[["train"]],
-  train_targets = list(pkht = train_targets$pkht,
-                       pkwk_int = train_targets$pkwk_int,
-                       cumhosp = train_targets$cumhosp)
-)
-
-print(hhc$train)
-
-# test set
-test_targets <- lapply(hhc_splits$test, summary)[-c(1, 3, 6, 7)]
-
-hhc$test <- list(
-  testset = hhc$outhc[cid %in% test_cids, ],
-  testset_sum = hhc_splits[["test"]],
-  test_targets = list(pkht = test_targets$pkht,
-                      pkwk_int = test_targets$pkwk_int,
-                      cumhosp = test_targets$cumhosp)
-)
-
-print(hhc$test)
-
+hhc$outhc %>%
+  ggplot(
+    aes(x = prediction, y = factor(weekint))
+  ) +
+  geom_density_ridges() +
+  theme_ridges()
 
 # %% Write Hypothetical Curves ----------------------------------------------
 
 saveRDS(hhc, paste0(clndir, "/hypothetical-curves.Rds"))
-
-
-# %% Visualize Training Set Curves ------------------------------------------
-
-train_pkhts <- hhc$train$trainset_sum %>%
-  .[, .(median = median(pkht),
-        mean = mean(pkht),
-        q25 = quantile(pkht, 0.25),
-        q75 = quantile(pkht, 0.75))] %>%
-        melt
-
-
-print(train_pkhts)
-
-p <- ggplot(hhc$train$trainset_sum) +
-  theme_minimal()
-
-p + geom_density(aes(x = pkht),
-                 color = "gray",
-                 fill = "lightgray") +
-    geom_jitter(aes(x = pkht, y = 0),
-                height = 0.01,
-                size = 0.2)
-
 
 # %% View and Write Plots ------------------------------------------------
 
