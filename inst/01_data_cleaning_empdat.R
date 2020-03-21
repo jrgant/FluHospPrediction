@@ -20,8 +20,9 @@ hsp_rate_cols <- c(
   "weekrate"
 )
 
-hsp_fsn_rates <- here::here("data", "raw", "flu",
-                            "FluSurveillance_FluSurv-NET_Entire Network_Data.csv")
+hsp_fsn_rates <- here::here(
+  "data", "raw", "flu", "FluSurveillance_FluSurv-NET_Entire Network_Data.csv"
+)
 
 # @NOTE:
 # - A warning is thrown when fread() gets to the CDC disclaimer text contained
@@ -95,133 +96,69 @@ hsp_rate_compare[!is.na(weekint)] %>%
   labs(x = "Rate difference (per 100,000)") +
   theme_ridges()
 
-
-# %% Merge Empirical Data ------------------------------------------------------
-
-# select columns from datasets to merge
-sel_ctcols <- c(
-  "season",
-  "weekint",
-  "mmwr_week",
-  paste0("flu.", c("a", "b", "ab", "unk", "tot"))
-)
-
-# Merge Hospitalizations and ILI Data
-flumerge_full <- whsp_eip_rt[!is.na(weekint)] %>%
-    merge(., whsp_fsn_rt[!is.na(weekint)], by = c("season", "weekint")) %>%
-    .[!season == "2009-10"]
+# Merge FluSurv-NET and EIP data
+flumerge_full <-
+  whsp_eip_rt[!is.na(weekint)] %>%
+  merge(., whsp_fsn_rt[!is.na(weekint)],
+           by = c("season", "weekint", "mmwr_week"),
+           suffixes = c("_eip", "_fsn")
+           ) %>%
+  .[!season == "2009-10"]
 
 str(flumerge_full)
-print(flumerge_full, topn = 50)
+print(flumerge_full, topn = 20)
+unique(flumerge_full$agecat_eip) == "Overall"
+unique(flumerge_full$agecat_fsn) == "Overall"
 
-sumvars <- c("cumrates",
-             "weekrate", "weekrate_lag1", "weekrate_lag2",
-             "pctw_ili", "pctw_ili_lag1", "pctw_ili_lag2",
-             "viral_flupct", "viral_flupct_lag1", "viral_flupct_lag2")
+sumvars <- c(
+  "cumrates_eip", "weekrate_eip",
+  "cumrates_fsn", "weekrate_fsn"
+)
 
 fluweek_sum <- flumerge_full[, lapply(.SD, function(x) round(mean(x), 3)),
-                               by = .(weekint, mmwr_week),
+                               by = weekint,
                                .SDcols = sumvars]
 
 str(fluweek_sum)
 print(fluweek_sum, topn = 50)
 
-# FULL DATA BY SEASON AND EPIWEEK
-
-out_full <- flumerge_full %>%
-  # create holiday indicators
-  .[, xmas := mmwr_week %in% xmas_epiweeks] %>%
-  .[, thanksgiving := mmwr_week %in% tg_epiweeks] %>%
-  # create squared weekint
-  .[, weekint2 := weekint^2]
-
-str(out_full)
-print(out_full)
-
-
-# WEEKLY SUMMARIES
-
-outweek_sum <- fluweek_sum %>%
-  # create holiday indicators
-  .[, xmas := mmwr_week %in% xmas_epiweeks] %>%
-  .[, thanksgiving := mmwr_week %in% tg_epiweeks] %>%
-  # create squared weekint
-  .[, weekint2 := weekint^2]
-
-str(outweek_sum)
-print(outweek_sum)
-
-
-# %% Plots ------------------------------------------------------------------
+# Plots -
 
 theme_set(theme_ridges())
+
 rate_lab <- "rates per 100,000"
+eip_lab <- "Emerging Infections Program"
+fsn_lab <- "FluSurv Network"
 
-# HOSPITALIZATION RATES, WEEKLY
+# WEEKLY HOSPITALIZATION RATES, AVERAGE
 
-ggplot(outweek_sum, aes(x = weekint, y = weekrate)) +
-  geom_line(data = out_full,
-            aes(x = weekint,
-                y = weekrate,
-                group = season),
-            col = "gray") +
-  geom_line(size = 1) +
-  labs(title = "Average weekly hospitalization rates",
-       y = rate_lab)
+ggplot(fluweek_sum, aes(x = weekint)) +
+  geom_line(aes(y = weekrate_eip, color = eip_lab), size = 1, alpha = 0.7) +
+  geom_line(aes(y = weekrate_fsn, color = fsn_lab), size = 1, alpha = 0.7) +
+  scale_color_manual(name = "Source", values = c("black", "slategray")) +
+  labs(
+    "Average weekly hospitalization rates",
+    y = rate_lab
+    ) +
+  theme(legend.position = "top")
 
-# HOSPITALIZATION RATES, CUMULATIVE
+# WEEKLY CUMULATIVE HOSPITALIZATION RATES, AVERAGE
 
-ggplot(outweek_sum, aes(x = weekint, y = cumrates)) +
-  geom_line(data = out_full,
-            aes(x = weekint,
-                y = cumrates,
-                group = season),
-            col = "gray") +
-  geom_line(size = 1) +
-  labs(title = "Average cumulative hospitalization rates",
-       y = rate_lab)
-
-# HOSPITALIZATION RATES AND LAGS, WEEKLY
-
-ggplot(melt(outweek_sum,
-            id.vars = "weekint",
-            measure.vars = c("weekrate", "weekrate_lag1", "weekrate_lag2"),
-            variable.name = "lagtype")) +
-  geom_line(aes(x = weekint,
-                y = value,
-                linetype = lagtype)) +
-  labs(title = "Hospitalization rates",
-       y = rate_lab)
-
-# WEIGHTED ILI AND LAGS, WEEKLY
-
-ggplot(melt(outweek_sum,
-            id.vars = "weekint",
-            measure.vars = c("pctw_ili", "pctw_ili_lag1", "pctw_ili_lag2"),
-            variable.name = "lagtype")) +
-  geom_line(aes(x = weekint,
-                y = value,
-                linetype = lagtype)) +
-  labs(title = "Weighted ILI %",
-       y = "%")
-
-# VIRAL ACTIVITY AND LAGS, WEEKLY
-
-ggplot(melt(outweek_sum,
-            id.vars = "weekint",
-            measure.vars = c("viral_flupct", "viral_flupct_lag1", "viral_flupct_lag2"),
-            variable.name = "lagtype")) +
-  geom_line(aes(x = weekint,
-                y = value,
-                linetype = lagtype)) +
-  labs(title = "Viral Activity %",
-       y = "%")
+ggplot(fluweek_sum, aes(x = weekint)) +
+  geom_line(aes(y = cumrates_eip, color = eip_lab), size = 1, alpha = 0.7) +
+  geom_line(aes(y = cumrates_fsn, color = fsn_lab), size = 1, alpha = 0.7) +
+  scale_color_manual(name = "Source", values = c("black", "slategray")) +
+  labs(
+    "Average weekly cumulative hospitalization rates",
+    y = rate_lab
+    ) +
+  theme(legend.position = "top")
 
 
 # %% Write Data to Files -------------------------------------------------------
 
 # Merged data
-fwrite(out_full, here::here("data", "cleaned", "empdat.csv"))
+fwrite(whsp_eip_rt, here::here("data", "cleaned", "empdat.csv"))
 
 # Weekly averages
-fwrite(outweek_sum, here::here("data", "cleaned", "empdat_weeksum.csv"))
+fwrite(fluweek_sum, here::here("data", "cleaned", "empdat_weeksum.csv"))
