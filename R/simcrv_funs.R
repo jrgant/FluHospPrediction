@@ -27,17 +27,17 @@
 #' @export simcrv
 
 simcrv <- function(
-                   print.plot = FALSE,
-                   print.samples = FALSE,
-                   print.eq = FALSE,
-                   verbose = FALSE,
-                   peakdist = dist_peaks,
-                   hstdat = ed,
-                   predfits = tf_pred,
-                   fitseas = tf_seas,
-                   nu.min = 0.75,
-                   nu.max = 1.25,
-                   lambda_index = 25) {
+  print.plot = FALSE,
+  print.samples = FALSE,
+  print.eq = FALSE,
+  verbose = FALSE,
+  peakdist = dist_peaks,
+  hstdat = ed,
+  predfits = tf_pred,
+  fitseas = tf_seas,
+  nu.min = 0.75,
+  nu.max = 1.25,
+  lambda_index = 25) {
 
   # sample shape (f)
   s <- sample(unique(hstdat$season), 1)
