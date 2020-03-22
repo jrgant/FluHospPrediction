@@ -175,15 +175,19 @@ simdist <- function(nreps,
 
   outhc <-
     sapply(hc, function(x) {
-      dt <- data.table(week = x$eq$arg_f, prediction = x$eq$fi_tf)
+      dt <- data.table(
+        week = x$eq$arg_f,
+        prediction = x$eq$fi_tf,
+        template = x$sample$season
+      )
 
-      # assign simulation id
       dt[, weekint := min(.I):max(.I)]
     },
     simplify = FALSE
     ) %>%
     rbindlist
 
+  # assign simulation id
   outhc[, cid := rep(1:nreps, each = length(unique(weekint)))]
 
   if (check) print(outhc, topn = check_nrow)

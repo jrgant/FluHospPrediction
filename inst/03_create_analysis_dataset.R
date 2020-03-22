@@ -12,6 +12,8 @@ pacman::p_load(
 clndir <- here::here("data", "cleaned")
 sim <- readRDS(paste0(clndir, "/hypothetical-curves.Rds"))
 
+names(sim)
+sim$hc[[1]]
 str(sim$outhc)
 
 # @TODO 2020-03-17:
@@ -24,22 +26,33 @@ sim$outhc[, .(weekrange = paste0(min(weekint), ",", max(weekint))), cid] %>%
   .[, .N, weekrange]
 
 
+sim$outhc[weekint == 1, .N, by = template][, P := N/sum(N)] %>% print
+
+
 # %% ANALYTIC DATA SETS --------------------------------------------------------
 
-simd <- sim$outhc[, .(cid, weekint, hosprate_100k = prediction)] %>%
+simd <- sim$outhc[, .(cid, template, weekint, hosprate_100k = prediction)] %>%
   .[, cumhosp_100k := cumsum(hosprate_100k), by = cid]
+
 print(simd)
 
+# template lookup table
+simd_templates <- simd[, .(template = unique(template)), keyby = cid]
+
+# get peak rates
 simd_targ_pkrate <- simd[, .(pkrate = max(hosprate_100k)), keyby = cid]
 
+# get peak weeks
 simd_targ_pkweek <- simd[, .(
   pkweek = weekint[hosprate_100k == max(hosprate_100k)]
   ), keyby = cid]
 
+# get cumulative hospitalization rates
 simd_targ_cumhosp <- simd[, .(
   cumhosp = cumhosp_100k[weekint == 30]
   ), keyby = cid]
 
+print(simd_templates)
 print(simd_targ_pkrate)
 print(simd_targ_pkweek)
 print(simd_targ_cumhosp)
@@ -56,19 +69,19 @@ theme_set(
   theme(axis.title = element_text(face = "bold"))
 )
 
-ggplot(targs, aes(x = pkrate)) +
+ggplot(targets, aes(x = pkrate)) +
   geom_density(
     fill = "gray",
     color = "gray"
   )
 
-ggplot(targs, aes(x = pkweek)) +
+ggplot(targets, aes(x = pkweek)) +
   geom_density(
     fill = "gray",
     color = "gray"
   )
 
-ggplot(targs, aes(x = cumhosp)) +
+ggplot(targets, aes(x = cumhosp)) +
   geom_density(
     fill = "gray",
     color = "gray"
@@ -82,11 +95,14 @@ simd_bycid <- dcast(
   value.var = c("hosprate_100k", "cumhosp_100k")
 )
 
-dat_long <- merge(simd, targets, by = "cid")
-dat_wide <- merge(simd_bycid, targets, by = "cid")
+print(simd_bycid)
 
-head(dat_long)
-head(dat_wide)
+dat_long <- merge(simd, targets, by = "cid")
+dat_wide <- merge(simd_bycid[simd_templates], targets, by = "cid")
+
+print(dat_long)
+print(dat_wide)
+
 
 # %% WRITE DATASET -------------------------------------------------------------
 
