@@ -30,7 +30,7 @@ sim$outhc[, .(weekrange = paste0(min(weekint), ",", max(weekint))), cid] %>%
 sim$outhc[weekint == 1, .N, by = template][, P := N/sum(N)] %>% print
 
 
-# %% ANALYTIC DATA SETS --------------------------------------------------------
+# %% WIDE AND LONG DATA SETS ---------------------------------------------------
 
 simd <- sim$outhc[, .(cid, template, weekint, hosprate_100k = prediction)] %>%
   .[, cumhosp_100k := cumsum(hosprate_100k), by = cid]
@@ -105,7 +105,67 @@ print(dat_long)
 print(dat_wide)
 
 
+# %% AUGMENT DATA_WIDE --------------------------------------------------------
+
+# the index of the list marks the integer week
+dat_wide_list <- lapply(1:30, function(x, data = dat_wide) {
+
+  # list columns to select in each iteration
+  select_always <- c("cid", "template", "pkrate", "pkweek", "cumhosp")
+  select_hosp <- c(paste0("hosprate_100k_", 1:x), paste0("cumhosp_100k_", 1:x))
+  select_curr <- c(select_always, select_hosp)
+
+  sub <- data[, ..select_curr]
+
+  # create variables for lagged differences
+  if (x <= 5 & x > 1) {
+
+    diffcols_hosprate <- paste0("diff_hosprate_lag", 1:(x - 1))
+    diffcols_cumhosp <- paste0("diff_cumhosp_lag", 1:(x - 1))
+
+    for (i in 1:(x - 1)) {
+
+      sub[, diffcols_hosprate[i] := (get(paste0("hosprate_100k_", x)) -
+            get(paste0("hosprate_100k_", x - i))
+          )]
+
+      sub[, diffcols_cumhosp[i] := (get(paste0("cumhosp_100k_", x)) -
+            get(paste0("cumhosp_100k_", x - i))
+          )]
+    }
+
+  } else if (x > 5) {
+
+      diffcols_hosprate <- paste0("diff_hosprate_lag", 1:5)
+      diffcols_cumhosp <- paste0("diff_cumhosp_lag", 1:5)
+
+      for (i in 1:5) {
+
+        sub[, diffcols_hosprate[i] := (get(paste0("hosprate_100k_", x)) -
+              get(paste0("hosprate_100k_", x - i))
+            )]
+
+        sub[, diffcols_cumhosp[i] := (get(paste0("cumhosp_100k_", x)) -
+              get(paste0("cumhosp_100k_", x - i))
+            )]
+    }
+  }
+
+  return(sub)
+})
+
+dat_wide_list
+
+for(i in 1:length(dat_wide_list)) {
+  str(dat_wide_list[[i]]) %>% print
+}
+
 # %% WRITE DATASET -------------------------------------------------------------
 
-fwrite(dat_long, here::here("data", "cleaned", "analysis_dataset_long.csv"))
-fwrite(dat_wide, here::here("data", "cleaned", "analysis_dataset_wide.csv"))
+fwrite(dat_long, here::here("data", "cleaned", "sim_dataset_long.csv"))
+fwrite(dat_wide, here::here("data", "cleaned", "sim_dataset_wide.csv"))
+
+saveRDS(
+  dat_wide_list,
+  here::here("data", "cleaned", "sim_dataset_analytic.rds")
+)
