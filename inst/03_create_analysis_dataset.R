@@ -20,6 +20,7 @@ str(sim$outhc)
 # - Get rid of empirical dataset with viral percentage, ILI, etc.
 # - Get rid of training and test sets in sim$outhc; using cross-validation now
 
+
 # %% CHECK WEEKINT RANGES ------------------------------------------------------
 
 sim$outhc[, .(weekrange = paste0(min(weekint), ",", max(weekint))), cid] %>%
