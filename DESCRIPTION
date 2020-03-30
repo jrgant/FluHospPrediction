@@ -28,7 +28,8 @@ Depends:
     purrr,
     tidyr,
     gridExtra,
-    sl3
+    sl3,
+    SuperLearner
 Suggests:
     tictoc
 License: GPL-3
