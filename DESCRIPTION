@@ -27,7 +27,8 @@ Depends:
     viridis,
     purrr,
     tidyr,
-    gridExtra
+    gridExtra,
+    sl3
 Suggests:
     tictoc
 License: GPL-3
