@@ -126,11 +126,11 @@ dat_wide_list <- lapply(1:30, function(x, data = dat_wide) {
     for (i in 1:(x - 1)) {
 
       sub[, diffcols_hosprate[i] := (get(paste0("hosprate_100k_", x)) -
-            get(paste0("hosprate_100k_", x - i))
+              get(paste0("hosprate_100k_", x - i))
           )]
 
       sub[, diffcols_cumhosp[i] := (get(paste0("cumhosp_100k_", x)) -
-            get(paste0("cumhosp_100k_", x - i))
+              get(paste0("cumhosp_100k_", x - i))
           )]
     }
 
@@ -156,9 +156,20 @@ dat_wide_list <- lapply(1:30, function(x, data = dat_wide) {
 
 dat_wide_list
 
-for(i in 1:length(dat_wide_list)) {
+
+
+# set template to factor
+for (i in seq_along(dat_wide_list)) {
+  dat_wide_list[[i]][, template := as.factor(template)]
+}
+
+for (i in seq_along(dat_wide_list)) {
   str(dat_wide_list[[i]]) %>% print
 }
+
+dat_long[, template := as.factor(template)]
+dat_wide[, template := as.factor(template)]
+
 
 # %% WRITE DATASET -------------------------------------------------------------
 
