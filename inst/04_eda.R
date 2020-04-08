@@ -1,10 +1,10 @@
 # %% LOAD ----------------------------------------------------------------------
 
-library(FluHospPrediction)
+suppressMessages(library(FluHospPrediction))
 pacman::p_load(ggthemes)
 
-datl <- fread(here::here("data", "cleaned", "analysis_dataset_long.csv"))
-datw <- fread(here::here("data", "cleaned", "analysis_dataset_wide.csv"))
+datl <- fread(here::here("data", "cleaned", "sim_dataset_long.csv"))
+datw <- fread(here::here("data", "cleaned", "sim_dataset_wide.csv"))
 
 head(datl)
 head(datw)
