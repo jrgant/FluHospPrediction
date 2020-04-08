@@ -6,18 +6,22 @@ output: github_document
 
 ## Installation
 
-Before installing this package, users will need to install the `glmgen` package, which is not on CRAN but is a dependency:
+Before installing this package, users will need to install the `glmgen` and `sl3` packages, which are not on CRAN but are dependencies:
 
 ```{r, eval = F}
 library(remotes)
 remotes::install_github("statsmaths/glmgen", subdir = "R_pkg/glmgen")
+remotes::install_github("tlverse/sl3")
 remotes::install_github("jrgant/FluHospPrediction")
 ```
+
+Please post an issue if you have trouble installing.
+
 
 ## Package directory (two levels deep):
 
 ```{r, echo = F}
-fs::dir_tree(recurse = 2, regexp = "interim", invert = T)
+fs::dir_tree(recurse = 2, regexp = "interim|results", invert = T)
 ```
 
 

@@ -4,13 +4,16 @@
 ## Installation
 
 Before installing this package, users will need to install the `glmgen`
-package, which is not on CRAN but is a dependency:
+and `sl3` packages, which are not on CRAN but are dependencies:
 
 ``` r
 library(remotes)
 remotes::install_github("statsmaths/glmgen", subdir = "R_pkg/glmgen")
+remotes::install_github("tlverse/sl3")
 remotes::install_github("jrgant/FluHospPrediction")
 ```
+
+Please post an issue if you have trouble installing.
 
 ## Package directory (two levels deep):
 
@@ -20,7 +23,39 @@ remotes::install_github("jrgant/FluHospPrediction")
     ## |   |   +-- analytic_datasets.Rds
     ## |   |   +-- empdat.csv
     ## |   |   +-- empdat_weeksum.csv
-    ## |   |   \-- hypothetical-curves.Rds
+    ## |   |   +-- hypothetical-curves.Rds
+    ## |   |   +-- sim_dataset_analytic_week_01.Rds
+    ## |   |   +-- sim_dataset_analytic_week_02.Rds
+    ## |   |   +-- sim_dataset_analytic_week_03.Rds
+    ## |   |   +-- sim_dataset_analytic_week_04.Rds
+    ## |   |   +-- sim_dataset_analytic_week_05.Rds
+    ## |   |   +-- sim_dataset_analytic_week_06.Rds
+    ## |   |   +-- sim_dataset_analytic_week_07.Rds
+    ## |   |   +-- sim_dataset_analytic_week_08.Rds
+    ## |   |   +-- sim_dataset_analytic_week_09.Rds
+    ## |   |   +-- sim_dataset_analytic_week_10.Rds
+    ## |   |   +-- sim_dataset_analytic_week_11.Rds
+    ## |   |   +-- sim_dataset_analytic_week_12.Rds
+    ## |   |   +-- sim_dataset_analytic_week_13.Rds
+    ## |   |   +-- sim_dataset_analytic_week_14.Rds
+    ## |   |   +-- sim_dataset_analytic_week_15.Rds
+    ## |   |   +-- sim_dataset_analytic_week_16.Rds
+    ## |   |   +-- sim_dataset_analytic_week_17.Rds
+    ## |   |   +-- sim_dataset_analytic_week_18.Rds
+    ## |   |   +-- sim_dataset_analytic_week_19.Rds
+    ## |   |   +-- sim_dataset_analytic_week_20.Rds
+    ## |   |   +-- sim_dataset_analytic_week_21.Rds
+    ## |   |   +-- sim_dataset_analytic_week_22.Rds
+    ## |   |   +-- sim_dataset_analytic_week_23.Rds
+    ## |   |   +-- sim_dataset_analytic_week_24.Rds
+    ## |   |   +-- sim_dataset_analytic_week_25.Rds
+    ## |   |   +-- sim_dataset_analytic_week_26.Rds
+    ## |   |   +-- sim_dataset_analytic_week_27.Rds
+    ## |   |   +-- sim_dataset_analytic_week_28.Rds
+    ## |   |   +-- sim_dataset_analytic_week_29.Rds
+    ## |   |   +-- sim_dataset_analytic_week_30.Rds
+    ## |   |   +-- sim_dataset_long.csv
+    ## |   |   \-- sim_dataset_wide.csv
     ## |   \-- raw
     ## |       \-- flu
     ## +-- DESCRIPTION
@@ -28,7 +63,9 @@ remotes::install_github("jrgant/FluHospPrediction")
     ## +-- inst
     ## |   +-- 01_data_cleaning_empdat.R
     ## |   +-- 02_simulate_hospcurves.R
-    ## |   \-- 03_create_analysis_dataset.R
+    ## |   +-- 03_create_analysis_dataset.R
+    ## |   +-- 04_eda.R
+    ## |   \-- 05_superlearner.R
     ## +-- LICENSE.md
     ## +-- man
     ## |   +-- calendar_mgmt.Rd
@@ -40,7 +77,8 @@ remotes::install_github("jrgant/FluHospPrediction")
     ## |   +-- calendar_mgmt.R
     ## |   \-- simcrv_funs.R
     ## +-- README.md
-    ## \-- README.Rmd
+    ## +-- README.Rmd
+    ## \-- scratch.R
 
 ## Code files
 
