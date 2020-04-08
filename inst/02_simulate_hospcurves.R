@@ -172,7 +172,7 @@ print(dist_peaks)
 # %% Generate Hypothetical Curves ------------------------------------------
 
 # number of curves to simulate
-reps <- 10000
+reps <- 15000
 
 # Simulate Curves
 # time the simulations (not required)
