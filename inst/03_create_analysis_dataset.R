@@ -154,8 +154,7 @@ dat_wide_list <- lapply(1:30, function(x, data = dat_wide) {
   return(sub)
 })
 
-dat_wide_list
-
+format(object.size(dat_wide_list), units = "MB")
 
 
 # set template to factor
@@ -176,7 +175,16 @@ dat_wide[, template := as.factor(template)]
 fwrite(dat_long, here::here("data", "cleaned", "sim_dataset_long.csv"))
 fwrite(dat_wide, here::here("data", "cleaned", "sim_dataset_wide.csv"))
 
-saveRDS(
-  dat_wide_list,
-  here::here("data", "cleaned", "sim_dataset_analytic.rds")
-)
+
+slugs <- stringr::str_pad(1:30, width = 2, "left", pad = "0")
+
+for (i in 1:30) {
+  saveRDS(
+    dat_wide_list[[i]],
+    here::here(
+      "data", "cleaned",
+      paste0("sim_dataset_analytic_week_", slugs[i], ".Rds")
+    )
+  )
+}
+
