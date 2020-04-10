@@ -4,8 +4,14 @@
 \alias{simdist}
 \title{Simulate multiple hospitalization curves}
 \usage{
-simdist(nreps, seed = 1971, gimme = NULL, check = FALSE, nrow = 10,
-  sim_args = list())
+simdist(
+  nreps,
+  seed = 1971,
+  gimme = NULL,
+  check = FALSE,
+  check_nrow = 10,
+  sim_args = list()
+)
 }
 \arguments{
 \item{nreps}{Numeric. Number of hypothetical hospitalization curves to generate.}
@@ -13,7 +19,7 @@ simdist(nreps, seed = 1971, gimme = NULL, check = FALSE, nrow = 10,
 \item{seed}{Numeric. Set random number generator seed.}
 
 \item{gimme}{Character. Can take three values: NULL, "everything", or "hc". NULL returns
-a data.frame containing the simulated hospitalization curves, labeled with a 
+a data.frame containing the simulated hospitalization curves, labeled with a
 run id; "everything" returns both the full results of \code{simcrv()} and the
 labeled simulations; "hc" returns only the results of \code{simcrv()}. Default:
 NULL}
@@ -21,13 +27,13 @@ NULL}
 \item{check}{Logical. Print preview of data.table containing labeled hypothetical
 hospitalization curves.}
 
-\item{nrow}{Numeric. If \code{check = TRUE}, choose number of rows to preview.
-Because functions use data.table, \code{nrow} applies at both the head and the 
-tail of the dataset. In other words, setting \code{nrow} to 10 would print 10
-rows from the beginning of the dataset and 10 rows from the end of it.}
-
 \item{sim_args}{List. A list of arguments to pass to \code{simcrv} via \code{do.call}.
 See \code{?do.call} for more information.}
+
+\item{nrow}{Numeric. If \code{check = TRUE}, choose number of rows to preview.
+Because functions use data.table, \code{nrow} applies at both the head and the
+tail of the dataset. In other words, setting \code{nrow} to 10 would print 10
+rows from the beginning of the dataset and 10 rows from the end of it.}
 }
 \value{
 A set of simulated hospitalization curves numbering \code{nreps}.

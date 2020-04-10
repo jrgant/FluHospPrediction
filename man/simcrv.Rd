@@ -4,10 +4,19 @@
 \alias{simcrv}
 \title{Simulate a hospitalization curve}
 \usage{
-simcrv(print.plot = FALSE, print.samples = FALSE, print.eq = FALSE,
-  verbose = FALSE, peakdist = dist_peaks, hstdat = ed,
-  predfits = tf_pred, fitseas = tf_seas, nu.min = 0.75,
-  nu.max = 1.25, lambda_index = 25)
+simcrv(
+  print.plot = FALSE,
+  print.samples = FALSE,
+  print.eq = FALSE,
+  verbose = FALSE,
+  peakdist = dist_peaks,
+  hstdat = ed,
+  predfits = tf_pred,
+  fitseas = tf_seas,
+  nu.min = 0.75,
+  nu.max = 1.25,
+  lambda_index = 25
+)
 }
 \arguments{
 \item{print.plot}{Logical. Print a plot of the simulated curve. Default: FALSE}
@@ -31,8 +40,8 @@ simcrv(print.plot = FALSE, print.samples = FALSE, print.eq = FALSE,
 \item{nu.max}{Numeric. Maximum for random uniform draw governing simulated curve shifting.}
 }
 \value{
-Simulated curve depicting weekly hospitalization rates during a 
-   hypothetical flu season. Returns a list containing two nested lists, one 
+Simulated curve depicting weekly hospitalization rates during a
+   hypothetical flu season. Returns a list containing two nested lists, one
    storing sampled values from random draws, and one storing the results of
    feeding these values into the curve generating function.
 }
@@ -40,10 +49,10 @@ Simulated curve depicting weekly hospitalization rates during a
 Simulate a hospitalization curve
 }
 \details{
-Methods adapted from: 
+Methods adapted from:
 
-   Brooks LC, Farrow DC, Hyun S, Tibshirani RJ, Rosenfeld R. Flexible Modeling 
-   of Epidemics with an Empirical Bayes Framework. PLoS Comput Biol. 
-   2015 Aug;11(8):e1004382. 
+   Brooks LC, Farrow DC, Hyun S, Tibshirani RJ, Rosenfeld R. Flexible Modeling
+   of Epidemics with an Empirical Bayes Framework. PLoS Comput Biol.
+   2015 Aug;11(8):e1004382.
    Available from: http://dx.doi.org/10.1371/journal.pcbi.1004382
 }

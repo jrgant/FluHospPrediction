@@ -10,7 +10,7 @@ assign_weekint(epiweek)
 season_levels()
 }
 \arguments{
-\item{epiweek}{Numeric. An epiweek: [1, 53]}
+\item{epiweek}{Numeric. An epiweek: [1, 52]}
 }
 \description{
 Functions and objects to manage calendar-related variables (e.g., 
