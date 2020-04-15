@@ -29,7 +29,12 @@ Depends:
     tidyr,
     gridExtra,
     sl3,
-    SuperLearner
+    SuperLearner,
+    glmnet,
+    polspline,
+    nnet,
+    gam,
+    randomForest
 Suggests:
     tictoc
 License: GPL-3
