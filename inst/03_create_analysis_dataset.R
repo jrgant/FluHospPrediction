@@ -27,7 +27,7 @@ sim$outhc[, .(weekrange = paste0(min(weekint), ",", max(weekint))), cid] %>%
   .[, .N, weekrange]
 
 
-sim$outhc[weekint == 1, .N, by = template][, P := N/sum(N)] %>% print
+sim$outhc[weekint == 1, .N, by = template][, P := round(N/sum(N), 4)][]
 
 
 # %% WIDE AND LONG DATA SETS ---------------------------------------------------
@@ -66,7 +66,7 @@ print(targets)
 # plot densities
 
 theme_set(
-  theme_clean() +
+  theme_clean(base_size = 18) +
   theme(axis.title = element_text(face = "bold"))
 )
 
@@ -170,6 +170,48 @@ dat_long[, template := as.factor(template)]
 dat_wide[, template := as.factor(template)]
 
 
+### hc3xdchl1 = hosprate_100k_3 * diff_cumhosp_lag1
+### ch3xdhrl3 = cumhosp_100k_3 * diff_hosprate_lag3
+
+dat_wide_list2 <- lapply(1:30, function(x) {
+
+    # pull dataset for week x
+    curr <- dat_wide_list[[x]]
+
+    if (x > 1) {
+      currnames <- names(curr)
+
+      # get all variable names beginning with "hosprate" and save
+      # the name of the current week's hosprate separately
+      hr_vars <- currnames[grepl("^hosprate", currnames)]
+      hr_curr <- hr_vars[length(hr_vars)]
+
+      # do the same for cumhosp variable
+      ch_vars <- currnames[grepl("^cumhosp\\_100", currnames)]
+      ch_curr <- ch_vars[length(ch_vars)]
+
+      # get all diff variables 
+      hr_diff <- currnames[grepl("^diff_hosprate", currnames)]
+      ch_diff <- currnames[grepl("^diff_cumhosp", currnames)]
+
+      # create interactions between hr_curr and cumhosp diffs
+      hr_ixnames <- paste0("hr", x, "xdchl", 1:length(ch_diff))
+      ch_ixnames <- paste0("ch", x, "xdhrl", 1:length(hr_diff))
+
+     curr[, (hr_ixnames) :=
+                lapply(hr_diff, function(x) get(x) * get(ch_diff))]
+
+     curr[, (ch_ixnames) :=
+                lapply(ch_diff, function(x) get(x) * get(hr_diff))]
+    }
+
+    return(curr)
+})
+
+# check names
+sapply(dat_wide_list2, names)
+
+
 # %% WRITE DATASET -------------------------------------------------------------
 
 fwrite(dat_long, here::here("data", "cleaned", "sim_dataset_long.csv"))
@@ -180,7 +222,7 @@ slugs <- stringr::str_pad(1:30, width = 2, "left", pad = "0")
 
 for (i in 1:30) {
   saveRDS(
-    dat_wide_list[[i]],
+    dat_wide_list2[[i]],
     here::here(
       "data", "cleaned",
       paste0("sim_dataset_analytic_week_", slugs[i], ".Rds")
