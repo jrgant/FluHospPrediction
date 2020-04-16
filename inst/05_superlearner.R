@@ -51,7 +51,7 @@ task_target_pkrate <- make_sl3_Task(
   outcome = "pkrate",
   outcome_type = "continuous",
   folds = fold_scheme,
-  id = "cid"
+  id = "template_numeric"
 )
 
 task_target_pkrate
@@ -193,9 +193,6 @@ stack_test_pkrate <- Stack$new(
 # specify the metalearner (ensemble model)
 metalearner <- Lrnr_nnls$new(convex = TRUE)
 
-# @TODO 2020-03-31: write the absolute error loss function
-#     L : (O, Qbar): |Y - Qbar(A,W)|
-
 # Source:
 # Polley EC, Rose S, van der Laan MJ. Super Learning. In: van der Laan MJ, Rose
 # S, eds. Targeted Learning: Causal Inference for Observational and Experimental
@@ -204,7 +201,7 @@ metalearner <- Lrnr_nnls$new(convex = TRUE)
 
 # specify the super learner
 sl <- Lrnr_sl$new(
-  learners = stack_test_pkrate,
+  learners = stack_all_pkrate,
   metalearner = metalearner
 )
 
@@ -217,65 +214,28 @@ plan(multiprocess)  # makes multiple cores available
 sched_pkrate <- Scheduler$new(
   sl_fit,
   FutureJob,
-  nworkers = 8  # specify number of cores to use
+  nworkers = future::nbrOfWorkers()  # specify number of cores to use
 )
 
 tictoc::tic("Ensemble Super Learner Fit")
-cv_fit <- sched_pkrate$compute()
+sl_trained <- sched_pkrate$compute()
 tictoc::toc()
 
 # make sure all learners were trained
-sapply(cv_fit$learner_fits, . %>% .$is_trained)
+cat("Verify that all component learners were trained")
+sapply(sl_trained$learner_fits, . %>% .$is_trained)
 
-cv_fit$fit_object$full_fit
-cv_fit$fit_object$cv_meta_fit
-
-# stack_preds <- cv_fit$predict()
-#
-# tpreds <- cbind(temp, stack_preds)
-# head(tpreds)
-
-# infold_preds <- ggplot(tpreds, aes(x = stack_preds, y = pkrate)) +
-#   geom_point(alpha = 0.4) +
-#   geom_smooth() +
-#   facet_wrap(~template) +
-#   theme_base()
-#
-# infold_preds
-
-# ggsave(
-#   plot = infold_preds,
-#   device = "png",
-#   filename = here::here(
-#   "interim-reports/2020-04-06_Prelim-Results",
-#   "infold_preds.png"
-#   )
-#   )
-
-risk <- cv_fit$cv_risk(loss_squared_error)
+risk <- sl_trained$cv_risk(loss_squared_error)
 risk
 
-meta_preds <- cv_fit$fit_object$cv_meta_fit$predict()
-full_preds <- cv_fit$fit_object$full_fit$predict()
-
-print(meta_preds)
-print(full_preds)
+meta_preds <- sl_trained$fit_object$cv_meta_fit$predict()
 
 out <- list(
-  cv_fit = cv_fit,
-  risk = risk,
-  meta_preds = meta_preds
+  sl_trained,
+  risk,
+  meta_preds
 )
 
-prediction_plot(cv_fit)
+# Write Files -------------------------------------------------------------
 
-object.size(out)
-
-cp <- cbind(
-  temp,
-  full_preds
-)
-
-head(cp)
-
-# saveRDS(out, "results/test_sl.Rds")
+saveRDS(out, "results/sl_pkrate.Rds")
