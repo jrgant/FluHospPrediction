@@ -2,8 +2,8 @@
 
 export(assign_weekint)
 export(fhp_make_tasks)
+export(fhp_run_sl)
 export(fhp_spec_learners)
-export(fhs_run_sl)
 export(loss_absolute_error)
 export(predict_curves)
 export(season_levels)

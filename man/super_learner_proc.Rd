@@ -3,14 +3,14 @@
 \name{fhp_make_tasks}
 \alias{fhp_make_tasks}
 \alias{fhp_spec_learners}
-\alias{fhs_run_sl}
+\alias{fhp_run_sl}
 \title{Super Learner Procedure}
 \usage{
 fhp_make_tasks(target)
 
 fhp_spec_learners()
 
-fhs_run_sl(tasklist, write = TRUE, results_path = "results")
+fhp_run_sl(tasklist, write = TRUE, results_path = "results")
 }
 \arguments{
 \item{target}{One of "pkrate", "pkweek", or "cumhosp". No default.}
@@ -33,6 +33,6 @@ Functions used to specify and execute the enesemble learning procedure.
 
 \item \code{fhp_spec_learners}: Specify all the component learners and assign them to the global environment. Takes no arguments.
 
-\item \code{fhs_run_sl}: Runs the parallelized super learner procedure based on `fhp_make_tasks()` and `fhp_spec_learners()`.
+\item \code{fhp_run_sl}: Runs the parallelized super learner procedure based on `fhp_make_tasks()` and `fhp_spec_learners()`.
 }}
 
