@@ -213,9 +213,9 @@ fhp_spec_learners <- function() {
 #' @describeIn super_learner_proc Runs the parallelized super learner procedure based on `fhp_make_tasks()` and `fhp_spec_learners()`.
 #'
 #' @import delayed future sl3 tictoc
-#' @export fhs_run_sl
+#' @export fhp_run_sl
 
-fhs_run_sl <- function(tasklist, write = TRUE, results_path = "results") {
+fhp_run_sl <- function(tasklist, write = TRUE, results_path = "results") {
 
   # specify the super learner
   sl <<- Lrnr_sl$new(

@@ -9,4 +9,4 @@ suppressMessages(library(FluHospPrediction))
 
 pkrate_tasks <- suppressWarnings(fhp_make_tasks("pkrate"))
 fhp_spec_learners()
-fhs_run_sl(pkrate_tasks, write = TRUE)
+fhp_run_sl(pkrate_tasks, write = TRUE)
