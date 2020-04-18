@@ -8,7 +8,7 @@
 \usage{
 fhp_make_task(target, current_week)
 
-fhp_spec_learners()
+fhp_spec_learners(learner_pat = "^lrnr_", verbose = FALSE)
 
 fhp_run_sl(task, write = TRUE, results_path = "results", current_week)
 }
@@ -16,6 +16,12 @@ fhp_run_sl(task, write = TRUE, results_path = "results", current_week)
 \item{target}{One of "pkrate", "pkweek", or "cumhosp". No default.}
 
 \item{current_week}{The week number at which predictions are made.}
+
+\item{learner_pat}{Regular expression specifying which learners to include in the learner stack. Defaults
+to "^lrnr_", which adds any object whose name starts with "lrnr" in the global environment
+to the learner stack. To select a specific subset of learners, provide appropriate regex.}
+
+\item{verbose}{Logical indicating whether to print the full component learner stack. Defaults to FALSE.}
 
 \item{task}{A learning task created by `fhp_make_task()`.}
 
@@ -33,7 +39,7 @@ Functions used to specify and execute the enesemble learning procedure.
 \itemize{
 \item \code{fhp_make_task}: Specify learning tasks for each week.
 
-\item \code{fhp_spec_learners}: Specify all the component learners and assign them to the global environment. Takes no arguments.
+\item \code{fhp_spec_learners}: Specify all the component learners and assign them to the global environment.
 
 \item \code{fhp_run_sl}: Runs the parallelized super learner procedure based on `fhp_make_tasks()` and `fhp_spec_learners()`.
 }}

@@ -57,20 +57,24 @@ fhp_make_task <- function(target, current_week) {
 }
 
 
-
+#' @param learner_pat Regular expression specifying which learners to include in the learner stack. Defaults
+#'                    to "^lrnr_", which adds any object whose name starts with "lrnr" in the global environment
+#'                    to the learner stack. To select a specific subset of learners, provide appropriate regex.
 #'
-#' @describeIn super_learner_proc Specify all the component learners and assign them to the global environment. Takes no arguments.
+#' @param verbose Logical indicating whether to print the full component learner stack. Defaults to FALSE.
+#'
+#' @describeIn super_learner_proc Specify all the component learners and assign them to the global environment.
 #'
 #' @export fhp_spec_learners
 
-fhp_spec_learners <- function() {
+fhp_spec_learners <- function(learner_pat = "^lrnr_", verbose = FALSE) {
 
   # Mean learner
   lrnr_mean <<- Lrnr_mean$new()
 
   # GLM
-  scrn_glm <<- Lrnr_pkg_SuperLearner_screener$new(SL_wrapper = "screen.glmnet")
-  lrnr_glm_gauss <<- Lrnr_glm$new(family = gaussian())
+  scrn_glm <- Lrnr_pkg_SuperLearner_screener$new(SL_wrapper = "screen.glmnet")
+  lrnr_glm_gauss <- Lrnr_glm$new(family = gaussian())
   lrnr_screen_glm <<- Pipeline$new(scrn_glm, lrnr_glm_gauss)
 
 
@@ -194,12 +198,16 @@ fhp_spec_learners <- function() {
   # define learner stack
   stack_full <<- Stack$new(
     lapply(
-      ls(pattern = "^lrnr", envir = .GlobalEnv),
+      ls(pattern = learner_pat, envir = .GlobalEnv),
       get
     )
   )
 
-  # specify the metalearner (ensemble model)
+  if (verbose) print(stack_full)
+
+  # specify the metalearner (ensemble model - non-negative least squares)
+  # convex = TRUE normalizes ensemble learner's coefficients so that
+  # all are >= 0 and sum to 1
   metalearner <<- Lrnr_nnls$new(convex = TRUE)
 
 }
