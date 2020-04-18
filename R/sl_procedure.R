@@ -33,7 +33,8 @@ fhp_make_task <- function(target, current_week) {
   season_template_ids <- unique(curr$template)
   curr$template_numeric <- as.numeric(curr$template)
 
-  covars <- names(curr)[!grepl("pkrate|pkweek|cumhosp$", names(curr))]
+  covar_exclude_pat <- "pkrate|pkweek|cumhosp$|template|cid"
+  covars <- names(curr)[!grepl(covar_exclude_pat, names(curr))]
 
   # set folds to 15 (equivalent to leave-one-out CV, by template id)
   fold_scheme <- make_folds(
