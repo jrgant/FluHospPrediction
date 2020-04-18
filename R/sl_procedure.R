@@ -5,62 +5,61 @@
 #'
 
 #' @param target One of "pkrate", "pkweek", or "cumhosp". No default.
+#' @param current_week Week of flu season for which to make a task.
 #'
 #' @return A list containing the sl3 tasks for each week of the flu season.
 #'
 #' @describeIn super_learner_proc Specify learning tasks for each week.
 #'
-#' @import origami sl3
-#' @export fhp_make_tasks
+#' @import origami sl3 stringr
+#' @export fhp_make_task
 
-fhp_make_tasks <- function(target) {
+fhp_make_task <- function(target, current_week) {
 
   clndir <- here::here("data", "cleaned")
 
-  datfiles <- list.files(
+  datfile <- list.files(
     clndir,
-    pattern = "sim_dataset_analytic_week",
+    pattern = paste0(
+      "sim_dataset_analytic_week_", str_pad(current_week, 2, "left", "0")
+    ),
     full.names = TRUE
   )
 
-  tasklist <- lapply(datfiles, function(x) {
+  # read in data for the week
+  curr <- readRDS(datfile)
 
-    # read in data for the week
-    curr <- readRDS(x)
+  # season templates (to use as fold ids in cross-validation)
+  season_template_ids <- unique(curr$template)
+  curr$template_numeric <- as.numeric(curr$template)
 
-    # season templates (to use as fold ids in cross-validation)
-    season_template_ids <- unique(curr$template)
-    curr$template_numeric <- as.numeric(curr$template)
-    curr[, .N, .(template, template_numeric)][order(template)]
+  covars <- names(curr)[!grepl("pkrate|pkweek|cumhosp$", names(curr))]
 
-    covars <- names(curr)[!grepl("pkrate|pkweek|cumhosp$", names(curr))]
+  # set folds to 15 (equivalent to leave-one-out CV, by template id)
+  fold_scheme <- make_folds(
+    cluster_ids = season_template_ids,
+    V = 15
+  )
 
-    # set folds to 15 (equivalent to leave-one-out CV, by template id)
-    fold_scheme <- make_folds(
-      cluster_ids = season_template_ids,
-      V = 15
-    )
+  task_spec <- make_sl3_Task(
+    data = curr,
+    covariates = covars,
+    outcome = target,
+    outcome_type = "continuous",
+    folds = fold_scheme,
+    id = "template_numeric"
+  )
 
-    task_spec <- make_sl3_Task(
-      data = curr,
-      covariates = covars,
-      outcome = target,
-      outcome_type = "continuous",
-      folds = fold_scheme,
-      id = "template_numeric"
-    )
 
-  })
-
-  return(tasklist)
+  return(task_spec)
 
 }
 
 
-#'
+
 #'
 #' @describeIn super_learner_proc Specify all the component learners and assign them to the global environment. Takes no arguments.
-#' 
+#'
 #' @export fhp_spec_learners
 
 fhp_spec_learners <- function() {
@@ -206,76 +205,75 @@ fhp_spec_learners <- function() {
 
 
 
-#' @param tasklist A list of learning tasks created by `fhp_make_tasks()`.
+#' @param task A learning task created by `fhp_make_task()`.
 #' @param write A logical indicating whether to write results to a file. Defaults to TRUE.
 #' @param results_path Relative to project root, where to save the results files.
-#'
+#' @param current_week The week number at which predictions are made.
+#' 
 #' @describeIn super_learner_proc Runs the parallelized super learner procedure based on `fhp_make_tasks()` and `fhp_spec_learners()`.
 #'
 #' @import delayed future sl3 tictoc
 #' @export fhp_run_sl
 
-fhp_run_sl <- function(tasklist, write = TRUE, results_path = "results") {
+fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_week) {
 
   # specify the super learner
-  sl <<- Lrnr_sl$new(
+  sl <- Lrnr_sl$new(
     learners = stack_full,
     metalearner = metalearner,
-    )
-
-  # specify the super learner for all tasks
-  sl_fits <<- lapply(tasklist, function(x) {
-    delayed_learner_train(sl, x)
-  })
+   )
 
   plan(multiprocess)
 
-  for (i in 1:length(sl_fits)) {
-    task_sched <- Scheduler$new(
-      sl_fits[[i]],
-      FutureJob,
-      nworkers = future::nbrOfWorkers()  # specify number of cores to use
-    )
+  sl_fit <- delayed_learner_train(sl, task)
 
-    tic("Ensemble Super Learner Runtime:")
-    sl_trained <- task_sched$compute()
-    toc()
+  task_sched <- Scheduler$new(
+    sl_fit,
+    FutureJob,
+    nworkers = future::nbrOfWorkers()  # specify number of cores to use
+  )
 
-    # select a subset of the super learner outputs to reduce file size:
-    # component, cross-validated, and other learners save numerous fit objects
-    # that contain multiple copies of the underlying datasets (unneeded for analysis)
-    sl_pruned <- list(
-      is_trained = sl_trained$is_trained,
-      params = sl_trained$params,
-      fit_uuid = sl_trained$fit_uuid,
-      learner_uuid = sl_trained$learner_uuid,
-      metalearner_fit = sl_trained$metalearner_fit()
-    )
+  tic("Ensemble Super Learner Runtime:")
+  sl_trained <- task_sched$compute()
+  toc()
 
-    # get cross-validated risk
-    risk <- sl_trained$cv_risk(loss_absolute_error)
+  # select a subset of the super learner outputs to reduce file size:
+  # component, cross-validated, and other learners save numerous fit objects
+  # that contain multiple copies of the underlying datasets (unneeded for analysis)
+  sl_pruned <- list(
+    is_trained = sl_trained$is_trained,
+    params = sl_trained$params,
+    fit_uuid = sl_trained$fit_uuid,
+    learner_uuid = sl_trained$learner_uuid,
+    metalearner_fit = sl_trained$metalearner_fit()
+  )
 
-    # get ensemble predictions for each fold (season template)
-    meta_preds <- sl_trained$fit_object$cv_meta_fit$predict()
-    full_preds <- sl_trained$fit_object$full_fit$predict()
+  # get cross-validated risk
+  risk <- sl_trained$cv_risk(loss_absolute_error)
 
-    out <- list(
+  # get ensemble predictions for each fold (season template)
+  meta_preds <- sl_trained$fit_object$cv_meta_fit$predict()
+  full_preds <- sl_trained$fit_object$full_fit$predict()
+
+  out <- list(
+      task = task,
       sl_pruned = sl_pruned,
       cv_risk_abserr = risk,
       meta_preds = meta_preds,
       full_preds = full_preds
     )
 
-    target <- tasklist[[i]]$nodes$outcome
+    target <- task$nodes$outcome
 
     slug <- paste0(
-      "sl_", target, "_", stringr::str_pad(i, width = 2, "left", pad = "0"))
+      "sl_", target, "_",
+      stringr::str_pad(current_week, width = 2, "left", pad = "0")
+    )
 
     if (write) {
       saveRDS(out, here::here(results_path, paste0(slug, ".Rds")))
     } else {
       assign(slug, out, envir = .GlobalEnv)
     }
-  }
 
 }

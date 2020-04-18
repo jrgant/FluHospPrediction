@@ -1,12 +1,29 @@
-# %% LOAD AND SETUP ------------------------------------------------------------
+# %% LOAD AND SETUP -----------------------------------------------------------
 
 suppressMessages(library(FluHospPrediction))
 
 
-# %% SUPER LEARNER (PEAK RATE) --------------------------------------------------
+# %% SUPER LEARNER (PEAK RATE) ------------------------------------------------
 
-# ignore leave-one-out CV warning: specification intended due to clustering
+# ignore leave-one-out CV warning: specification intended due to- clustering
 
-pkrate_tasks <- suppressWarnings(fhp_make_tasks("pkrate"))
+current_week <- as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+
+# pull the sl3 task for the current week
+pkrate_task <- suppressWarnings(
+  fhp_make_tasks("pkrate", current_week = current_week)
+)
+
+# specify learners and send to global environment
 fhp_spec_learners()
-fhp_run_sl(pkrate_tasks, write = TRUE)
+
+# run the super learner algorithm
+fhp_run_sl(
+  pkrate_task,
+  write = TRUE,
+  current_week = current_week
+)
+
+devtools::session_info()
+
+
