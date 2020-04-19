@@ -17,6 +17,6 @@
 #' @export loss_absolute_error
 
 loss_absolute_error <- function(pred, observed) {
-  out <- abs(pred - observed)^2
+  out <- abs(pred - observed)
   return(out)
 }
