@@ -9,7 +9,7 @@ simcrv(
   print.samples = FALSE,
   print.eq = FALSE,
   verbose = FALSE,
-  peakdist = dist_peaks,
+  peakdist = dist_tf_peaks,
   hstdat = ed,
   predfits = tf_pred,
   fitseas = tf_seas,
@@ -27,7 +27,7 @@ simcrv(
 
 \item{verbose}{Logical. Equivalent to setting both \code{print.samples} and \code{print.eq} to TRUE. Default: FALSE.}
 
-\item{peakdist}{Observed peak hospitalizations (height and week) from FluSurv-NET.}
+\item{peakdist}{Observed peak hospitalizations (height and week) from trend filter fits to FluSurv-NET (EIP) data.}
 
 \item{hstdat}{Observed hospitalization curves from FluSurv-NET.}
 

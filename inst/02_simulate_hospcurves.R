@@ -47,8 +47,7 @@ theme_tweak <-
       axis.line.y = element_blank(),
       legend.position = "bottom",
       plot.caption = element_text(size = 10, face = "italic"),
-      plot.background = element_blank(),
-      plot.margin = margin(rep(0.5, 4),  unit = "cm")
+      plot.background = element_blank()
     )
 
 emp_hosp <- ggplot(ed, aes(x = weekint, y = weekrate)) +
@@ -157,16 +156,65 @@ tf_pred_plotlist <- lapply(unique(tfp$season), function(x) {
 tf_pred_plotlist
 
 
+tf_fit_facet <- tfp %>%
+  ggplot(aes(x = weekint, y = obs.hosp1)) +
+  geom_point(
+    aes(y = obs.hosp1, shape = "Empirical"),
+    size = 0.3,
+    alpha = 0.8
+  ) +
+  geom_line(
+    aes(y = pred.hosp, color = "Fit"),
+    size = 0.2
+  ) +
+  facet_wrap(~season) +
+  scale_color_discrete(name = "") +
+  scale_shape_discrete(name = "") +
+  labs(
+    x = "Week of season",
+    y = "Hospitalizations (per 100,000)"
+  ) +
+  theme_base() +
+  theme(
+    legend.position = "top", 
+    plot.background = element_blank()
+  )
+
+tf_fit_facet
+
+ggsave(
+  "results/trendfilter-fit-facet.pdf",
+  plot = tf_fit_facet,
+  device = "pdf",
+  height = 7,
+  width = 6,
+  units = "in"
+)
+
+
 # %% Generate hypothetical curves -------------------------------------------
 
-# record peak weeks
-dist_peaks <- ed[, .(
+# record peak weeks from empirical data
+dist_emp_peaks <- ed[, .(
     pkhosp = max(weekrate),
     pkweek = weekint[weekrate == max(weekrate)]
     ),
   by = "season" ]
 
-print(dist_peaks)
+print(dist_emp_peaks)
+
+# return peak weeks from trend filter fits
+dist_tf_peaks <- data.table(
+  season = names(tf_pred),
+  pkhosp = sapply(
+    tf_pred, function(x) max(x$dat[, pred.hosp])
+  ) %>% round(., 1),
+  pkweek = sapply(
+    tf_pred, function(x) max(x$dat[pred.hosp == max(pred.hosp), weekint])
+  )
+ )
+
+print(dist_tf_peaks)
 
 
 # %% Generate Hypothetical Curves ------------------------------------------
@@ -190,6 +238,7 @@ hhc <- suppressWarnings(
     seed = 1983745,
     gimme = "everything",
     sim_args = list(
+      peakdist = dist_tf_peaks,
       lambda_index = sel_lambda,
       hstdat = ed
     )

@@ -4,7 +4,7 @@
 #' @param print.samples Logical. Print stochastically sampled parameters as the function runs. Default: FALSE
 #' @param print.eq Logical. Print values calculated using the modified formula from Brooks et al (see Details). Default: FALSE
 #' @param verbose Logical. Equivalent to setting both \code{print.samples} and \code{print.eq} to TRUE. Default: FALSE.
-#' @param peakdist Observed peak hospitalizations (height and week) from FluSurv-NET.
+#' @param peakdist Observed peak hospitalizations (height and week) from trend filter fits to FluSurv-NET (EIP) data.
 #' @param hstdat Observed hospitalization curves from FluSurv-NET.
 #' @param fitseas Trend filter fit objects for each observed hospitalization curve.
 #' @param predfits Trend filter predictions based on fits to observed hospitalization curves.
@@ -31,7 +31,7 @@ simcrv <- function(
   print.samples = FALSE,
   print.eq = FALSE,
   verbose = FALSE,
-  peakdist = dist_peaks,
+  peakdist = dist_tf_peaks,
   hstdat = ed,
   predfits = tf_pred,
   fitseas = tf_seas,
