@@ -10,7 +10,13 @@ fhp_make_task(target, current_week)
 
 fhp_spec_learners(learner_pat = "^lrnr_", verbose = FALSE)
 
-fhp_run_sl(task, write = TRUE, results_path = "results", current_week)
+fhp_run_sl(
+  task,
+  write = TRUE,
+  results_path = "results",
+  current_week,
+  loss_fun = loss_absolute_error
+)
 }
 \arguments{
 \item{target}{One of "pkrate", "pkweek", or "cumhosp". No default.}
