@@ -37,8 +37,7 @@ Depends:
     polspline,
     nnet,
     gam,
-    randomForest
-Suggests:
+    randomForest,
     tictoc
 License: GPL-3
 Encoding: UTF-8
