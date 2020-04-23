@@ -250,7 +250,7 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_wee
   )
 
   # get cross-validated risk
-  risk <- sl_trained$fit_object$cv_fit$cv_risk(loss_absolute_error)
+  risk <- sl_trained$cv_risk(loss_absolute_error)
 
   # get ensemble predictions for each fold (season template)
   meta_preds <- sl_trained$fit_object$cv_meta_fit$predict()
