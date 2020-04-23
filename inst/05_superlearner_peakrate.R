@@ -7,38 +7,48 @@ suppressMessages(library(FluHospPrediction))
 
 # ignore leave-one-out CV warning: specification intended due to- clustering
 
-get_week <- function(w = NULL, slurm = TRUE) {
-  
-  if (is.null(w) & slurm) {
-    as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
-  } else {
-    w
-  }
-}
-
-current_week <- get_week(4)
+current_week <- get_week(slurm = TRUE)
 
 # pull the sl3 task for the current week
-pkrate_task <- suppressWarnings(
+task <- suppressWarnings(
   fhp_make_task(
     "pkrate",
     current_week = current_week
   )
 )
 
-# specify learners and send to global environment
+# specify component learners and send to global environment
 cat("\n\nLearners in Stack\n")
-fhp_spec_learners(learner_pat = "glm|lasso|mean", verbose = TRUE)
+fhp_spec_learners(verbose = TRUE)
 
-# run the super learner algorithm
-fhp_run_sl(
-  pkrate_task,
-  write = FALSE,
-  current_week = current_week,
-  loss_fun = loss_squared_error
+# specify meta learner
+fhp_metalearner <- make_learner(
+  Lrnr_nnls,
+  convex = TRUE,
+  metalearner_linear,
+  loss_absolute_error
 )
 
+# run the super learner algorithm
+
+spec_output_dir <- paste0(
+  "results/ArrayID-",
+  Sys.getenv("SLURM_ARRAY_JOB_ID"), "_",
+  task$nodes$outcome
+)
+
+cat("\n\n\n", "Output will be written to:", spec_output_dir, "\n\n\n")
+
+fhp_run_sl(
+  task,
+  write = TRUE,
+  results_path = spec_output_dir,
+  current_week = current_week,
+  metalearner = fhp_metalearner,
+  keep_extra = TRUE
+)
+
+cat("WARNING LIST", rep("=", 60), "\n\n", sep = "")
+warnings()
+
 devtools::session_info()
-
-
-
