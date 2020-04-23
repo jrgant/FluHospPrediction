@@ -154,7 +154,7 @@ fhp_spec_learners <- function(learner_pat = "^lrnr_", verbose = FALSE) {
   }
 
   # Specify Elastic Net learners
-  glmnet_folds <- 15 # n folds to use for glmnet's internal cross-validation
+  glmnet_folds <- 10 # n folds to use for glmnet's internal cross-validation
 
   lrnr_lasso <<- Lrnr_glmnet$new(
     alpha = 1,
@@ -205,32 +205,24 @@ fhp_spec_learners <- function(learner_pat = "^lrnr_", verbose = FALSE) {
 
   if (verbose) print(stack_full)
 
-  # specify the metalearner (ensemble model - non-negative least squares)
-  # convex = TRUE normalizes ensemble learner's coefficients so that
-  # all are >= 0 and sum to 1
-  metalearner <<- Lrnr_nnls$new(convex = TRUE)
-
 }
-
 
 
 #' @param task A learning task created by `fhp_make_task()`.
 #' @param write A logical indicating whether to write results to a file. Defaults to TRUE.
 #' @param results_path Relative to project root, where to save the results files.
 #' @param current_week The week number at which predictions are made.
-#' 
+#' @param ... Pass arguments to Lrnr_sl$new(...)
+#'
 #' @describeIn super_learner_proc Runs the parallelized super learner procedure based on `fhp_make_tasks()` and `fhp_spec_learners()`.
 #'
 #' @import delayed future sl3 tictoc
 #' @export fhp_run_sl
 
-fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_week) {
+fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_week, ...) {
 
   # specify the super learner
-  sl <- Lrnr_sl$new(
-    learners = stack_full,
-    metalearner = metalearner,
-   )
+  sl <- Lrnr_sl$new(learners = stack_full, ...)
 
   plan(multiprocess)
 
@@ -246,9 +238,9 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_wee
   sl_trained <- task_sched$compute()
   toc()
 
-  # select a subset of the super learner outputs to reduce file size:
-  # component, cross-validated, and other learners save numerous fit objects
-  # that contain multiple copies of the underlying datasets (unneeded for analysis)
+  ## select a subset of the super learner outputs to reduce file size:
+  ## component, cross-validated, and other learners save numerous fit objects
+  ## that contain multiple copies of the underlying datasets (unneeded for analysis)
   sl_pruned <- list(
     is_trained = sl_trained$is_trained,
     params = sl_trained$params,
@@ -258,7 +250,7 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_wee
   )
 
   # get cross-validated risk
-  risk <- sl_trained$cv_risk(loss_absolute_error)
+  risk <- sl_trained$fit_object$cv_fit$cv_risk(loss_absolute_error)
 
   # get ensemble predictions for each fold (season template)
   meta_preds <- sl_trained$fit_object$cv_meta_fit$predict()
@@ -270,19 +262,36 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_wee
       cv_risk_abserr = risk,
       meta_preds = meta_preds,
       full_preds = full_preds
-    )
+  )
+  #out <- sl_trained
+  target <- task$nodes$outcome
 
-    target <- task$nodes$outcome
+  slug <- paste0(
+    "sl_", target, "_",
+    stringr::str_pad(current_week, width = 2, "left", pad = "0")
+  )
 
-    slug <- paste0(
-      "sl_", target, "_",
-      stringr::str_pad(current_week, width = 2, "left", pad = "0")
-    )
+  if (write) {
+    if(!file.exists(results_path)) dir.create(results_path)
+    saveRDS(out, here::here(results_path, paste0(slug, ".Rds")))
+  } else {
+    assign(slug, out, envir = .GlobalEnv)
+  }
 
-    if (write) {
-      saveRDS(out, here::here(results_path, paste0(slug, ".Rds")))
-    } else {
-      assign(slug, out, envir = .GlobalEnv)
-    }
+  print(warnings())
 
+}
+
+#' @param w Numerical integer week (1--30). Used in script testing.
+#' @param slurm Logical indicating whether job is submitted via batch script in SLURM. If TRUE, will take job ID from job array.
+#'
+#' @export get_week
+#' @describeIn super_learner_proc Specifies the week for which to run the super learner algorithm.
+#' 
+get_week <- function(w = NULL, slurm = TRUE) {
+  if (is.null(w) & slurm) {
+    as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
+  } else {
+    w
+  }
 }

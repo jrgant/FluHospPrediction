@@ -4,19 +4,16 @@
 \alias{fhp_make_task}
 \alias{fhp_spec_learners}
 \alias{fhp_run_sl}
+\alias{get_week}
 \title{Super Learner Procedure}
 \usage{
 fhp_make_task(target, current_week)
 
 fhp_spec_learners(learner_pat = "^lrnr_", verbose = FALSE)
 
-fhp_run_sl(
-  task,
-  write = TRUE,
-  results_path = "results",
-  current_week,
-  loss_fun = loss_absolute_error
-)
+fhp_run_sl(task, write = TRUE, results_path = "results", current_week, ...)
+
+get_week(w = NULL, slurm = TRUE)
 }
 \arguments{
 \item{target}{One of "pkrate", "pkweek", or "cumhosp". No default.}
@@ -34,6 +31,12 @@ to the learner stack. To select a specific subset of learners, provide appropria
 \item{write}{A logical indicating whether to write results to a file. Defaults to TRUE.}
 
 \item{results_path}{Relative to project root, where to save the results files.}
+
+\item{...}{Pass arguments to Lrnr_sl$new(...)}
+
+\item{w}{Numerical integer week (1--30). Used in script testing.}
+
+\item{slurm}{Logical indicating whether job is submitted via batch script in SLURM. If TRUE, will take job ID from job array.}
 }
 \value{
 A list containing the sl3 tasks for each week of the flu season.
@@ -48,5 +51,7 @@ Functions used to specify and execute the enesemble learning procedure.
 \item \code{fhp_spec_learners}: Specify all the component learners and assign them to the global environment.
 
 \item \code{fhp_run_sl}: Runs the parallelized super learner procedure based on `fhp_make_tasks()` and `fhp_spec_learners()`.
+
+\item \code{get_week}: Specifies the week for which to run the super learner algorithm.
 }}
 
