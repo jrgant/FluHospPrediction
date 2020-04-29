@@ -54,8 +54,6 @@ fwrite(pkrate_risks, file.path(resdir, "table-04_peakrate-risks.csv"))
 
 ## Table 5: Peak Week Risks ----------------------------------------------------
 
-# TODO: temporary kludge to mark jobs that need to be resubmitted (exceeded memory request)
-
 pkweek_risks <- fmt_risk_table(
   dir = file.path("results", "2020-04-24-Draft02-PeakWeek"),
   slug = "sl_pkweek"
@@ -67,8 +65,6 @@ fwrite(pkweek_risks, file.path(resdir, "table-05_peakweek_risks.csv"))
 
 
 ## Table 6: Cumulative Hospitalizations Risks ----------------------------------
-
-# TODO: temporary kludge to mark jobs that need to be resubmitted (exceeded memory request)
 
 cumhosp_risks <- fmt_risk_table(
   dir = file.path("results", "2020-04-24-Draft02-CumHosp"),
@@ -128,14 +124,18 @@ tempsim_plot <- crv %>%
     size = 1,
     aes(color = "Empirical")
   ) +
-  facet_wrap(~ template) +
+  facet_wrap(~ template, ncol = 5) +
   scale_color_manual(name = "", values = "black") +
-  theme_base()
+  theme_base() +
+  theme(legend.position = "bottom")
 
 tempsim_plot
 
 ggsave(
   plot = tempsim_plot,
+  width = 3,
+  height = 3,
+  units = "in",
   file = "interim-reports/2020-04-28_RA-Meeting/tempsim_plot.svg",
   dev = "svg"
 )
@@ -192,6 +192,7 @@ cumhosp_weights <- get_learner_weights(
   slug = "sl_cumhosp"
 )
 
+# check that we have all 30 weeks for each prediction target
 sapply(
   list(pkrate_weights, pkweek_weights, cumhosp_weights),
   function(x) length(x) == 30
