@@ -182,10 +182,21 @@ tf_fit_facet <- tfp %>%
 
 tf_fit_facet
 
+# S1 Figure
+
 ggsave(
   "results/trendfilter-fit-facet.pdf",
   plot = tf_fit_facet,
   device = "pdf",
+  height = 7,
+  width = 6,
+  units = "in"
+)
+
+ggsave(
+  "results/trendfilter-fit-facet.png",
+  plot = tf_fit_facet,
+  device = "png",
   height = 7,
   width = 6,
   units = "in"
