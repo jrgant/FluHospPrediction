@@ -200,6 +200,38 @@ sapply(
 
 ## Risk-and-weight summaries ---------------------
 
+plotrw <- function(data, ptitle) {
+  ggplot(
+    data,
+    aes(
+      x = log(mean_risk),
+      y = weight
+    )) +
+    geom_point(
+      aes(
+        shape = weight > 0,
+        color = weight > 0,
+        alpha = weight > 0
+      ), size = 2) +
+    facet_wrap(
+      ~ Week,
+      labeller = labeller(Week = function(x) paste("Week", x))
+    ) +
+    scale_shape_manual(values = c(4, 18)) +
+    scale_color_viridis_d(
+      direction = -1,
+      end = 0.5
+    ) +
+    scale_alpha_manual(values = c(0.4, 1)) +
+    guides(alpha = FALSE) +
+    labs(
+      title = ptitle,
+      y = "ensemble weight"
+    ) +
+    theme_base(base_family = "serif") +
+    theme(strip.text = element_text(face = "bold"))
+}
+
 ## Peak Rate ---------------------------------------
 
 ### Data summary
@@ -219,45 +251,9 @@ fwrite(
   pkrate_lrnr_sel, file.path("interim-reports/2020-04-28_RA-Meeting/pkrate_lrnr_selection.csv")
 )
 
-# theme tweak
-th <-
-  theme_base(
-    base_family = "serif"
-  ) +
-  theme(
-    strip.text = element_text(face = "bold")
-  )
+### Plot
 
-pkrate_rw_plot <- ggplot(
-  pkrate_rwsum,
-  aes(
-    x = log(mean_risk),
-    y = weight
-  )) +
-  geom_point(
-    aes(
-      shape = weight > 0,
-      color = weight > 0,
-      alpha = weight > 0
-  ), size = 2) +
-  facet_wrap(
-    ~ Week,
-    labeller = labeller(Week = function(x) paste("Week", x))
-  ) +
-  scale_shape_manual(values = c(4, 18)) +
-  scale_color_viridis_d(
-    direction = -1,
-    end = 0.5
-  ) +
-  scale_alpha_manual(values = c(0.4, 1)) +
-  guides(alpha = FALSE) +
-  labs(
-    title = "Peak rate",
-    y = "ensemble weight"
-  ) +
-  th
-
-pkrate_rw_plot
+pkrate_rw_plot <- plotrw(pkrate_rwsum, "Peak rate")
 
 ggsave(
   plot = pkrate_rw_plot,
