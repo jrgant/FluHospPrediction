@@ -7,7 +7,7 @@ suppressMessages(library(FluHospPrediction))
 
 # ignore leave-one-out CV warning: specification intended due to- clustering
 
-current_week <- get_week(slurm = TRUE)
+current_week <- get_week(5)
 
 # pull the sl3 task for the current week
 task <- suppressWarnings(
@@ -19,30 +19,40 @@ task <- suppressWarnings(
 
 # specify component learners and send to global environment
 cat("\n\nLearners in Stack\n")
-fhp_spec_learners(learner_pat = "glm|gam|lasso", verbose = TRUE)
+fhp_spec_learners(learner_pat = "glm|lasso|ridge", verbose = TRUE)
 
 # specify meta learner
 fhp_metalearner <- make_learner(
-  Lrnr_nnls,
-  convex = TRUE,
-  metalearner_linear,
-  loss_absolute_error
+  Lrnr_solnp,
+  convex_combination = TRUE,
+  learner_function = metalearner_linear,
+  loss_function = FluHospPrediction::loss_absolute_error
 )
 
 # run the super learner algorithm
 
-spec_output_dir <- paste0(
+spec_output_dir_oscar <- paste0(
   "results/ArrayID-",
   Sys.getenv("SLURM_ARRAY_JOB_ID"), "_",
   task$nodes$outcome
 )
 
-cat("\n\n\n", "Output will be written to:", spec_output_dir, "\n\n\n", sep = "")
+spec_output_dir_local <- paste0(
+  "results/testrun_solnp_metalearner"
+)
+
+cat(
+  "\n\n\n",
+  "Output will be written to:",
+  spec_output_dir_oscar,
+  "\n\n\n",
+  sep = ""
+)
 
 fhp_run_sl(
   task,
   write = TRUE,
-  results_path = spec_output_dir,
+  results_path = spec_output_dir_local,
   current_week = current_week,
   metalearner = fhp_metalearner,
   keep_extra = TRUE

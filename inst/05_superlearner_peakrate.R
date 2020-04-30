@@ -23,14 +23,13 @@ fhp_spec_learners(verbose = TRUE)
 
 # specify meta learner
 fhp_metalearner <- make_learner(
-  Lrnr_nnls,
-  convex = TRUE,
-  metalearner_linear,
-  loss_absolute_error
+  Lrnr_solnp,
+  convex_combination = TRUE,
+  learner_function = metalearner_linear,
+  loss_function = loss_absolute_error
 )
 
 # run the super learner algorithm
-
 spec_output_dir <- paste0(
   "results/ArrayID-",
   Sys.getenv("SLURM_ARRAY_JOB_ID"), "_",
