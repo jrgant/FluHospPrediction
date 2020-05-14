@@ -10,7 +10,6 @@ Before installing this package, users will need to install the `glmgen` and `sl3
 
 ```{r, eval = F}
 library(remotes)
-remotes::install_github("statsmaths/glmgen", subdir = "R_pkg/glmgen")
 remotes::install_github("tlverse/sl3")
 remotes::install_github("jrgant/FluHospPrediction")
 ```
@@ -18,10 +17,14 @@ remotes::install_github("jrgant/FluHospPrediction")
 Please post an issue if you have trouble installing.
 
 
-## Package directory (two levels deep):
+## Package directory (one level deep):
 
 ```{r, echo = F}
-fs::dir_tree(recurse = 2, regexp = "interim|results", invert = T)
+fs::dir_tree(
+  recurse = 1,
+  regexp = "interim|results|scratch|scripts",
+  invert = T
+)
 ```
 
 
