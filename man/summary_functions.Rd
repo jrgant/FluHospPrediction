@@ -12,7 +12,11 @@ fmt_risk_table(dir, slug = c("sl_pkrate", "sl_pkweek", "sl_cumhosp"))
 
 get_risk_dist(outcome = c("pkrate", "pkweek", "cumhosp"))
 
-get_learner_weights(dir, slug = c("sl_pkrate", "sl_pkweek", "sl_cumhosp"))
+get_learner_weights(
+  dir,
+  slug = c("sl_pkrate", "sl_pkweek", "sl_cumhosp"),
+  metalearner_is = c("nnls", "solnp")
+)
 
 join_learner_stats(risktables, weights)
 
@@ -49,7 +53,7 @@ Functions to summarize, visualize, and analyze data
 
 \item \code{get_risk_dist}: Outputs a summary of the distribution of cross-validated risks across all learners, by week of the flu season.
 
-\item \code{get_learner_weights}: Pulls the weights assigned to each learner by the metalearner.
+\item \code{get_learner_weights}: Pulls the weights assigned to each learner by the metalearner.xm
 
 \item \code{join_learner_stats}: Generates a data.table that links each learner's mean cross-validated risk and the weight assigned to that learner based on the metalearner fit, for each week of the flu season.
 
