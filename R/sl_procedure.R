@@ -73,7 +73,7 @@ fhp_spec_learners <- function(learner_pat = "^lrnr_", verbose = FALSE) {
   lrnr_mean <<- Lrnr_mean$new()
 
   # GLM
-  scrn_glm <- Lrnr_pkg_SuperLearner_screener$new(SL_wrapper = "screen.glmnet")
+  scrn_glm <- Lrnr_screener_corP$new()
   lrnr_glm_gauss <- Lrnr_glm$new(family = gaussian())
   lrnr_screen_glm <<- Pipeline$new(scrn_glm, lrnr_glm_gauss)
 
