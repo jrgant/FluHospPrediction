@@ -4,8 +4,9 @@ Predicting Flu Hospitalizations Paper
 Installation
 ------------
 
-Before installing this package, users will need to install the `glmgen`
-and `sl3` packages, which are not on CRAN but are dependencies:
+Before installing this package, users will need to install the `sl3`
+package from Github. All other dependencies should be installed
+automatically.
 
     library(remotes)
     remotes::install_github("tlverse/sl3")
