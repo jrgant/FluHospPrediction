@@ -10,6 +10,8 @@
 #' @param predfits Trend filter predictions based on fits to observed hospitalization curves.
 #' @param nu.min Numeric. Minimum for random uniform draw governing simulated curve shifting.
 #' @param nu.max Numeric. Maximum for random uniform draw governing simulated curve shifting.
+#' @param cv_list List. containing cross-validation output for each season's trendfilter fit.
+#' @param lambda_type Character. One of "lambda.min" or "lambda.1se", each corresponding to different criteria used to select the lambda penalty for each trendfilter fit. Per the \code{genlasso} package documentation, "lambda.min" is the lambda that minimizes the cross-validated error (average error across folds), while "lambda.1se" selects the largest lambda value that produces a cross-validated error within one standard deviation of the minimum cross-validated error.
 
 #' @return Simulated curve depicting weekly hospitalization rates during a
 #'    hypothetical flu season. Returns a list containing two nested lists, one
@@ -37,7 +39,8 @@ simcrv <- function(
   fitseas = tf_seas,
   nu.min = 0.75,
   nu.max = 1.25,
-  lambda_index = 25) {
+  cv_list = cv_tf,
+  lambda_type = c("lambda.min", "lambda.1se")) {
 
   # sample shape (f)
   s <- sample(unique(hstdat$season), 1)
@@ -82,13 +85,18 @@ simcrv <- function(
   t1 <- theta / max_j
   arg_f <- (predfits[[s]]$dat$weekint - mu) / nu + argmax_j
 
-  f <- predict(fitseas[[s]],
-    x.new = arg_f,
-    lambda = fitseas[[s]]$lambda[lambda_index]
+  # set up predictor matrix
+  m <- diag(arg_f / 1:30, length(arg_f), length(arg_f))
+
+  # get predictions at arg_f
+  f <- predict(
+    fitseas[[s]],
+    Xnew = m,
+    lambda = cv_list[[s]][[lambda_type]]
   )
 
-  err <- rnorm(n = length(f), 0, sd = sqrt(sigma))
-  fi <- t1 * f + err
+  err <- rnorm(n = length(f$fit), 0, sd = sqrt(sigma))
+  fi <- t1 * f$fit + err
 
   #  transformation to set the lower function bound to 0
   fi_tf <- sapply(fi, function(x) 0.5 * (abs(x) + x))
@@ -96,14 +104,13 @@ simcrv <- function(
   eqlist <- list(
     "term1" = t1,
     "arg_f" = arg_f,
-    "predictions" = f,
+    "predictions" = f$fit,
     "error" = err,
     "fi_pluserr" = fi,
     "fi_tf" = fi_tf
   )
 
   if (print.eq | verbose) print(eqlist)
-
 
   if (print.plot) {
     plot(fi_tf,
@@ -166,6 +173,7 @@ simdist <- function(nreps,
                     check = FALSE,
                     check_nrow = 10,
                     sim_args = list()) {
+
   set.seed(seed)
 
   hc <- replicate(nreps,
@@ -213,7 +221,8 @@ simdist <- function(nreps,
 #'    dataset per list item.
 #' @param tf_list A list containing trend filter fits to observed seasons. One
 #'    fit per list item.
-#' @param tf_lambda_index Set which lambda parameter to feed to trend filter.
+#' @param cv_list List. containing cross-validation output for each season's trendfilter fit.
+#' @param lambda_type Character. One of "lambda.min" or "lambda.1se", each corresponding to different criteria used to select the lambda penalty for each trendfilter fit. Per the \code{genlasso} package documentation, "lambda.min" is the lambda that minimizes the cross-validated error (average error across folds), while "lambda.1se" selects the largest lambda value that produces a cross-validated error within one standard deviation of the minimum cross-validated error.
 #'
 #' @return Trend filter weekly hospitalization rate predictions for each observed
 #'         season.
@@ -223,15 +232,17 @@ simdist <- function(nreps,
 
 predict_curves <- function(hosp_obs,
                            tf_list,
-                           tf_lambda_index = 25) {
+                           cv_list,
+                           lambda_type = c("lambda.min", "lambda.1se")) {
 
   lapply(setNames(names(tf_list), names(tf_list)), function(x) {
 
-    get_lambda <- tf_list[[x]]$lambda[tf_lambda_index]
+    get_lambda <- cv_list[[x]][[lambda_type]]
 
-    pred.hosp <- predict(object = tf_list[[x]],
-                         xvar = hosp_obs[[x]]$x,
-                         lambda = get_lambda)
+    pred.hosp <- predict(
+      object = tf_list[[x]],
+      lambda = get_lambda
+    )
 
     obs.hosp1 <- tf_list[[x]]$y
     obs.hosp2 <- hosp_obs[[x]]$weekrate
@@ -240,14 +251,13 @@ predict_curves <- function(hosp_obs,
     if (sum(check.obs) != 0) stop("Observed hospitalizations don't match!")
 
     # calculate tau^2 for each season
-    sqerr <- (as.vector(pred.hosp) - obs.hosp1)^2
-
+    sqerr <- (as.vector(pred.hosp$fit) - obs.hosp1)^2
 
     list(
       dat = data.table(
         season = x,
-        weekint = 1:length(pred.hosp) - 1,
-        pred.hosp = as.vector(pred.hosp),
+        weekint = 1:length(pred.hosp$fit),
+        pred.hosp = as.vector(pred.hosp$fit),
         obs.hosp1,
         obs.hosp2,
         check.obs,

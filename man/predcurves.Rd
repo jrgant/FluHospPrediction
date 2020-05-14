@@ -4,7 +4,12 @@
 \alias{predict_curves}
 \title{Predict hospitalization curves based on observed seasons}
 \usage{
-predict_curves(hosp_obs, tf_list, tf_lambda_index = 25)
+predict_curves(
+  hosp_obs,
+  tf_list,
+  cv_list,
+  lambda_type = c("lambda.min", "lambda.1se")
+)
 }
 \arguments{
 \item{hosp_obs}{A list containing the hospitalization rate data frames. One
@@ -13,7 +18,9 @@ dataset per list item.}
 \item{tf_list}{A list containing trend filter fits to observed seasons. One
 fit per list item.}
 
-\item{tf_lambda_index}{Set which lambda parameter to feed to trend filter.}
+\item{cv_list}{List. containing cross-validation output for each season's trendfilter fit.}
+
+\item{lambda_type}{Character. One of "lambda.min" or "lambda.1se", each corresponding to different criteria used to select the lambda penalty for each trendfilter fit. Per the \code{genlasso} package documentation, "lambda.min" is the lambda that minimizes the cross-validated error (average error across folds), while "lambda.1se" selects the largest lambda value that produces a cross-validated error within one standard deviation of the minimum cross-validated error.}
 }
 \value{
 Trend filter weekly hospitalization rate predictions for each observed

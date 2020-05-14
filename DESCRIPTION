@@ -23,7 +23,7 @@ Depends:
     ggridges,
     summarytools,
     magrittr,
-    glmgen,
+    genlasso,
     viridis,
     purrr,
     tidyr,

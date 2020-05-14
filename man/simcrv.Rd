@@ -15,7 +15,8 @@ simcrv(
   fitseas = tf_seas,
   nu.min = 0.75,
   nu.max = 1.25,
-  lambda_index = 25
+  cv_list = cv_tf,
+  lambda_type = c("lambda.min", "lambda.1se")
 )
 }
 \arguments{
@@ -38,6 +39,10 @@ simcrv(
 \item{nu.min}{Numeric. Minimum for random uniform draw governing simulated curve shifting.}
 
 \item{nu.max}{Numeric. Maximum for random uniform draw governing simulated curve shifting.}
+
+\item{cv_list}{List. containing cross-validation output for each season's trendfilter fit.}
+
+\item{lambda_type}{Character. One of "lambda.min" or "lambda.1se", each corresponding to different criteria used to select the lambda penalty for each trendfilter fit. Per the \code{genlasso} package documentation, "lambda.min" is the lambda that minimizes the cross-validated error (average error across folds), while "lambda.1se" selects the largest lambda value that produces a cross-validated error within one standard deviation of the minimum cross-validated error.}
 }
 \value{
 Simulated curve depicting weekly hospitalization rates during a

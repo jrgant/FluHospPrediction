@@ -10,7 +10,6 @@
 # %% Load packages ----------------------------------------------------------
 
 suppressMessages(library(FluHospPrediction))
-library(tictoc)
 
 # data directories
 rawdir <- here::here("data", "raw")
@@ -98,112 +97,143 @@ print(seas_obs)
 # run trendfilter on each observed season
 tf_seas <- lapply(seas_obs, function(x) {
   trendfilter(
-    x = x$weekint,
     y = x$weekrate,
-    k = 1,
-    family = "gaussian"
+    ord = 1  # 1 = linear, 2 = quadratic
   )
 })
 
 # view model summaries
-lapply(tf_seas, summary)
+lapply(tf_seas, class)
 
-# %% Predict ----------------------------------------------------------------
+# get lambda values for each season's trendfilter fit
+# cv.trendfilter() picks the lambda that minimizes the cross-validated error
+# 5 folds used in CV (k = 5)
+cv_tf <- lapply(tf_seas, function(x) {
+  cv.trendfilter(x, mode = "lambda", k = 5)
+})
+
+# %% Predict: Minimizing Lambda ------------------------------------------------
 
 # predict the weekly count (y) and error (tau) for each season
-
-# choose lambda index (same for each trendfilter fit)
-# used from here forward
-sel_lambda <- 25
 
 tf_pred <- predict_curves(
   hosp_obs = seas_obs,
   tf_list = tf_seas,
-  tf_lambda_index = sel_lambda
+  cv_list = cv_tf,
+  lambda_type = "lambda.min"
 )
 
 sapply(tf_pred, function(x) class(x$dat))
 print(tf_pred)
 
+# make sure correct lambda used for each season
+check.lambda <- data.table(
+  pred.lambda = sapply(tf_pred, function(x) x$lambda),
+  cv.lambda = sapply(cv_tf, function(x) x$lambda.min)
+)[, same := pred.lambda == cv.lambda]
+
+check.lambda
+
 tfp <- rbindlist(lapply(tf_pred, function(x) x[[1]]))
 
-# plot predictions vs. empirical data
-tf_pred_plotlist <- lapply(unique(tfp$season), function(x) {
+# confirm correct weekint numbering
+sapply(names(tf_pred), function(x) range(tfp[season == x, range(weekint)]))
 
-  ggplot(tfp[season == x, ], aes(x = weekint)) +
-    geom_line(aes(y = pred.hosp), color = "red") +
+
+# %% Predict: Lambda 1SE -------------------------------------------------------
+
+tf_pred_1se <- predict_curves(
+  hosp_obs = seas_obs,
+  tf_list = tf_seas,
+  cv_list = cv_tf,
+  lambda_type = "lambda.1se"
+)
+
+sapply(tf_pred_1se, function(x) class(x$dat))
+
+# make sure correct lambda used for each season
+check.lambda.1se <- data.table(
+  pred.lambda.1se= sapply(tf_pred_1se, function(x) x$lambda),
+  cv.lambda.1se = sapply(cv_tf, function(x) x$lambda.1se)
+)[, same := pred.lambda.1se == cv.lambda.1se]
+
+tfp_1se <- rbindlist(lapply(tf_pred_1se, function(x) x[[1]]))
+
+# confirm correct weekint numbering
+sapply(names(tf_pred_1se), function(x) range(tfp_1se[season == x, range(weekint)]))
+
+
+# %% Prediction Plots ----------------------------------------------------------
+
+plot.tf <- function(data, title) {
+  data %>%
+    ggplot(aes(x = weekint, y = obs.hosp1)) +
     geom_point(
-      aes(y = obs.hosp1),
-      alpha = 0.5,
-      size = 0.8
+      aes(y = obs.hosp1, shape = "Empirical"),
+      size = 0.3,
+      alpha = 0.8
     ) +
-    scale_color_viridis_d() +
+    geom_line(
+      aes(y = pred.hosp, color = "Fit"),
+      size = 0.2
+    ) +
+    facet_wrap(~season) +
+    scale_color_discrete(name = "") +
+    scale_shape_discrete(name = "") +
     labs(
-      x = glue::glue("Week of { x }"),
-      y = "Hospitalizations (per 100,000)",
-      title = "Trend filter, predicted hospitalizations vs. observed",
-      caption = paste("lambda = ", tf_pred[[1]]$lambda)
+      title = title,
+      x = "Week of season",
+      y = "Hospitalizations (per 100,000)"
     ) +
-    theme_clean(base_size = 15) +
+    theme_base() +
     theme(
-      plot.caption = element_text(face = "italic", size = 10),
-      axis.title = element_text(face = "bold", color = "slategray"),
-      strip.text = element_text(face = "bold"),
-      legend.position = "bottom"
+      legend.position = "top", 
+      plot.background = element_blank()
     )
-})
+}
 
-tf_pred_plotlist
-
-
-tf_fit_facet <- tfp %>%
-  ggplot(aes(x = weekint, y = obs.hosp1)) +
-  geom_point(
-    aes(y = obs.hosp1, shape = "Empirical"),
-    size = 0.3,
-    alpha = 0.8
-  ) +
-  geom_line(
-    aes(y = pred.hosp, color = "Fit"),
-    size = 0.2
-  ) +
-  facet_wrap(~season) +
-  scale_color_discrete(name = "") +
-  scale_shape_discrete(name = "") +
-  labs(
-    x = "Week of season",
-    y = "Hospitalizations (per 100,000)"
-  ) +
-  theme_base() +
-  theme(
-    legend.position = "top", 
-    plot.background = element_blank()
-  )
-
+tf_fit_facet <- plot.tf(tfp, "Lambda.min")
 tf_fit_facet
 
-# S1 Figure
+tf1se_fit_facet <- plot.tf(tfp_1se, "Lambda.1se")
+tf1se_fit_facet
 
-ggsave(
-  "results/trendfilter-fit-facet.pdf",
-  plot = tf_fit_facet,
-  device = "pdf",
-  height = 7,
-  width = 6,
-  units = "in"
-)
+# S1 Figures
 
-ggsave(
-  "results/trendfilter-fit-facet.png",
-  plot = tf_fit_facet,
-  device = "png",
-  height = 7,
-  width = 6,
-  units = "in"
-)
+save.tf.plot <- function(plot, lambda.type) {
+
+  fp <- file.path(
+    "results",
+    paste0("facet_preds_", lambda.type, "_", Sys.Date())
+  )
+
+  ggsave(
+    paste0(fp, ".pdf"),
+    plot = plot,
+    device = "pdf",
+    height = 7,
+    width = 6,
+    units = "in"
+  )
+
+  ggsave(
+    paste0(fp, ".png"),
+    plot = plot,
+    device = "png",
+    height = 7,
+    width = 6,
+    units = "in"
+  )
+
+}
+
+save.tf.plot(tf_fit_facet, "lambda.min")
+save.tf.plot(tf1se_fit_facet, "lambda.1se")
 
 
-# %% Generate hypothetical curves -------------------------------------------
+
+
+# %% Empirical Peak Rate and Peak Week -----------------------------------------
 
 # record peak weeks from empirical data
 dist_emp_peaks <- ed[, .(
@@ -214,57 +244,99 @@ dist_emp_peaks <- ed[, .(
 
 print(dist_emp_peaks)
 
-# return peak weeks from trend filter fits
-dist_tf_peaks <- data.table(
-  season = names(tf_pred),
-  pkhosp = sapply(
-    tf_pred, function(x) max(x$dat[, pred.hosp])
-  ) %>% round(., 1),
-  pkweek = sapply(
-    tf_pred, function(x) max(x$dat[pred.hosp == max(pred.hosp), weekint])
-  )
- )
 
-print(dist_tf_peaks)
+# %% Simulation Reusables ------------------------------------------------------
 
-
-# %% Generate Hypothetical Curves ------------------------------------------
-
-# number of curves to simulate
-reps <- 15000
-
-# Simulate Curves
-# time the simulations (not required)
-tic(paste0("Curve simulations (n = ", reps, ")"))
-
-# @NOTE: Suppressing warnings for predictions out of range. Expected behavior
-#        due to the curve stretching. R is being asked to predict
-#        hospitalizations outside the range of observed weeks, which is what (in
-#        part) produces the curve shifts necessary to generate the hypothetical
-#        hospitalization curves. We map the predictions by index to the weekint
-#        range.
-hhc <- suppressWarnings(
-  simdist(
-    nreps = reps,
-    seed = 1983745,
-    gimme = "everything",
-    sim_args = list(
-      peakdist = dist_tf_peaks,
-      lambda_index = sel_lambda,
-      hstdat = ed
+get_pred_peaks <- function(predlist) {
+  data.table(
+    season = names(predlist),
+    pkhosp = sapply(
+      predlist, function(x) max(x$dat[, pred.hosp])
+    ) %>% round(., 1),
+    pkweek = sapply(
+      predlist, function(x) max(x$dat[pred.hosp == max(pred.hosp), weekint])
     )
   )
+}
+
+run_curvesim <- function(tf_peaks,
+                         predlist,
+                         lt,
+                         empdat = ed,
+                         reps = 15000,
+                         seed) {
+
+  # time the simulations
+  tic(paste0("Curve simulations (n = ", reps, ")"))
+
+  # @NOTE: Suppressing warnings for predictions out of range. Expected behavior
+  #        due to the curve stretching. R is being asked to predict
+  #        hospitalizations outside the range of observed weeks, which is what (in
+  #        part) produces the curve shifts necessary to generate the hypothetical
+  #        hospitalization curves. We map the predictions by index to the weekint
+  #        range.
+  out <- suppressWarnings(
+    simdist(
+      nreps = reps,
+      seed = seed,
+      gimme = "everything",
+      sim_args = list(
+        peakdist = tf_peaks,
+        predfits = predlist,
+        fitseas = tf_seas,
+        nu.min = 0.75,
+        nu.max = 1.25,
+        cv_list = cv_tf,
+        lambda_type = lt,
+        hstdat = empdat
+      )
+    )
+  )
+  toc()
+
+  out
+}
+
+# %% Generate Hypothetical Curves: Minimizing Lambda ---------------------------
+
+# return peak weeks from trend filter fits
+dist_tf_peaks <- get_pred_peaks(tf_pred)
+dist_tf_peaks
+
+hhc <- run_curvesim(
+  tf_peaks = dist_tf_peaks,
+  predlist = tf_pred,
+  lt = "lambda.min",
+  reps = 15000,
+  seed = 1983745
 )
-toc()
 
 names(hhc)
 head(hhc$hc)
+
 
 # check to make sure each season has 30 predicted periods
 veclengths <- sapply(hhc$hc, function(x) length(x$eq$arg_f))
 table(veclengths == 30)
 
 names(ed)
+
+
+# %% Generate Hypothetical Curves: Lambda 1SE ----------------------------------
+
+dist_tf1se_peaks <- get_pred_peaks(tf_pred_1se)
+dist_tf1se_peaks
+
+hhc_1se <- run_curvesim(
+  tf_peaks = dist_tf1se_peaks,
+  predlist = tf_pred_1se,
+  lt = "lambda.1se",
+  reps = 15000,
+  seed = 98876876
+)
+
+
+# %% Inspect Simulated Curves --------------------------------------------------
 
 edsum <- ed[, .(pkht = max(weekrate),
                 pkweekint = weekint[weekrate == max(weekrate)],
@@ -280,16 +352,27 @@ edsum <- ed[, .(pkht = max(weekrate),
 
 print(edsum)
 names(hhc$outhc)
+names(hhc_1se$outhc)
 
-simsum <-
-  hhc$outhc[, .(pkht = max(prediction),
-                pkweekint = weekint[prediction == max(prediction)],
-                cumhosp = sum(prediction)), by = .(cid = as.character(cid))] %>%
-  .[, data := "simulated"]
+simsum <- hhc$outhc[, .(
+  pkht = max(prediction),
+  pkweekint = weekint[prediction == max(prediction)],
+  cumhosp = sum(prediction)
+), by = .(cid = as.character(cid))
+][, data := "sim.lambda.min"]
 
-print(simsum)
+simsum
 
-edsim <- rbind(edsum, simsum)
+simsum_1se <- hhc_1se$outhc[, .(
+  pkht = max(prediction),
+  pkweekint = weekint[prediction == max(prediction)],
+  cumhosp = sum(prediction)
+), by = .(cid = as.character(cid))
+][, data := "sim.lambda.1se"]
+
+simsum_1se
+
+edsim <- rbind(edsum, simsum, simsum_1se)
 
 theme_set(theme_clean())
 
@@ -321,11 +404,7 @@ hyp_hosp_p <-
   labs(x = "Week",
        y = "Predicted hospitalizations (per 100,000)",
        title = "Hypothetical Hospitalization Curves",
-       subtitle = paste(simsub, "simulations"),
-       caption = paste0(
-         "Linear trend filter \u03BB index",
-         " = ", sel_lambda
-         )
+       subtitle = paste(simsub, "simulations")
       ) +
   theme_tweak +
   theme(legend.position = "none")
@@ -334,9 +413,6 @@ hyp_hosp_p <-
 hyp_hosp_p
 
 
-# @NOTE 2019-09-26:
-#  Run some summaries on the hypothetical curves to check for errors
-#  May still want to choose different lambda or conduct sensitivity around lambda
 ggplot(hhc$outhc[weekint == 1, ], aes(x = prediction)) +
   geom_density() +
   labs(
@@ -360,9 +436,11 @@ hhc$outhc %>%
   geom_density_ridges() +
   theme_ridges()
 
+
 # %% Write Hypothetical Curves ----------------------------------------------
 
-saveRDS(hhc, paste0(clndir, "/hypothetical-curves.Rds"))
+saveRDS(hhc, paste0(clndir, "/hypothetical-curves_lambda-min.Rds"))
+saveRDS(hhc_1se, paste0(clndir, "/hypothetical-curves_lambda-1se.Rds"))
 
 # %% View and Write Plots ------------------------------------------------
 
