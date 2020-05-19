@@ -7,7 +7,7 @@ suppressMessages(library(FluHospPrediction))
 
 # ignore leave-one-out CV warning: specification intended due to- clustering
 
-current_week <- get_week(5)
+current_week <- get_week(7)
 
 # pull the sl3 task for the current week
 task <- suppressWarnings(
@@ -18,8 +18,40 @@ task <- suppressWarnings(
 )
 
 # specify component learners and send to global environment
-cat("\n\nLearners in Stack\n")
-fhp_spec_learners(learner_pat = "glm|lasso|ridge", verbose = TRUE)
+## cat("\n\nLearners in Stack\n")
+
+## lrnr_testgam <- Lrnr_gam$new(select = TRUE, fit = FALSE, gamma = 0.1)
+
+## fl <- paste("pkweek ~",
+##             sapply(task$nodes$covariates, function(x) paste0("s(", x, ")")) %>% paste(., collapse = " + ")
+##             )
+
+## t <- mgcv::gam(
+##   pkweek ~ s(hosprate_100k_7) + s(cumhosp_100k_7),
+##   data = task$get_data(),
+##   by = template_numeric
+## )
+
+## tp <- predict(t)
+## tpb <- cbind(task$get_data(), tp)
+## tpb[, plot(hosprate_100k_1, tp)]
+## tpb[, plot(cumhosp_100k_1, tp)]
+
+## tg <- Lrnr_gam$new(
+##   formula = as.formula(paste("pkweek ~ s(hosprate_100k_7) + s(cumhosp_100k_7)"))
+## )
+
+## tg$train(task)
+## tcv <- Lrnr_cv$new(tg)
+## tcv$train(task)
+
+
+fhp_spec_learners(
+  learner_pat = "glm|mean",
+  gamweek = current_week,
+  currtask = task,
+  verbose = TRUE
+)
 
 # specify meta learner
 fhp_metalearner <- make_learner(
@@ -51,7 +83,7 @@ cat(
 
 fhp_run_sl(
   task,
-  write = TRUE,
+  write = FALSE,
   results_path = spec_output_dir_local,
   current_week = current_week,
   metalearner = fhp_metalearner,

@@ -13,13 +13,18 @@ current_week <- get_week(slurm = TRUE)
 task <- suppressWarnings(
   fhp_make_task(
     "pkrate",
-    current_week = current_week
+    current_week = current_week,
+    lambda_type = "lambda-min"
   )
 )
 
 # specify component learners and send to global environment
 cat("\n\nLearners in Stack\n")
-fhp_spec_learners(verbose = TRUE)
+fhp_spec_learners(
+  verbose = TRUE,
+  gamweek = current_week,
+  currtask = task
+)
 
 # specify meta learner
 fhp_metalearner <- make_learner(
