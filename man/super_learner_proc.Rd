@@ -7,9 +7,9 @@
 \alias{get_week}
 \title{Super Learner Procedure}
 \usage{
-fhp_make_task(target, current_week)
+fhp_make_task(target, current_week, lambda_type)
 
-fhp_spec_learners(learner_pat = "^lrnr_", verbose = FALSE)
+fhp_spec_learners(learner_pat = "^lrnr_", gamweek, currtask, verbose = FALSE)
 
 fhp_run_sl(task, write = TRUE, results_path = "results", current_week, ...)
 
@@ -20,9 +20,15 @@ get_week(w = NULL, slurm = TRUE)
 
 \item{current_week}{The week number at which predictions are made.}
 
+\item{lambda_type}{Pick the curves simulated based on trendfilter lambda. Should be one of "lambda-min" or "lambda-1se".}
+
 \item{learner_pat}{Regular expression specifying which learners to include in the learner stack. Defaults
 to "^lrnr_", which adds any object whose name starts with "lrnr" in the global environment
 to the learner stack. To select a specific subset of learners, provide appropriate regex.}
+
+\item{gamweek}{The week for which the super learner algorithm is being run. Used to limit the variables fed to smoothing functions in the generalized additive models (GAMs, \code{mgcv} package).}
+
+\item{currtask}{Machine learning task as produced by the sl3 package. Used to build custom model formulas for the GAMs.}
 
 \item{verbose}{Logical indicating whether to print the full component learner stack. Defaults to FALSE.}
 

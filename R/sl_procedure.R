@@ -92,17 +92,22 @@ fhp_spec_learners <- function(learner_pat = "^lrnr_", gamweek, currtask, verbose
     )
   }
 
-
   # Specify random forest learners
+  numcovs <- length(currtask$nodes$covariates)
   rf_tune <- expand.grid(
-    ntree = c(50, 100, 200, 500), # number of trees
-    nodesize = c(3, 5, 10) # minimum number of observations in terminal nodes
+    ntree = c(50, 100, 500), # number of trees
+    nodesize = c(5, 10, 50),  # minimum number of observations in terminal nodes
+    mtry = c(numcovs / 3, numcovs / 2, numcovs / 1.5)
   )
 
   for (i in 1:nrow(rf_tune)) {
     assign(
       paste0("lrnr_rf_", stringr::str_pad(i, width = 2, pad = "0")),
-      Lrnr_randomForest$new(ntree = rf_tune[i, 1], nodesize = rf_tune[i, 2]),
+      Lrnr_randomForest$new(
+        ntree = rf_tune[i, 1],
+        nodesize = rf_tune[i, 2],
+        mtry = round(rf_tune[i, 3])
+        ),
       envir = .GlobalEnv
     )
   }
