@@ -43,42 +43,37 @@ fmt_risk_table <- function(dir,
   keep_always <- c("Lrnr_mean", "SuperLearner")
 
   rt <- lapply(risks, function(x) {
-    disc_sl_name <- x[!learner %in% keep_always & mean_risk == min(mean_risk), learner]
-    print(length(disc_sl_name))
-    curr <- x[
-      learner %in% keep_always |
-          (!learner %in% keep_always & mean_risk == min(mean_risk))
-        ][, learner := ifelse(!learner %in% keep_always, "BestComponent", learner)
-          ][, risksum :=
-                paste0(format(round(mean_risk, 2), digits = 3),
-                       " (", format(round(SE_risk, 3), digits = 3), ")")
-            ][, .(learner, risksum)
-              ][learner != "Lrnr_glm_TRUE"]
 
-    # using dplyr first here accounts for cases where two learners had
-    # exactly the same mean_risk (SE)
-    rtlong <- dcast(
-      curr,
-      . ~ learner,
-      value.var = "risksum",
-      fun.aggregate = dplyr::first
-    )
+    disc_sl_name <- x[
+      !learner == "SuperLearner" & mean_risk == min(mean_risk),
+      learner
+    ]
+
+    # get risk information;
+    esl <- x[learner == "SuperLearner"]
+
+    dsl <- x[
+      learner != "SuperLearner"
+    ][mean_risk == min(mean_risk)
+    ][, learner := "DiscreteSL"]
+
+    mnl <- x[learner == "Lrnr_mean"]
+
+    lrnr_sum <- rbind(esl, dsl, mnl)[,
+      risksum :=
+        paste0(format(round(mean_risk, 2), digits = 3),
+               " (", format(round(SE_risk, 3), digits = 3), ")")
+      ][, .(learner, risksum)]
 
     # if more than one learner had the same best mean_risk (SE),
     # they'll be concatenated and named in the BestComponent Model column
-    rtlong[, BestComponentModel :=
-               ifelse(
-                 length(disc_sl_name) > 1,
-                 paste(disc_sl_name, collapse = ", "),
-                 disc_sl_name
-               )
-           ][, .(SuperLearner, BestComponent, Mean = Lrnr_mean, BestComponentModel)]
+    rtlong <- dcast(lrnr_sum, . ~ learner, value.var = "risksum")
   })
 
   risksout <- lapply(1:length(files), function(x) {
     currwk <- str_extract(files[x], "[0-9]{2}(?=\\.Rds)")
     rt[[x]][, Week := currwk
-            ][, .(Week, SuperLearner, BestComponent, Mean, BestComponentModel)]
+            ][, .(Week, SuperLearner, DiscreteSL, Mean = Lrnr_mean)]
   }) %>% rbindlist
 
   return(risksout)
@@ -198,9 +193,149 @@ join_learner_stats <- function(risktables, weights) {
 
 summarize_learner_selection <- function(learner_stats) {
 
-  learner_stats[, .N, .(learner, weight > 0)
-    ][, P := N / sum(N), .(learner)
-    ][weight == TRUE, .(learner, N, pct = round(P * 100, 1))
+  learner_stats[, .N, .(lname, weight > 0)
+    ][, P := N / sum(N), .(lname)
+    ][weight == TRUE, .(lname, N, pct = round(P * 100, 1))
     ][order(pct, decreasing = TRUE)]
 
+}
+
+
+#' @param data A _rwsum type data set.
+#' @describeIn summary_functions Helper function for cleaning random forest learner names
+#' @export relabel_rf
+
+relabel_rf <- function(data) {
+  slugs <- data[
+    grepl("randomForest", lname),
+    str_extract_all(lname, "[0-9]{2}$")
+  ]
+
+  prefixes <- data[
+    grepl("randomForest", lname),
+    str_extract(lname, ".*(?=[0-9]{2}$)")
+  ]
+
+  snum <- unique(as.numeric(slugs))
+
+  newslugs <- paste0("mtry", match(slugs, snum))
+
+  newlabs <- paste0(prefixes, newslugs)
+  newlabs
+}
+
+#' @param data A _rwsum type data set.
+#' @describeIn summary_functions Helper function to format results for plotting.
+#' @export apply_rf_relabel
+#' 
+apply_rf_relabel <- function(data) {
+
+  if (!exists("lchar", envir = .GlobalEnv)) {
+    stop("Create the learner ID lookup table. (Run code at top of script file.)")
+  }
+
+  data[grepl("randomForest", learner), .N, Week][
+  , check := N == length(lchar[grepl("randomForest", lname), lname])]
+
+  data[, lname := learner][
+    grepl("randomForest", learner),
+    lname := lchar$lname[grepl("RF", lchar$lid)], Week]
+
+  data[, lid := lchar$lid[match(lname, lchar$lname)]]
+
+}
+
+#' @param data A _rwsum type data set.
+#' @describeIn summary_functions Produces a tile plot summarizing component risks and metalearner weights.
+#'
+#' @export plot_risktiles
+plot_risktiles <- function(data) {
+
+  data %>%
+    ggplot(aes(
+      x = lid,
+      y = Week
+    )) +
+    geom_tile(
+      aes(fill = log(mean_risk)),
+      color = "white"
+    ) +
+    geom_point(
+      aes(size = weight, alpha = weight > 0),
+      shape = 22,
+      color = "black",
+      fill = "white"
+    ) +
+    scale_fill_viridis(
+      option = "magma",
+      direction = -1
+    ) +
+    scale_alpha_manual(values = c(0, 0.7)) +
+    expand_limits(y = c(0, 1)) +
+    labs(
+      x = "Learner ID",
+      y = "Week"
+    ) +
+    theme_minimal(base_family = "serif") +
+    theme(
+      plot.background = element_blank(),
+      axis.text = element_text(angle = 90, hjust = 1, vjust = -1)
+    )
+}
+
+#' @param data A _rwsum type data set.
+#' @describeIn summary_functions Produces a plot of the ensemble super learner's mean risk across all 30 weeks of the flu season against the mean prediction reference, as well as the distribution of cross-validated risks and ensemble weights assigned to each component learner.
+#'
+#' @importFrom magrittr `%>%`
+#' @import data.table
+#' 
+#' @export plot_ensemble_performance
+
+plot_ensemble_performance <- function(data, risktables) {
+
+  meanpred_mnrisk <- data[learner == "Lrnr_mean", mean_risk][1]
+
+  cntens <- lapply(risktables, function(x) {
+    x[learner == "SuperLearner", .(learner, ens_mean_risk = mean_risk, Week)]
+  }) %>% rbindlist
+
+  data[weight > 0] %>%
+    ggplot(aes(
+      x = Week
+    )) +
+    geom_point(aes(
+      size = weight,
+      y = log(mean_risk)
+    ),
+    alpha = 0.4,
+    shape = 21
+    ) +
+    geom_hline(aes(
+      yintercept = log(meanpred_mnrisk),
+      color = "Mean Prediction"
+    ),
+    size = 1,
+    alpha = 0.3
+    ) +
+    geom_point(
+      data = cntens,
+      aes(
+        y = log(ens_mean_risk),
+        color = "Super Learner"
+      ),
+      shape = 17,
+      size = 3
+    ) +
+    geom_line(
+      data = cntens,
+      aes(
+        y = log(ens_mean_risk),
+        group = 1,
+        color = "Super Learner",
+        ),
+      size = 1,
+      alpha = 0.3
+    ) +
+    guides(name = "Mean cross-validated risk") +
+    theme_base(base_family = "serif")
 }
