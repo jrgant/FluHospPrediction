@@ -77,15 +77,6 @@ fhp_spec_learners <- function(learner_pat = "^lrnr_", verbose = FALSE) {
   lrnr_glm_gauss <- Lrnr_glm$new(family = gaussian())
   lrnr_screen_glm <<- Pipeline$new(scrn_glm, lrnr_glm_gauss)
 
-
-  # @NOTE 2020-04-08:
-  # - I think Andrew was right about the weirdness of the Poisson and
-  #   quasi-Poisson results... I'm not actually modeling a count, I'm
-  #   modeling a peak count, so these two models probably don't make sense
-
-  # lrnr_glm_pois <- Lrnr_glm$new(family = poisson())
-  # lrnr_glm_qpois <- Lrnr_glm$new(family = quasipoisson())
-
   # Specify polymars learners
   pmars_tune <- seq(2, 10, 2)
 
@@ -136,11 +127,8 @@ fhp_spec_learners <- function(learner_pat = "^lrnr_", verbose = FALSE) {
   lrnr_svm_poly2  <<- Lrnr_svm$new(kernel = "polynomial", degree = 2)
   lrnr_svm_poly3  <<- Lrnr_svm$new(kernel = "polynomial", degree = 3)
 
-  # TODO: Specify bagged learners
-  # lrnr_bag <-
-
   # Specify GAM learners
-  gam_tune <- list(gamma = 1:5)
+
 
   for (i in 1:length(gam_tune$gamma)) {
     assign(
@@ -191,9 +179,6 @@ fhp_spec_learners <- function(learner_pat = "^lrnr_", verbose = FALSE) {
       envir = .GlobalEnv
     )
   }
-
-  # TODO: Specify GBM (use xgboost)
-  # lrnr_gbm <-
 
   # define learner stack
   stack_full <<- Stack$new(
