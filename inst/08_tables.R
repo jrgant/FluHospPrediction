@@ -11,6 +11,7 @@ resdir <- here::here("results", "paper_output")
 
 # TABLE ONE: Parameter Targets -------------------------------------------------
 
+
 emp <- fread(file.path(clndir, "empdat.csv"))
 
 pkht <- emp[, .(pkht = max(weekrate)), by = season]
@@ -28,6 +29,48 @@ targets
 fwrite(targets, file.path(resdir, "table-01_prediction-targets.csv"))
 
 
+# %% RESULTS DIRECTORIES -------------------------------------------------------
+
+resdir <- file.path("results", "2020-05-18-Draft04")
+
+respr <- file.path(resdir, "ArrayID-12877997_pkrate")
+respw <- file.path(resdir, "ArrayID-12878011_pkweek")
+resch <- file.path(resdir, "ArrayID-12878012_cumhosp")
+
+paper_output <- file.path("results", "paper_output")
+
+
+# %% LEARNER NAME LOOKUP TABLE ------------------------------------------------
+
+# Learner lookup table (get submitted learners from a task)
+lid07 <- readRDS(file.path(respr, "sl_pkrate_07.Rds"))
+
+lchar <- data.table(
+  lname = names(lid07$sl_pruned$metalearner_fit$coefficients)
+)
+
+relabel_rf(lchar)
+
+# Assign IDs to the component learners and create lookup table
+lchar[grepl("glmnet.*(0\\.25|0\\.5|0\\.75)", lname),
+      lid := paste0("EN", 1:max(.I))][]
+lchar[grepl("gam", lname), lid := paste0("GAM", 1:max(.I))][]
+lchar[grepl("glmnet.*1_100", lname), lid := "LASSO"][]
+lchar[grepl("loess", lname), lid := paste0("LOESS", 1:max(.I))][]
+lchar[lname == "Lrnr_mean", lid := "Mean"][]
+lchar[grepl("nnet", lname), lid := paste0("NNet", 1:max(.I))][]
+lchar[grepl("polspline", lname), lid := paste0("PMars", 1:max(.I))][]
+
+lchar[grepl("randomForest", lname), lname := relabel_rf(lchar)][]
+lchar[grepl("randomForest", lname), lid := paste0("RF", 1:max(.I))][]
+
+lchar[grepl("glmnet.*0_100", lname), lid := "Ridge"][]
+lchar[grepl("Pipeline", lname), lid := "ScreenGLM"][]
+lchar[grepl("svm", lname), lid := paste0("SVM", 1:max(.I))][]
+
+lchar
+
+
 # TABLE TWO: Parameter Targets -------------------------------------------------
 
 ## No analysis output, just LaTeX equations. See manuscript file.
@@ -42,48 +85,62 @@ fwrite(targets, file.path(resdir, "table-01_prediction-targets.csv"))
 
 ## Table 4: Peak Rate Risks ----------------------------------------------------
 
-pkrate_risks <- fmt_risk_table(
-  dir = file.path("results", "2020-04-22-Draft02-PeakRate-CompleteJobs"),
-  slug = "sl_pkrate"
-)
-
+pkrate_risks <- fmt_risk_table(dir = respr, slug = "sl_pkrate")
 pkrate_risks
 
-fwrite(pkrate_risks, file.path(resdir, "table-04_peakrate-risks.csv"))
+fwrite(
+  pkrate_risks,
+  file.path(paper_output, paste0(Sys.Date(), "_table-04_peakrate-risks.csv"))
+)
 
 
 ## Table 5: Peak Week Risks ----------------------------------------------------
 
-pkweek_risks <- fmt_risk_table(
-  dir = file.path("results", "2020-04-24-Draft02-PeakWeek"),
-  slug = "sl_pkweek"
-)
-
+pkweek_risks <- fmt_risk_table(dir = respw, slug = "sl_pkweek")
 pkweek_risks
 
-fwrite(pkweek_risks, file.path(resdir, "table-05_peakweek_risks.csv"))
+fwrite(
+  pkweek_risks,
+  file.path(paper_output, paste0(Sys.Date(), "_table-05_peakweek_risks.csv"))
+)
 
 
 ## Table 6: Cumulative Hospitalizations Risks ----------------------------------
 
-cumhosp_risks <- fmt_risk_table(
-  dir = file.path("results", "2020-04-24-Draft02-CumHosp"),
-  slug = "sl_cumhosp"
-)
-
+cumhosp_risks <- fmt_risk_table(dir = resch, slug = "sl_cumhosp")
 cumhosp_risks
 
-fwrite(cumhosp_risks, file.path(resdir, "table-06_cumhosp_risks.csv"))
+fwrite(
+  cumhosp_risks,
+  file.path(paper_output, paste0(Sys.Date(), "_table-06_cumhosp_risks.csv"))
+)
 
 
 # S2 TABLE: Curves by Season Template ------------------------------------------
 
-sims <- readRDS(file.path(clndir, "hypothetical-curves.Rds"))$outhc
+fullsim <- readRDS(file.path(clndir, "hypothetical-curves.Rds"))
+
+pretrans_sims <- lapply(1:length(fullsim$hc), function(x) {
+  cid <- rep(x, 30)
+  original_sim <- unname(unlist(fullsim$hc[[x]]$eq$fi_pluserr))
+  data.table(cid = cid, weekint = 1:30, original_sim)
+}) %>% rbindlist
+
+setnames(pretrans_sims, "V1", "origsim")
+pretrans_sims
+
+sims <- fullsim$outhc
 
 tmpct <- sims[weekint == 1, .N, keyby = .(`Template season` = template)
               ][, N := format(N, big.mark = ",")]
 
 fwrite(tmpct, file.path(resdir, "table-s02_template-counts.csv"))
+
+# Reported in methods: proportion of weeks negative and set to 0
+
+transcomp <- sims[pretrans_sims, on = c("cid", "weekint")]
+
+transcomp[, .N, .(origsim < 0)][, P := N / sum(N)][]
 
 
 # S3 FIGURE: Curves by Season Template -----------------------------------------
@@ -114,7 +171,7 @@ tempsim_plot <- crv %>%
   ) +
   geom_line(
     data = crv[crvtype == "Simulated"],
-    alpha = 0.1,
+    alpha = 0.05,
     size = 0.5,
     color = "gray"
   ) +
@@ -133,63 +190,74 @@ tempsim_plot
 
 ggsave(
   plot = tempsim_plot,
-  width = 3,
-  height = 3,
+  width = 6,
+  height = 6,
   units = "in",
-  file = "interim-reports/2020-04-28_RA-Meeting/tempsim_plot.svg",
-  dev = "svg"
+  file = "results/paper_output/tempsim_plot.png",
+  dev = "png"
 )
 
 
-# S3-S5 TABLES: Average Risk by Week, Across Component Model -------------------
+# S4-S6 TABLES: Average Risk by Week, Across Component Model -------------------
 
-## Table S3 -------------
+## Table S4 -------------
 
 riskdist_pkrate <- get_risk_dist("sl_pkrate")
 riskdist_pkrate
 
 fwrite(
   riskdist_pkrate,
-  file.path(resdir, "table-s03_risk-distbyweek-pkrate.csv")
+  file.path(
+    paper_output, paste0(Sys.Date(), "_table-s04_risk-distbyweek-pkrate.csv")
+  )
 )
 
 
-## Table S4 -------------
+## Table S5 -------------
 
 riskdist_pkweek <- get_risk_dist("sl_pkweek")
 riskdist_pkweek
 
 fwrite(
   riskdist_pkweek,
-  file.path(resdir, "table-s04_risk-distbyweek-pkweek.csv")
+  file.path(
+    paper_output,
+    paste0(Sys.Date(), "_table-s05_risk-distbyweek-pkweek.csv")
+  )
 )
 
-## Table S5 -------------
+## Table S6 -------------
 
 riskdist_cumhosp <- get_risk_dist("sl_cumhosp")
 riskdist_cumhosp
 
 fwrite(
   riskdist_cumhosp,
-  file.path(resdir, "table-s05_risk-distbyweek-cumhosp.csv")
+  file.path(
+    paper_output,
+    paste0(Sys.Date(), "_table-s06_risk-distbyweek-cumhosp.csv")
+  )
 )
 
 
-# S6-SN TABLES: Inspect Weight Assignments -------------------------------------
+# S7-S9 FIGURES: Inspect Weight Assignments ------------------------------------
 
 pkrate_weights <- get_learner_weights(
-  dir = file.path("results", "2020-04-22-Draft02-PeakRate-CompleteJobs"),
-  slug = "sl_pkrate"
+  dir = respr,
+  slug = "sl_pkrate",
+  metalearner_is = "solnp"
 )
 
 pkweek_weights <- get_learner_weights(
-  dir = file.path("results", "2020-04-24-Draft02-PeakWeek"),
-  slug = "sl_pkweek"
+  dir = respw,
+  slug = "sl_pkweek",
+  metalearner_is = "solnp"
 )
 
 cumhosp_weights <- get_learner_weights(
-  dir = file.path("results", "2020-04-24-Draft02-CumHosp"),
-  slug = "sl_cumhosp"
+  dir = resch,
+  slug = "sl_cumhosp",
+  metalearner_is = "solnp"
 )
 
 # check that we have all 30 weeks for each prediction target
@@ -198,44 +266,10 @@ sapply(
   function(x) length(x) == 30
 )
 
-## Risk-and-weight summaries ---------------------
-
-plotrw <- function(data, ptitle) {
-  ggplot(
-    data,
-    aes(
-      x = log(mean_risk),
-      y = weight
-    )) +
-    geom_point(
-      aes(
-        shape = weight > 0,
-        color = weight > 0,
-        alpha = weight > 0
-      ), size = 2) +
-    facet_wrap(
-      ~ Week,
-      labeller = labeller(Week = function(x) paste("Week", x))
-    ) +
-    scale_shape_manual(values = c(4, 18)) +
-    scale_color_viridis_d(
-      direction = -1,
-      end = 0.5
-    ) +
-    scale_alpha_manual(values = c(0.4, 1)) +
-    guides(alpha = FALSE) +
-    labs(
-      title = ptitle,
-      y = "ensemble weight"
-    ) +
-    theme_base(base_family = "serif") +
-    theme(strip.text = element_text(face = "bold"))
-}
 
 ## Peak Rate ---------------------------------------
 
 ### Data summary
-
 pkrate_rwsum <- join_learner_stats(
   risktables = sl_pkrate_risktables,
   weights = pkrate_weights
@@ -243,28 +277,28 @@ pkrate_rwsum <- join_learner_stats(
 
 pkrate_rwsum
 
-pkrate_lrnr_sel <- summarize_learner_selection(pkrate_rwsum)
+### Relabel randomForest learners in results
+apply_rf_relabel(pkrate_rwsum)
 
+### Risk tile plot
+plot_risktiles(pkrate_rwsum)
+
+### Super Learner performance
+plot_ensemble_performance(pkrate_rwsum, sl_pkrate_risktables)
+
+### Summarize learner selection
+pkrate_lrnr_sel <- summarize_learner_selection(pkrate_rwsum)
 pkrate_lrnr_sel
 
 fwrite(
-  pkrate_lrnr_sel, file.path("interim-reports/2020-04-28_RA-Meeting/pkrate_lrnr_selection.csv")
+  pkrate_lrnr_sel,
+  file.path(paper_output, paste0(Sys.Date(), "_pkrate_lrnr_selection.csv"))
 )
 
-### Plot
-
-pkrate_rw_plot <- plotrw(pkrate_rwsum, "Peak rate")
-
-ggsave(
-  plot = pkrate_rw_plot,
-  filename = "interim-reports/2020-04-28_RA-Meeting/pkrate_rw_plot.svg",
-  dev = "svg"
-)
 
 ## Peak Week ---------------------------------------
 
 ### Data summary
-
 pkweek_rwsum <- join_learner_stats(
   sl_pkweek_risktables,
   pkweek_weights
@@ -272,26 +306,27 @@ pkweek_rwsum <- join_learner_stats(
 
 pkweek_rwsum
 
+### Relabel randomForest learners
+apply_rf_relabel(pkweek_rwsum)
+
+### Risk tile plot
+plot_risktiles(pkweek_rwsum)
+
+### Super Learner performance
+plot_ensemble_performance(pkweek_rwsum, sl_pkweek_risktables)
+
+### Summarize learner selection
 pkweek_lrnr_sel <- summarize_learner_selection(pkweek_rwsum)
 
 fwrite(
-  pkweek_lrnr_sel, file.path("interim-reports/2020-04-28_RA-Meeting/pkweek_lrnr_selection.csv")
+  pkweek_lrnr_sel,
+  file.path(paper_output, paste0(Sys.Date(), "_pkweek_lrnr_selection.csv"))
 )
 
-### Plot
 
-pkweek_rw_plot <- plotrw(pkweek_rwsum, "Peak week")
-
-ggsave(
-  plot = pkweek_rw_plot,
-  filename = "interim-reports/2020-04-28_RA-Meeting/pkweek_rw_plot.svg",
-  dev = "svg"
-)
-
-## Cumulative Hospitalizations
+## Cumulative Hospitalizations --------------------
 
 ### Data summary
-
 cumhosp_rwsum <- join_learner_stats(
   sl_cumhosp_risktables,
   cumhosp_weights
@@ -299,18 +334,19 @@ cumhosp_rwsum <- join_learner_stats(
 
 cumhosp_rwsum
 
+### Relabel randomForest learners
+apply_rf_relabel(cumhosp_rwsum)
+
+### Risk tile plot
+plot_risktiles(cumhosp_rwsum)
+
+### Super Learner performance
+plot_ensemble_performance(cumhosp_rwsum, sl_cumhosp_risktables)
+
+### Summarize learner selection
 cumhosp_lrnr_sel <- summarize_learner_selection(cumhosp_rwsum)
 
 fwrite(
-  cumhosp_lrnr_sel, file.path("interim-reports/2020-04-28_RA-Meeting/cumhosp_lrnr_selection.csv")
-)
-
-### Plot
-
-cumhosp_rw_plot <- plotrw(cumhosp_rwsum, "Cumulative hospitalizations")
-
-ggsave(
-  plot = cumhosp_rw_plot,
-  filename = "interim-reports/2020-04-28_RA-Meeting/cumhosp_rw_plot.svg",
-  dev = "svg"
+  cumhosp_lrnr_sel,
+  file.path(paper_output, paste0(Sys.Date(), "_cumhosp_lrnr_selection.csv"))
 )
