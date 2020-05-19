@@ -6,7 +6,8 @@
 
 #' @param target One of "pkrate", "pkweek", or "cumhosp". No default.
 #' @param current_week Week of flu season for which to make a task.
-#'
+#' @param lambda_type Pick the curves simulated based on trendfilter lambda. Should be one of "lambda-min" or "lambda-1se".
+#' 
 #' @return A list containing the sl3 tasks for each week of the flu season.
 #'
 #' @describeIn super_learner_proc Specify learning tasks for each week.
@@ -14,14 +15,16 @@
 #' @import origami sl3 stringr
 #' @export fhp_make_task
 
-fhp_make_task <- function(target, current_week) {
+fhp_make_task <- function(target, current_week, lambda_type) {
 
   clndir <- here::here("data", "cleaned")
 
   datfile <- list.files(
     clndir,
     pattern = paste0(
-      "sim_dataset_analytic_week_", str_pad(current_week, 2, "left", "0")
+      "sim_dataset_analytic_",
+      lambda_type, "_week_",
+      str_pad(current_week, 2, "left", "0")
     ),
     full.names = TRUE
   )
