@@ -63,14 +63,15 @@ fhp_make_task <- function(target, current_week, lambda_type) {
 #' @param learner_pat Regular expression specifying which learners to include in the learner stack. Defaults
 #'                    to "^lrnr_", which adds any object whose name starts with "lrnr" in the global environment
 #'                    to the learner stack. To select a specific subset of learners, provide appropriate regex.
-#'
+#' @param gamweek The week for which the super learner algorithm is being run. Used to limit the variables fed to smoothing functions in the generalized additive models (GAMs, \code{mgcv} package).
+#' @param currtask Machine learning task as produced by the sl3 package. Used to build custom model formulas for the GAMs.
 #' @param verbose Logical indicating whether to print the full component learner stack. Defaults to FALSE.
 #'
 #' @describeIn super_learner_proc Specify all the component learners and assign them to the global environment.
 #'
 #' @export fhp_spec_learners
 
-fhp_spec_learners <- function(learner_pat = "^lrnr_", verbose = FALSE) {
+fhp_spec_learners <- function(learner_pat = "^lrnr_", gamweek, currtask, verbose = FALSE) {
 
   # Mean learner
   lrnr_mean <<- Lrnr_mean$new()
@@ -132,11 +133,38 @@ fhp_spec_learners <- function(learner_pat = "^lrnr_", verbose = FALSE) {
 
   # Specify GAM learners
 
+  ## build GAM model formula
+  if (missing(gamweek) | missing(currtask)) {
+
+    warning("Current week or task was not specified. The GAM learners will try smoothing parameters for all continuous predictors, per sl3 defaults. To build custom model formulas, specify both gamweek and currtask arguments.")
+
+  } else {
+
+    outcome <- currtask$nodes$outcome
+    covs <- currtask$nodes$covariates
+
+    smoothed_cov <- c(
+      paste0("hosprate_100k_", gamweek),
+      paste0("cumhosp_100k_", gamweek)
+    )
+
+    smoothed_terms <- paste(
+      sapply(smoothed_cov, function(x) paste0("s(", x, ", k = 7)")),
+      collapse = "+"
+    )
+
+    unsmoothed_terms <- paste(covs[!covs %in% smoothed_cov], collapse = "+")
+
+    fml <- paste(outcome, "~", smoothed_terms)
+  }
+
+  gam_tune <- list(gamma = c(1, 5, 10))
 
   for (i in 1:length(gam_tune$gamma)) {
     assign(
       paste0("lrnr_gam_", stringr::str_pad(i, width = 2, pad = "0")),
       Lrnr_gam$new(
+        formula = as.formula(fml),
         select = TRUE, # allow penalization to drop parameters from the model
         gamma = gam_tune$gamma[i]
       ),
