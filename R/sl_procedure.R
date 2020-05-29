@@ -2,7 +2,6 @@
 #'
 #' Functions used to specify and execute the enesemble learning procedure.
 #'
-#'
 
 #' @param target One of "pkrate", "pkweek", or "cumhosp". No default.
 #' @param current_week Week of flu season for which to make a task.
@@ -225,7 +224,6 @@ fhp_spec_learners <- function(learner_pat = "^lrnr_", gamweek, currtask, verbose
   )
 
   if (verbose) print(stack_full)
-
 }
 
 
@@ -308,7 +306,7 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_wee
 #'
 #' @export get_week
 #' @describeIn super_learner_proc Specifies the week for which to run the super learner algorithm.
-#' 
+#'
 get_week <- function(w = NULL, slurm = TRUE) {
   if (is.null(w) & slurm) {
     as.numeric(Sys.getenv("SLURM_ARRAY_TASK_ID"))
