@@ -33,6 +33,7 @@ ed[, lapply(.SD, is.na)] %>%
   melt %>%
   print
 
+
 # %% View Historical Curves -------------------------------------------------
 
 sublab <- "2003–2019, excludes 2009–2010 season"
@@ -308,7 +309,7 @@ hhc <- run_curvesim(
   predlist = tf_pred,
   lt = "lambda.min",
   reps = 15000,
-  seed = 1983745
+  seed = 709027485
 )
 
 names(hhc)
@@ -332,7 +333,7 @@ hhc_1se <- run_curvesim(
   predlist = tf_pred_1se,
   lt = "lambda.1se",
   reps = 15000,
-  seed = 98876876
+  seed = 709027485
 )
 
 
@@ -441,6 +442,7 @@ hhc$outhc %>%
 
 saveRDS(hhc, paste0(clndir, "/hypothetical-curves_lambda-min.Rds"))
 saveRDS(hhc_1se, paste0(clndir, "/hypothetical-curves_lambda-1se.Rds"))
+
 
 # %% View and Write Plots ------------------------------------------------
 
