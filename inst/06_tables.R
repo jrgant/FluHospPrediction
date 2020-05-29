@@ -6,11 +6,10 @@ pacman::p_load(
 )
 
 clndir <- here::here("data", "cleaned")
-resdir <- here::here("results", "paper_output")
+paper_output <- here::here("results", "paper_output")
 
 
 # TABLE ONE: Parameter Targets -------------------------------------------------
-
 
 emp <- fread(file.path(clndir, "empdat.csv"))
 
@@ -26,18 +25,21 @@ targets <- pkht[pkwk[cumhosp, on = "season"], on = "season"] %>%
 
 targets
 
-fwrite(targets, file.path(resdir, "table-01_prediction-targets.csv"))
+fwrite(targets, file.path(paper_output, "table-01_prediction-targets.csv"))
 
 
 # %% RESULTS DIRECTORIES -------------------------------------------------------
 
-resdir <- file.path("results", "2020-05-18-Draft04")
+resdir <- "results"
 
-respr <- file.path(resdir, "ArrayID-12877997_pkrate")
-respw <- file.path(resdir, "ArrayID-12878011_pkweek")
-resch <- file.path(resdir, "ArrayID-12878012_cumhosp")
+## Main analysis files
+respr <- file.path(resdir, "ArrayID-12980667-Target-PeakRate-Lambda-Min")
+respw <- file.path(resdir, "ArrayID-12980671-Target-PeakWeek-Lambda-Min")
+resch <- file.path(resdir, "ArrayID-12980674-Target-CumHosp-Lambda-Min")
 
-paper_output <- file.path("results", "paper_output")
+## Sensitivity analysis files (alternative trend filter lambda)
+respr_1se <- file.path(resdir, "ArrayID-12980676-Target-PeakRate-Lambda-1SE")
+respw_1se <- file.path(resdir, "ArrayID-12980677-Target-PeakWeek-Lambda-1SE")
 
 
 # %% LEARNER NAME LOOKUP TABLE ------------------------------------------------
@@ -49,23 +51,24 @@ lchar <- data.table(
   lname = names(lid07$sl_pruned$metalearner_fit$coefficients)
 )
 
+# Relabel the random forests
 relabel_rf(lchar)
 
 # Assign IDs to the component learners and create lookup table
 lchar[grepl("glmnet.*(0\\.25|0\\.5|0\\.75)", lname),
-      lid := paste0("EN", 1:max(.I))][]
-lchar[grepl("gam", lname), lid := paste0("GAM", 1:max(.I))][]
-lchar[grepl("glmnet.*1_100", lname), lid := "LASSO"][]
-lchar[grepl("loess", lname), lid := paste0("LOESS", 1:max(.I))][]
-lchar[lname == "Lrnr_mean", lid := "Mean"][]
-lchar[grepl("nnet", lname), lid := paste0("NNet", 1:max(.I))][]
-lchar[grepl("polspline", lname), lid := paste0("PMars", 1:max(.I))][]
+      lid := paste0("EN", 1:max(.I))]
+lchar[grepl("gam", lname), lid := paste0("GAM", 1:max(.I))]
+lchar[grepl("glmnet.*1_100", lname), lid := "LASSO"]
+lchar[grepl("loess", lname), lid := paste0("LOESS", 1:max(.I))]
+lchar[lname == "Lrnr_mean", lid := "Mean"]
+lchar[grepl("nnet", lname), lid := paste0("NNet", 1:max(.I))]
+lchar[grepl("polspline", lname), lid := paste0("PMARS", 1:max(.I))]
 
-lchar[grepl("randomForest", lname), lname := relabel_rf(lchar)][]
-lchar[grepl("randomForest", lname), lid := paste0("RF", 1:max(.I))][]
+lchar[grepl("randomForest", lname), lname := relabel_rf(lchar)]
+lchar[grepl("randomForest", lname), lid := paste0("RF", 1:max(.I))]
 
-lchar[grepl("glmnet.*0_100", lname), lid := "Ridge"][]
-lchar[grepl("Pipeline", lname), lid := "ScreenGLM"][]
+lchar[grepl("glmnet.*0_100", lname), lid := "Ridge"]
+lchar[grepl("Pipeline", lname), lid := "ScreenGLM"]
 lchar[grepl("svm", lname), lid := paste0("SVM", 1:max(.I))][]
 
 lchar
@@ -118,18 +121,20 @@ fwrite(
 
 # S2 TABLE: Curves by Season Template ------------------------------------------
 
-fullsim <- readRDS(file.path(clndir, "hypothetical-curves.Rds"))
+sim_lr <- readRDS(file.path(clndir, "hypothetical-curves.Rds"))
+sim_lm <- readRDS(file.path(clndir, "hypothetical-curves_lambda-min.Rds"))
+sim_ls <- readRDS(file.path(clndir, "hypothetical-curves_lambda-1se.Rds"))
 
-pretrans_sims <- lapply(1:length(fullsim$hc), function(x) {
+pretrans_sims <- lapply(1:length(sim_lm$hc), function(x) {
   cid <- rep(x, 30)
-  original_sim <- unname(unlist(fullsim$hc[[x]]$eq$fi_pluserr))
+  original_sim <- unname(unlist(sim_lm$hc[[x]]$eq$fi_pluserr))
   data.table(cid = cid, weekint = 1:30, original_sim)
 }) %>% rbindlist
 
 setnames(pretrans_sims, "V1", "origsim")
 pretrans_sims
 
-sims <- fullsim$outhc
+sims <- sim_ls$outhc
 
 tmpct <- sims[weekint == 1, .N, keyby = .(`Template season` = template)
               ][, N := format(N, big.mark = ",")]
@@ -145,12 +150,28 @@ transcomp[, .N, .(origsim < 0)][, P := N / sum(N)][]
 
 # S3 FIGURE: Curves by Season Template -----------------------------------------
 
+# compare curves by lambda
+simlist <- list(
+  lambda.rand = sim_lr$outhc,
+  lambda.min = sim_lm$outhc,
+  lambda.1se = sim_ls$outhc
+)
+
+simdt <- rbindlist(simlist, idcol = "lambda")
+
+sapply(unique(simdt$lambda), function(x) simdt[lambda == x, summary(week)])
+
+simdt[, .(pkrate = max(prediction)), .(lambda, cid)] %>%
+  ggplot(aes(x = lambda, y = pkrate)) +
+  geom_boxplot() +
+  theme_base()
+
 sim_crvs <- sims[, .(
   cid,
   weekint,
   weekrate = prediction,
-  template)
-  ][, crvtype := "Simulated"]
+  template
+)][, crvtype := "Simulated"]
 
 emp_crvs <- emp[season != "2009-10", .(
   cid = paste(season),
@@ -162,16 +183,10 @@ emp_crvs <- emp[season != "2009-10", .(
 crv <- rbind(sim_crvs, emp_crvs)
 
 tempsim_plot <- crv %>%
-  ggplot(
-    aes(
-      x = weekint,
-      y = weekrate,
-      group = cid
-    )
-  ) +
+  ggplot(aes(x = weekint, y = weekrate, group = cid)) +
   geom_line(
     data = crv[crvtype == "Simulated"],
-    alpha = 0.05,
+    alpha = 0.03,
     size = 0.5,
     color = "gray"
   ) +
@@ -193,8 +208,8 @@ ggsave(
   width = 6,
   height = 6,
   units = "in",
-  file = "results/paper_output/tempsim_plot.png",
-  dev = "png"
+  file = "results/paper_output/tempsim_plot.pdf",
+  dev = "pdf"
 )
 
 
@@ -281,10 +296,14 @@ pkrate_rwsum
 apply_rf_relabel(pkrate_rwsum)
 
 ### Risk tile plot
-plot_risktiles(pkrate_rwsum)
+prt_pr <- plot_risktiles(pkrate_rwsum, titlestring = "Peak rate")
 
 ### Super Learner performance
-plot_ensemble_performance(pkrate_rwsum, sl_pkrate_risktables)
+pep_pr <- plot_ensemble_performance(
+  pkrate_rwsum,
+  sl_pkrate_risktables,
+  titlestring = "Peak rate"
+)
 
 ### Summarize learner selection
 pkrate_lrnr_sel <- summarize_learner_selection(pkrate_rwsum)
@@ -310,10 +329,14 @@ pkweek_rwsum
 apply_rf_relabel(pkweek_rwsum)
 
 ### Risk tile plot
-plot_risktiles(pkweek_rwsum)
+prt_pw <- plot_risktiles(pkweek_rwsum, titlestring = "Peak week")
 
 ### Super Learner performance
-plot_ensemble_performance(pkweek_rwsum, sl_pkweek_risktables)
+pep_pw <- plot_ensemble_performance(
+  pkweek_rwsum,
+  sl_pkweek_risktables,
+  titlestring = "Peak week"
+)
 
 ### Summarize learner selection
 pkweek_lrnr_sel <- summarize_learner_selection(pkweek_rwsum)
@@ -338,10 +361,17 @@ cumhosp_rwsum
 apply_rf_relabel(cumhosp_rwsum)
 
 ### Risk tile plot
-plot_risktiles(cumhosp_rwsum)
+prt_ch <- plot_risktiles(
+  cumhosp_rwsum,
+  titlestring = "Cumulative hospitalizations"
+)
 
 ### Super Learner performance
-plot_ensemble_performance(cumhosp_rwsum, sl_cumhosp_risktables)
+pep_ch <- plot_ensemble_performance(
+  cumhosp_rwsum,
+  sl_cumhosp_risktables,
+  titlestring = "Cumulative hospitalizations"
+)
 
 ### Summarize learner selection
 cumhosp_lrnr_sel <- summarize_learner_selection(cumhosp_rwsum)
@@ -349,4 +379,91 @@ cumhosp_lrnr_sel <- summarize_learner_selection(cumhosp_rwsum)
 fwrite(
   cumhosp_lrnr_sel,
   file.path(paper_output, paste0(Sys.Date(), "_cumhosp_lrnr_selection.csv"))
+)
+
+
+
+
+# %% SENSITIVITY ANALYSES ------------------------------------------------------
+
+## PEAK RATE -------------------------------------------
+
+pkrate_risks_1se <- fmt_risk_table(
+  dir = respr_1se,
+  slug = "sl_pkrate",
+  altslug = "1se"
+)
+
+pkrate_risks_1se
+
+fwrite(
+  pkrate_risks_1se,
+  file.path(paper_output, paste0(Sys.Date(), "peakrate-risks_lambda-1se.csv"))
+)
+
+pkrate_weights_1se <- get_learner_weights(
+  dir = respr_1se,
+  slug = "sl_pkrate",
+  metalearner_is = "solnp"
+)
+
+### Data summary
+pkrate_rwsum_1se <- join_learner_stats(
+  risktables = sl_pkrate_risktables_1se,
+  weights = pkrate_weights_1se
+)
+
+pkrate_rwsum_1se
+
+### Relabel randomForest learners in results
+apply_rf_relabel(pkrate_rwsum_1se)
+
+### Risk tile plot
+prt_pr_1se <- plot_risktiles(
+  pkrate_rwsum_1se,
+  titlestring = "Peak rate (alternate trend filter penalty)"
+)
+
+### Super Learner performance
+pep_pr_1se <- plot_ensemble_performance(
+  pkrate_rwsum_1se,
+  sl_pkrate_risktables_1se,
+  titlestring = "Peak rate (alternate trend filter penalty)"
+)
+
+### Summarize learner selection
+pkrate_lrnr_sel_1se <- summarize_learner_selection(pkrate_rwsum_1se)
+pkrate_lrnr_sel_1se
+
+fwrite(
+  pkrate_lrnr_sel_1se,
+  file.path(paper_output, paste0(Sys.Date(), "_pkrate_lrnr_selection_1se.csv"))
+)
+
+
+## PEAK WEEK -------------------------------------------
+
+pkweek_risks_1se <- fmt_risk_table(dir = respw_1se, slug = "sl_pkweek")
+pkweek_risks_1se
+
+fwrite(
+  pkweek_risks_1se,
+  file.path(paper_output, paste0(Sys.Date(), "peakweek_risks_1se.csv"))
+)
+
+pkweek_weights <- get_learner_weights(
+  dir = respw,
+  slug = "sl_pkweek",
+  metalearner_is = "solnp"
+)
+
+
+## CUMULATIVE HOSPITALIZATIONS ----------------------------------------
+
+cumhosp_risks_1se <- fmt_risk_table(dir = resch_1se, slug = "sl_cumhosp")
+cumhosp_risks_1se
+
+fwrite(
+  cumhosp_risks_1se,
+  file.path(paper_output, paste0(Sys.Date(), "cumhosp_risks_1se.csv"))
 )
