@@ -30,9 +30,9 @@ relabel_rf(data)
 
 apply_rf_relabel(data)
 
-plot_risktiles(data)
+plot_risktiles(data, titlestring = "")
 
-plot_ensemble_performance(data, risktables)
+plot_ensemble_performance(data, risktables, titlestring = "")
 }
 \arguments{
 \item{dir}{Directory where desired super learner results are stored.}
@@ -48,6 +48,8 @@ plot_ensemble_performance(data, risktables)
 \item{learner_stats}{The data.table produced by `join_learner_stats`.}
 
 \item{data}{A _rwsum type data set.}
+
+\item{titlestring}{Add a title to the plot.}
 }
 \value{
 The function explicitly returns the risk table described in the function's description. In the process of executing, the function also assigns a list containing data.tables containing mean learner risks for each week of the flu season.
