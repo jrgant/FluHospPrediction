@@ -113,10 +113,10 @@ cv_tf <- lapply(tf_seas, function(x) {
   cv.trendfilter(x, mode = "lambda", k = 5)
 })
 
+
 # %% Predict: Minimizing Lambda ------------------------------------------------
 
 # predict the weekly count (y) and error (tau) for each season
-
 tf_pred <- predict_curves(
   hosp_obs = seas_obs,
   tf_list = tf_seas,
@@ -161,7 +161,10 @@ check.lambda.1se <- data.table(
 tfp_1se <- rbindlist(lapply(tf_pred_1se, function(x) x[[1]]))
 
 # confirm correct weekint numbering
-sapply(names(tf_pred_1se), function(x) range(tfp_1se[season == x, range(weekint)]))
+sapply(
+  names(tf_pred_1se),
+  function(x) range(tfp_1se[season == x, range(weekint)])
+)
 
 
 # %% Prediction Plots ----------------------------------------------------------
@@ -193,10 +196,10 @@ plot.tf <- function(data, title) {
     )
 }
 
-tf_fit_facet <- plot.tf(tfp, "Lambda.min")
+tf_fit_facet <- plot.tf(tfp, "")
 tf_fit_facet
 
-tf1se_fit_facet <- plot.tf(tfp_1se, "Lambda.1se")
+tf1se_fit_facet <- plot.tf(tfp_1se, "")
 tf1se_fit_facet
 
 # S1 Figures
@@ -204,16 +207,16 @@ tf1se_fit_facet
 save.tf.plot <- function(plot, lambda.type) {
 
   fp <- file.path(
-    "results",
-    paste0("facet_preds_", lambda.type, "_", Sys.Date())
+    "results", "00_paper_output",
+    paste0("FIG_TF-Predictions_", lambda.type, "_", Sys.Date())
   )
 
   ggsave(
     paste0(fp, ".pdf"),
     plot = plot,
     device = "pdf",
-    height = 7,
-    width = 6,
+    height = 10,
+    width = 8,
     units = "in"
   )
 
@@ -221,8 +224,8 @@ save.tf.plot <- function(plot, lambda.type) {
     paste0(fp, ".png"),
     plot = plot,
     device = "png",
-    height = 7,
-    width = 6,
+    height = 10,
+    width = 8,
     units = "in"
   )
 
@@ -230,8 +233,6 @@ save.tf.plot <- function(plot, lambda.type) {
 
 save.tf.plot(tf_fit_facet, "lambda.min")
 save.tf.plot(tf1se_fit_facet, "lambda.1se")
-
-
 
 
 # %% Empirical Peak Rate and Peak Week -----------------------------------------
@@ -247,6 +248,18 @@ print(dist_emp_peaks)
 
 
 # %% Simulation Reusables ------------------------------------------------------
+
+## # refit trendfilter but provide a predictor matrix for later use in
+## # curve simulation (enables appropriate shifting). cv.trendfilter() requires
+## # identity matrix to be used initially.
+## tf_seas_pmat <- lapply(seas_obs, function(x) {
+##   trendfilter(
+##     y = x$weekrate,
+##     X = diag(1:30, nrow = 30, ncol = 30),
+##     ord = 1
+##   )
+## })
+
 
 get_pred_peaks <- function(predlist) {
   data.table(
@@ -320,8 +333,6 @@ head(hhc$hc)
 veclengths <- sapply(hhc$hc, function(x) length(x$eq$arg_f))
 table(veclengths == 30)
 
-names(ed)
-
 
 # %% Generate Hypothetical Curves: Lambda 1SE ----------------------------------
 
@@ -335,6 +346,10 @@ hhc_1se <- run_curvesim(
   reps = 15000,
   seed = 709027485
 )
+
+# check to make sure each season has 30 predicted periods
+veclengths2 <- sapply(hhc_1se$hc, function(x) length(x$eq$arg_f))
+table(veclengths2 == 30)
 
 
 # %% Inspect Simulated Curves --------------------------------------------------
@@ -401,7 +416,7 @@ hyp_hosp_p <-
              y = prediction)) +
   geom_line(aes(group = cid, color = factor(cid)),
             alpha = 0.6) +
-  coord_cartesian(y = c(0, 10)) +
+  coord_cartesian(y = c(0, 12)) +
   labs(x = "Week",
        y = "Predicted hospitalizations (per 100,000)",
        title = "Hypothetical Hospitalization Curves",
@@ -413,37 +428,122 @@ hyp_hosp_p <-
 # view plot
 hyp_hosp_p
 
-
-ggplot(hhc$outhc[weekint == 1, ], aes(x = prediction)) +
-  geom_density() +
-  labs(
-    title = "Predicted hospitalization rates at Epiweek 40 (integer week 1)"
-    ) +
-  theme_clean()
-
-summary(hhc$outhc$prediction[hhc$outhc$weekint == 1])
-
 # Check for unrealistic predictions at start and end of season
-hhc$outhc[weekint == 1, .(max = max(prediction),
-                          min = min(prediction))]
+hhc$outhc[
+  weekint == 1,
+  .(max = max(prediction), min = min(prediction))
+]
 
-hhc$outhc[weekint == 30, .(max = max(prediction),
-                           min = min(prediction))]
+hhc$outhc[
+  weekint == 30,
+  .(max = max(prediction), min = min(prediction))
+]
 
 hhc$outhc %>%
-  ggplot(
-    aes(x = prediction, y = factor(weekint))
-  ) +
+  ggplot(aes(x = prediction, y = factor(weekint))) +
   geom_density_ridges() +
   theme_ridges()
 
 
-# %% Write Hypothetical Curves ----------------------------------------------
+# %% Compare Simulated Curve to their Empirical Templates ----------------------
+
+simvemp <- list(
+  empirical = ed[, .(template = season, weekrate, weekint, cid = season)],
+  sim.lmin = hhc$outhc[, .(template, weekrate = prediction, weekint, cid)],
+  sim.l1se = hhc_1se$outhc[, .(template, weekrate = prediction, weekint, cid)]
+)
+
+simvempl <- rbindlist(simvemp, idcol = "type")
+
+simvempl[type != "sim.l1se"] %>%
+  ggplot(aes(x = weekint, y = weekrate, group = cid)) +
+  geom_line(
+    data = simvempl[type == "sim.lmin"],
+    alpha = 0.03,
+    size = 0.5,
+    color = "gray"
+  ) +
+  geom_line(
+    data = simvempl[type == "empirical"],
+    size = 1,
+    color = "black"
+  ) +
+  facet_wrap(~ template)
+
+simvempl[type != "sim.lmin"] %>%
+  ggplot(aes(x = weekint, y = weekrate, group = cid)) +
+  geom_line(
+    data = simvempl[type == "sim.l1se"],
+    alpha = 0.03,
+    size = 0.5,
+    color = "gray"
+  ) +
+  geom_line(
+    data = simvempl[type == "empirical"],
+    size = 1,
+    color = "black"
+  ) +
+  facet_wrap(~ template)
+
+simsum <- copy(simvempl[type != "empirical"])
+
+simsum <- simsum[, .(
+  peakrate = max(weekrate),
+  peakweek = weekint[weekrate == max(weekrate)]
+), .(cid, type, template)]
+
+# summarize peak rate by lambda sim and season shape template
+simsum[, .(
+  mean = mean(peakrate),
+  median = median(peakrate),
+  sd = sd(peakrate),
+  min = min(peakrate),
+  max = max(peakrate)
+), keyby = .(type, template)]
+
+# summarize peak week by lambda sim and season shape template
+simsum[, .(
+  mean = mean(peakweek),
+  median = median(peakweek),
+  sd = sd(peakweek),
+  min = min(peakweek),
+  max = max(peakweek)
+), keyby = .(type, template)]
+
+
+ggplot(simsum, aes(x = template, y = peakrate)) +
+  geom_boxplot() +
+  facet_wrap(~type) +
+  ggtitle("Peak rates by lambda version and shape template") +
+  theme_base() +
+  theme(axis.text.x = element_text(angle = 90, size = 8, vjust = 0.5))
+
+ggplot(simsum, aes(y = type, x = peakweek, fill = type)) +
+  geom_density_ridges() +
+  scale_fill_viridis_d(option = "magma") +
+  facet_wrap(~template) +
+  ggtitle("Peak weeks by lambda version and shape template") +
+  theme_ridges()
+
+ggplot(simsum, aes(y = type, fill = type, x = peakrate)) +
+  geom_density_ridges() +
+  scale_fill_viridis_d(option = "magma") +
+  ggtitle("Peakrate by lambda type only") +
+  theme_ridges()
+
+ggplot(simsum, aes(y = type, fill = type, x = peakweek)) +
+  geom_density_ridges() +
+  scale_fill_viridis_d(option = "magma") +
+  ggtitle("Peak week by lambda type only") +
+  theme_ridges()
+
+
+# %% Write Hypothetical Curves -------------------------------------------------
 
 saveRDS(hhc, paste0(clndir, "/hypothetical-curves_lambda-min.Rds"))
 saveRDS(hhc_1se, paste0(clndir, "/hypothetical-curves_lambda-1se.Rds"))
 
 
-# %% View and Write Plots ------------------------------------------------
+# %% View and Write Plots ------------------------------------------------------
 
 curve_grid <- grid.arrange(emp_hosp, emp_cumr, hyp_hosp_p, nrow = 3)
