@@ -1,6 +1,8 @@
 ^LICENSE\.md$
 ^.*\.Rproj$
 ^\.Rproj\.user$
-interim-reports
+^interim-reports$
 ^results$
 ^scripts$
+^data$
+^.*/graveyard/
