@@ -12,7 +12,11 @@
 \alias{plot_ensemble_performance}
 \title{Functions to summarize, visualize, and analyze data}
 \usage{
-fmt_risk_table(dir, slug = c("sl_pkrate", "sl_pkweek", "sl_cumhosp"))
+fmt_risk_table(
+  dir,
+  slug = c("sl_pkrate", "sl_pkweek", "sl_cumhosp"),
+  altslug = NULL
+)
 
 get_risk_dist(outcome = c("pkrate", "pkweek", "cumhosp"))
 
@@ -38,6 +42,8 @@ plot_ensemble_performance(data, risktables, titlestring = "")
 \item{dir}{Directory where desired super learner results are stored.}
 
 \item{slug}{Slug that identifies the prediction target. One of `sl_pkrate`, `sl_pkweek`, or `sl_cumhosp`.}
+
+\item{altslug}{Additional label to identify sensitivity analyses.}
 
 \item{outcome}{Prediction target outcome. One of `pkrate`, `pkweek`, or `cumhosp`}
 
