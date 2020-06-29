@@ -13,6 +13,7 @@ scratch.R
 **/*.jpg
 **/*.dat
 **/*.inv
+**/*.tar.gz
 DailySourceData/*
 
 interim-reports/*
