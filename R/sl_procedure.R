@@ -72,9 +72,6 @@ fhp_make_task <- function(target, current_week, lambda_type) {
 
 fhp_spec_learners <- function(learner_pat = "^lrnr_", gamweek, currtask, verbose = FALSE) {
 
-  # Mean learner
-  lrnr_mean <<- Lrnr_mean$new()
-
   # GLM
   scrn_glm <- Lrnr_screener_corP$new()
   lrnr_glm_gauss <- Lrnr_glm$new(family = gaussian())
