@@ -26,6 +26,7 @@
 #'    Available from: http://dx.doi.org/10.1371/journal.pcbi.1004382
 
 #' @import data.table
+#' @importFrom genlasso predict.genlasso
 #' @export simcrv
 
 simcrv <- function(
@@ -86,16 +87,16 @@ simcrv <- function(
   arg_f <- (predfits[[s]]$dat$weekint - mu) / nu + argmax_j
 
   # set up predictor matrix
-  m <- diag(arg_f / 1:30, length(arg_f), length(arg_f))
+  m <- diag(arg_f/1:30, length(arg_f), length(arg_f))
 
   # get predictions at arg_f
-  f <- predict(
+  f <- predict.genlasso(
     fitseas[[s]],
     Xnew = m,
     lambda = cv_list[[s]][[lambda_type]]
   )
 
-  err <- rnorm(n = length(f$fit), 0, sd = sqrt(sigma))
+  err <- rnorm(n = length(f$fit), 0, sd = sigma)
   fi <- t1 * f$fit + err
 
   #  transformation to set the lower function bound to 0
@@ -104,6 +105,7 @@ simcrv <- function(
   eqlist <- list(
     "term1" = t1,
     "arg_f" = arg_f,
+    "predmatrix" = m,
     "predictions" = f$fit,
     "error" = err,
     "fi_pluserr" = fi,
@@ -228,6 +230,8 @@ simdist <- function(nreps,
 #'         season.
 #'
 #' @rdname predcurves
+#'
+#' @importFrom genlasso predict.genlasso
 #' @export predict_curves
 
 predict_curves <- function(hosp_obs,
@@ -239,7 +243,7 @@ predict_curves <- function(hosp_obs,
 
     get_lambda <- cv_list[[x]][[lambda_type]]
 
-    pred.hosp <- predict(
+    pred.hosp <- predict.genlasso(
       object = tf_list[[x]],
       lambda = get_lambda
     )
