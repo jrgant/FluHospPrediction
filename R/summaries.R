@@ -200,10 +200,27 @@ join_learner_stats <- function(risktables, weights) {
 
 summarize_learner_selection <- function(learner_stats) {
   dt <- copy(learner_stats)
-  dt[, selected := ifelse(!is.na(weight) & weight > 0, 1, 0)
-    ][, .N, .(lid, selected)
-    ][, P := round(N / sum(N), 3), .(lid)
-    ][, .(lid, N, P)]
+  wk_cnt <-  dt[, length(unique(Week))]
+
+  dt <- dt[, selected := ifelse(!is.na(weight) & weight > 0, 1, 0)
+    ][, .(cnt_selected = sum(selected)), lid
+    ][, P := cnt_selected / wk_cnt
+    ][, .(lid, cnt_selected, P)
+    ][order(-P)]
+
+  dt[lid %like% "NNet", lclass := "Neural network"]
+  dt[lid %like% "GAM", lclass := "GAM"]
+  dt[lid %like% "LOESS", lclass := "LOESS"]
+  dt[lid == "ScreenGLM", lclass := "GLM"]
+  dt[lid %like% "SVM", lclass := "Support vector regression"]
+  dt[lid %like% "RF", lclass := "Random forest"]
+  dt[lid %like% "PMARS", lclass := "PolyMARS"]
+  dt[
+    lid %in% c("LASSO", "Ridge", paste0("EN", 1:3)),
+    lclass := "Penalized regression"
+  ]
+  dt[lid == "Mean", lclass := "Mean of prediction target"]
+
 }
 
 
@@ -278,6 +295,7 @@ plot_risktiles <- function(data, titlestring = "") {
       fill = "white"
     ) +
     scale_fill_viridis(
+      name = "Log(mean_risk)",
       option = "magma",
       direction = -1
     ) +
@@ -310,27 +328,33 @@ plot_ensemble_performance <- function(data, risktables, titlestring = "") {
   meanpred_mnrisk <- data[learner == "Lrnr_mean", mean_risk][1]
 
   cntens <- lapply(risktables, function(x) {
-    x[learner == "SuperLearner", .(learner, ens_mean_risk = mean_risk, Week)]
+    x[learner == "SuperLearner", .(
+      learner, ens_mean_risk = mean_risk, SE = SE_risk, Week
+    )][, ":="(
+      ll95 = ens_mean_risk - qnorm(0.975) * SE,
+      ul95 = ens_mean_risk + qnorm(0.975) * SE
+    )]
   }) %>% rbindlist
 
   data[weight > 0] %>%
     ggplot(aes(x = Week)) +
+    geom_hline(
+      aes(yintercept = log(meanpred_mnrisk), color = "Mean prediction"),
+      size = 1,
+    ) +
     geom_point(
       aes(size = weight, y = log(mean_risk)),
-      alpha = 0.4,
+      alpha = 0.2,
       shape = 21
     ) +
-    geom_hline(
-      aes(yintercept = log(meanpred_mnrisk), color = "Mean Prediction"),
-      size = 1,
-      alpha = 0.3
-    ) +
-    geom_point(
+    geom_pointrange(
       data = cntens,
-      aes(y = log(ens_mean_risk), color = "Super Learner"),
-      shape = 17,
-      size = 3
-    ) +
+      aes(
+        y = log(ens_mean_risk),
+        ymin = log(ll95),
+        ymax = log(ul95),
+        color = "Super Learner"
+    ), width = 0.25, shape = "square") +
     geom_line(
       data = cntens,
       aes(y = log(ens_mean_risk), group = 1, color = "Super Learner"),
