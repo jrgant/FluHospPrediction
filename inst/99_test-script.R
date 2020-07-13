@@ -23,7 +23,6 @@ cat("\n\nLearners in Stack\n")
 fhp_spec_learners(
   learner_pat = "mean|glm|lasso",
   verbose = TRUE,
-  gamweek = current_week,
   currtask = task
 )
 
