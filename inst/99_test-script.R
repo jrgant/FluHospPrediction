@@ -36,7 +36,7 @@ fhp_metalearner <- make_learner(
 
 # run the super learner algorithm
 fhpl1 <- fhp_run_sl(
-  pkrate_task,
+  task,
   write = FALSE,
   current_week = current_week,
   metalearner = fhp_metalearner
