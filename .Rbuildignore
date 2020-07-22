@@ -2,7 +2,10 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^interim-reports$
-^results$
+^results/
 ^scripts$
-^data$
+^data/cleaned/sim.*
+^data/cleaned/hyp.*
 ^.*/graveyard/
+scratch.R
+^.git$
