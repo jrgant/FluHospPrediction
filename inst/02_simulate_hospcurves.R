@@ -322,7 +322,7 @@ hhc <- run_curvesim(
   predlist = tf_pred,
   lt = "lambda.min",
   reps = 15000,
-  seed = 709027485
+  seed = 5882300
 )
 
 names(hhc)
@@ -344,7 +344,7 @@ hhc_1se <- run_curvesim(
   predlist = tf_pred_1se,
   lt = "lambda.1se",
   reps = 15000,
-  seed = 709027485
+  seed = 19711998
 )
 
 # check to make sure each season has 30 predicted periods

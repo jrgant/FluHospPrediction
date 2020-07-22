@@ -21,7 +21,7 @@ task <- suppressWarnings(
 # specify component learners and send to global environment
 cat("\n\nLearners in Stack\n")
 fhp_spec_learners(
-  learner_pat = "mean|glm|lasso",
+  learner_pat = "elastnet|rf",
   verbose = TRUE,
   currtask = task
 )
