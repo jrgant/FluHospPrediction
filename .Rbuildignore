@@ -3,9 +3,8 @@
 ^\.Rproj\.user$
 ^interim-reports$
 ^results/
-^scripts$
-^data/cleaned/sim.*
-^data/cleaned/hyp.*
-^.*/graveyard/
+^scripts/
+^data/
+^.*/*.graveyard/
 scratch.R
-^.git$
+^.git/
