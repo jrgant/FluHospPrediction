@@ -26,7 +26,6 @@ cat("\n\nLearners in Stack\n")
 fhp_spec_learners(
   learner_pat = learner_select,
   verbose = TRUE,
-  gamweek = current_week,
   currtask = task
 )
 
