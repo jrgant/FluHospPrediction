@@ -64,9 +64,7 @@ fmt_risk_table <- function(dir,
     ][mean_risk == min(mean_risk)
     ][1][, learner := "DiscreteSL"]
 
-    mnl <- x[learner == "Lrnr_mean"]
-
-    lrnr_sum <- rbind(esl, dsl, mnl)[,
+    lrnr_sum <- rbind(esl, dsl)[,
       risksum :=
         paste0(format(round(mean_risk, 2), digits = 4),
                " (", format(round(SE_risk, 3), digits = 4), ")")
@@ -80,7 +78,7 @@ fmt_risk_table <- function(dir,
   risksout <- lapply(1:length(files), function(x) {
     currwk <- str_extract(files[x], "[0-9]{2}(?=\\.Rds)")
     rt[[x]][, Week := currwk
-            ][, .(Week, SuperLearner, DiscreteSL, Mean = Lrnr_mean)]
+            ][, .(Week, SuperLearner, DiscreteSL)]
   }) %>% rbindlist
 
   return(risksout)
@@ -209,7 +207,6 @@ summarize_learner_selection <- function(learner_stats) {
     ][order(-P)]
 
   dt[lid %like% "NNet", lclass := "Neural network"]
-  dt[lid %like% "GAM", lclass := "GAM"]
   dt[lid %like% "LOESS", lclass := "LOESS"]
   dt[lid == "ScreenGLM", lclass := "GLM"]
   dt[lid %like% "SVM", lclass := "Support vector regression"]
@@ -273,11 +270,12 @@ apply_rf_relabel <- function(data) {
 
 #' @param data A _rwsum type data set.
 #' @param titlestring Add a title to the plot.
+#' @param font Control font in plot output. Defaults to "serif".
 #' @describeIn summary_functions Produces a tile plot summarizing component risks and metalearner weights.
 #'
 #' @export plot_risktiles
 
-plot_risktiles <- function(data, titlestring = "") {
+plot_risktiles <- function(data, titlestring = "", font = "serif") {
 
   data %>%
     ggplot(aes(
@@ -306,7 +304,7 @@ plot_risktiles <- function(data, titlestring = "") {
       y = "Week",
       title = titlestring
     ) +
-    theme_minimal(base_family = "serif") +
+    theme_minimal(base_family = font) +
     theme(
       plot.background = element_blank(),
       axis.text = element_text(angle = 90, hjust = 1, vjust = -1)
@@ -316,6 +314,7 @@ plot_risktiles <- function(data, titlestring = "") {
 
 #' @param data A _rwsum type data set.
 #' @param titlestring Add a title to the plot.
+#' @param font Control font in plot output. Defaults to "serif".
 #' @describeIn summary_functions Produces a plot of the ensemble super learner's mean risk across all 30 weeks of the flu season against the mean prediction reference, as well as the distribution of cross-validated risks and ensemble weights assigned to each component learner.
 #'
 #' @importFrom magrittr `%>%`
@@ -323,10 +322,9 @@ plot_risktiles <- function(data, titlestring = "") {
 #'
 #' @export plot_ensemble_performance
 
-plot_ensemble_performance <- function(data, risktables, titlestring = "") {
+plot_ensemble_performance <- function(data, risktables, titlestring = "", font = "serif") {
 
-  meanpred_mnrisk <- data[learner == "Lrnr_mean", mean_risk][1]
-
+  ## Calculate 95% confidence intervals for mean risk.
   cntens <- lapply(risktables, function(x) {
     x[learner == "SuperLearner", .(
       learner, ens_mean_risk = mean_risk, SE = SE_risk, Week
@@ -336,15 +334,12 @@ plot_ensemble_performance <- function(data, risktables, titlestring = "") {
     )]
   }) %>% rbindlist
 
+  ## Plot.
   data[weight > 0] %>%
     ggplot(aes(x = Week)) +
-    geom_hline(
-      aes(yintercept = log(meanpred_mnrisk), color = "Mean prediction"),
-      size = 1,
-    ) +
     geom_point(
       aes(size = weight, y = log(mean_risk)),
-      alpha = 0.2,
+      alpha = 0.4,
       shape = 21
     ) +
     geom_pointrange(
@@ -354,7 +349,7 @@ plot_ensemble_performance <- function(data, risktables, titlestring = "") {
         ymin = log(ll95),
         ymax = log(ul95),
         color = "Super Learner"
-    ), width = 0.25, shape = "square") +
+    ), shape = "square") +
     geom_line(
       data = cntens,
       aes(y = log(ens_mean_risk), group = 1, color = "Super Learner"),
@@ -363,5 +358,5 @@ plot_ensemble_performance <- function(data, risktables, titlestring = "") {
     ) +
     ggtitle(titlestring) +
     guides(name = "Mean cross-validated risk") +
-    theme_base(base_family = "serif")
+    theme_base(base_family = font)
 }
