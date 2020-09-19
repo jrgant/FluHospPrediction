@@ -10,6 +10,8 @@
 # %% Load packages ----------------------------------------------------------
 
 suppressMessages(library(FluHospPrediction))
+library(extrafont)
+loadfonts()
 
 # data directories
 rawdir <- here::here("data", "raw")
@@ -172,27 +174,29 @@ sapply(
 plot.tf <- function(data, title) {
   data %>%
     ggplot(aes(x = weekint, y = obs.hosp1)) +
-    geom_point(
-      aes(y = obs.hosp1, shape = "Empirical"),
-      size = 0.3,
-      alpha = 0.8
-    ) +
     geom_line(
       aes(y = pred.hosp, color = "Fit"),
-      size = 0.2
+      size = 0.4
     ) +
-    facet_wrap(~season) +
-    scale_color_discrete(name = "") +
-    scale_shape_discrete(name = "") +
+    geom_point(
+      aes(y = obs.hosp1, shape = "Empirical"),
+      color = "gray32",
+      size = 0.7
+    ) +
+    facet_wrap(~season, ncol = 5) +
+    scale_color_manual(name = "", values = "firebrick") +
+    scale_shape_manual(name = "", values = 21) +
     labs(
       title = title,
       x = "Week of season",
-      y = "Hospitalizations (per 100,000)"
+      y = "Hospitalizations (per 100,000 population)"
     ) +
-    theme_base() +
+    theme_base(base_family = "CMU Serif", base_size = 12) +
     theme(
-      legend.position = "top", 
-      plot.background = element_blank()
+      legend.position = "top",
+      plot.background = element_blank(),
+      axis.text = element_text(size = 7),
+      axis.ticks = element_line(color = "gray32", size = 0.5)
     )
 }
 
@@ -204,7 +208,7 @@ tf1se_fit_facet
 
 # S1 Figures
 
-save.tf.plot <- function(plot, lambda.type) {
+save.tf.plot <- function(plot, lambda.type, ht = 6, wd = 7.5) {
 
   fp <- file.path(
     "results", "00_paper_output",
@@ -215,8 +219,8 @@ save.tf.plot <- function(plot, lambda.type) {
     paste0(fp, ".pdf"),
     plot = plot,
     device = "pdf",
-    height = 10,
-    width = 8,
+    height = ht,
+    width = wd,
     units = "in"
   )
 
@@ -224,8 +228,8 @@ save.tf.plot <- function(plot, lambda.type) {
     paste0(fp, ".png"),
     plot = plot,
     device = "png",
-    height = 10,
-    width = 8,
+    height = ht,
+    width = wd,
     units = "in"
   )
 
