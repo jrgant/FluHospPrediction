@@ -957,8 +957,115 @@ cumhosp_lrnr_sel[, lid := as.factor(lid)
 
 
 ################################################################################
+## COMBINED ENSEMBLE PERFORMANCE ##
+################################################################################
+
+## Bind component learner data.
+pep_main_weights <- rbindlist(
+  idcol = "target",
+  list(
+    peakrate = pep_pr_out$data,
+    peakweek = pep_pw_out$data,
+    cumhosp = pep_ch_out$data
+  )
+)
+
+pep_main_weights
+
+## Bind ensemble risk data and calculate 95% confidence limits.
+pep_main_ens <- rbindlist(
+  idcol = "target",
+  list(
+    peakrate = rbindlist(sl_pkrate_risktables),
+    peakweek = rbindlist(sl_pkweek_risktables),
+    cumhosp = rbindlist(sl_cumhosp_risktables)
+  )
+)[learner == "SuperLearner"]
+
+pep_main_ens[, ":="(
+  ll95 = mean_risk - qnorm(0.975) * SE_risk,
+  ul95 = mean_risk + qnorm(0.975) * SE_risk
+)]
+
+pep_main_ens
+
+## Bind together the risks of the naive predictions
+pep_main_naive <- data.table(
+  target = c("peakrate", "peakweek", "cumhosp"),
+  naiverisk = c(pr_medrisk, pw_medrisk, ch_medrisk)
+)
+
+## Make nice lables for each facet and set facet order.
+facetlabs <- c(
+  peakrate = "Peak rate",
+  peakweek = "Peak week",
+  cumhosp = "Cumulative hospitalizations"
+)
+
+forder <- names(facetlabs)
+
+pep_main_weights[, target := factor(target, levels = forder, ordered = TRUE)]
+pep_main_ens[, target := factor(target, levels = forder, ordered = TRUE)]
+pep_main_naive[, target := factor(target, levels = forder, ordered = TRUE)]
+
+## Plot ensemble performance across all prediction targets.
+pep_main_all <- pep_main_weights %>%
+  ggplot(aes(x = Week, y = log(mean_risk))) +
+  geom_point(
+    aes(size = weight, color = "Component"),
+    shape = 21
+  ) +
+  geom_pointrange(
+    data = pep_main_ens,
+    aes(x = Week, y = log(mean_risk),
+        ymin = log(ll95), ymax = log(ul95),
+        color = "Ensemble"
+        ),
+    size = 0.3,
+    shape = 21,
+    fill = "white"
+  ) +
+  geom_hline(
+    data = pep_main_naive,
+    aes(
+      yintercept = naiverisk,
+      color = "Median predictor"
+    ),
+    linetype = "dashed"
+  ) +
+  facet_wrap(
+    ~ target,
+    ncol = 1,
+    scales = "free_y",
+    labeller = labeller(target = facetlabs)
+  ) +
+  scale_color_manual(
+    name = "Prediction source",
+    values = c("#dddddd", "#990000", "black")
+  ) +
+  scale_size(name = "Weight") +
+  guides(linetype = FALSE) +
+  theme_base(base_family = global_plot_font) +
+  theme(
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(size = 8)
+  )
+
+ggsave(
+  nicefile(figslug, "Ensemble-Summary_All-Targets", "png"),
+  pep_main_all,
+  width = 6,
+  height = 10,
+  unit = "in",
+  device = "png"
+)
+
+
+################################################################################
 ## SENSITIVITY ANALYSIS: PEAK RATE, LAMBDA 1SE ##
 ################################################################################
+
+l1se_slug <- "Alternate trend filter penalty"
 
 pkrate_risks_1se <- fmt_risk_table(
   dir = respr_1se,
