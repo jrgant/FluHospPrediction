@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "jason.gantenberg@gmail.com",
            comment = c(ORCID = "0000-0002-8144-4273"))
-Description: This package contains code and documentation to reproduce the studies described in [FILL IN PAPER TITLE].
+Description: This package contains code and documentation to reproduce the studies described in "Predicting seasonal influenza hospitalization using an ensemble super learner: a simulation study".
 Depends:
     R (>= 3.6),
     data.table,
