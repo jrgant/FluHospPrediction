@@ -1,0 +1,77 @@
+lid,cnt_selected,P,lclass
+LOESS1,4,0.571428571428571,LOESS
+LOESS2,4,0.571428571428571,LOESS
+LOESS3,4,0.571428571428571,LOESS
+LOESS4,4,0.571428571428571,LOESS
+ScreenGLM,4,0.571428571428571,GLM
+SVM2,3,0.428571428571429,Support vector regression
+NNet03,2,0.285714285714286,Neural network
+NNet06,2,0.285714285714286,Neural network
+NNet15,2,0.285714285714286,Neural network
+NNet25,2,0.285714285714286,Neural network
+EN2,1,0.142857142857143,Penalized regression
+NNet04,1,0.142857142857143,Neural network
+NNet08,1,0.142857142857143,Neural network
+NNet09,1,0.142857142857143,Neural network
+NNet11,1,0.142857142857143,Neural network
+NNet12,1,0.142857142857143,Neural network
+NNet13,1,0.142857142857143,Neural network
+NNet14,1,0.142857142857143,Neural network
+NNet16,1,0.142857142857143,Neural network
+NNet19,1,0.142857142857143,Neural network
+NNet23,1,0.142857142857143,Neural network
+NNet24,1,0.142857142857143,Neural network
+NNet30,1,0.142857142857143,Neural network
+PMARS2,1,0.142857142857143,PolyMARS
+SVM1,1,0.142857142857143,Support vector regression
+SVM3,1,0.142857142857143,Support vector regression
+EN1,0,0,Penalized regression
+EN3,0,0,Penalized regression
+LASSO,0,0,Penalized regression
+NNet01,0,0,Neural network
+NNet02,0,0,Neural network
+NNet05,0,0,Neural network
+NNet07,0,0,Neural network
+NNet10,0,0,Neural network
+NNet17,0,0,Neural network
+NNet18,0,0,Neural network
+NNet20,0,0,Neural network
+NNet21,0,0,Neural network
+NNet22,0,0,Neural network
+NNet26,0,0,Neural network
+NNet27,0,0,Neural network
+NNet28,0,0,Neural network
+NNet29,0,0,Neural network
+PMARS1,0,0,PolyMARS
+PMARS3,0,0,PolyMARS
+PMARS4,0,0,PolyMARS
+PMARS5,0,0,PolyMARS
+RF01,0,0,Random forest
+RF02,0,0,Random forest
+RF03,0,0,Random forest
+RF04,0,0,Random forest
+RF05,0,0,Random forest
+RF06,0,0,Random forest
+RF07,0,0,Random forest
+RF08,0,0,Random forest
+RF09,0,0,Random forest
+RF10,0,0,Random forest
+RF11,0,0,Random forest
+RF12,0,0,Random forest
+RF13,0,0,Random forest
+RF14,0,0,Random forest
+RF15,0,0,Random forest
+RF16,0,0,Random forest
+RF17,0,0,Random forest
+RF18,0,0,Random forest
+RF19,0,0,Random forest
+RF20,0,0,Random forest
+RF21,0,0,Random forest
+RF22,0,0,Random forest
+RF23,0,0,Random forest
+RF24,0,0,Random forest
+RF25,0,0,Random forest
+RF26,0,0,Random forest
+RF27,0,0,Random forest
+Ridge,0,0,Penalized regression
+SVM4,0,0,Support vector regression

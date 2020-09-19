@@ -1,0 +1,77 @@
+lid,cnt_selected,P,lclass
+LOESS1,27,0.9,LOESS
+LOESS2,27,0.9,LOESS
+LOESS3,27,0.9,LOESS
+LOESS4,27,0.9,LOESS
+ScreenGLM,18,0.6,GLM
+NNet24,17,0.566666666666667,Neural network
+NNet23,16,0.533333333333333,Neural network
+NNet01,15,0.5,Neural network
+NNet10,15,0.5,Neural network
+NNet15,15,0.5,Neural network
+NNet18,15,0.5,Neural network
+NNet29,15,0.5,Neural network
+NNet04,14,0.466666666666667,Neural network
+NNet20,14,0.466666666666667,Neural network
+NNet21,14,0.466666666666667,Neural network
+NNet25,14,0.466666666666667,Neural network
+NNet27,14,0.466666666666667,Neural network
+PMARS4,14,0.466666666666667,PolyMARS
+PMARS5,14,0.466666666666667,PolyMARS
+NNet03,13,0.433333333333333,Neural network
+NNet05,13,0.433333333333333,Neural network
+NNet13,13,0.433333333333333,Neural network
+NNet14,13,0.433333333333333,Neural network
+NNet02,12,0.4,Neural network
+NNet07,12,0.4,Neural network
+NNet09,12,0.4,Neural network
+NNet16,12,0.4,Neural network
+NNet19,12,0.4,Neural network
+NNet22,12,0.4,Neural network
+NNet28,12,0.4,Neural network
+NNet30,12,0.4,Neural network
+PMARS1,12,0.4,PolyMARS
+RF16,12,0.4,Random forest
+EN3,11,0.366666666666667,Penalized regression
+NNet06,11,0.366666666666667,Neural network
+NNet08,11,0.366666666666667,Neural network
+NNet12,11,0.366666666666667,Neural network
+NNet26,11,0.366666666666667,Neural network
+RF04,11,0.366666666666667,Random forest
+RF06,11,0.366666666666667,Random forest
+RF07,11,0.366666666666667,Random forest
+RF08,11,0.366666666666667,Random forest
+RF09,11,0.366666666666667,Random forest
+RF13,11,0.366666666666667,Random forest
+RF14,11,0.366666666666667,Random forest
+RF15,11,0.366666666666667,Random forest
+RF17,11,0.366666666666667,Random forest
+RF18,11,0.366666666666667,Random forest
+RF22,11,0.366666666666667,Random forest
+RF23,11,0.366666666666667,Random forest
+RF24,11,0.366666666666667,Random forest
+RF25,11,0.366666666666667,Random forest
+RF26,11,0.366666666666667,Random forest
+RF27,11,0.366666666666667,Random forest
+LASSO,10,0.333333333333333,Penalized regression
+NNet11,10,0.333333333333333,Neural network
+NNet17,10,0.333333333333333,Neural network
+RF01,10,0.333333333333333,Random forest
+RF02,10,0.333333333333333,Random forest
+RF03,10,0.333333333333333,Random forest
+RF05,10,0.333333333333333,Random forest
+RF10,10,0.333333333333333,Random forest
+RF11,10,0.333333333333333,Random forest
+RF12,10,0.333333333333333,Random forest
+RF19,10,0.333333333333333,Random forest
+RF20,10,0.333333333333333,Random forest
+RF21,10,0.333333333333333,Random forest
+SVM2,10,0.333333333333333,Support vector regression
+SVM4,10,0.333333333333333,Support vector regression
+EN1,9,0.3,Penalized regression
+EN2,9,0.3,Penalized regression
+PMARS2,9,0.3,PolyMARS
+Ridge,9,0.3,Penalized regression
+SVM1,9,0.3,Support vector regression
+SVM3,9,0.3,Support vector regression
+PMARS3,8,0.266666666666667,PolyMARS
