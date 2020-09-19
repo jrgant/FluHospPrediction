@@ -224,7 +224,6 @@ proptrans <-
 saveRDS(proptrans, nicefile(valslug, "Proportion-Weeks-Transformed", "Rds"))
 
 
-
 ################################################################################
 ## FIGURE: CURVES BY SEASON TEMPLATE AND LAMBDA VALUE ##
 ################################################################################
@@ -296,6 +295,47 @@ ggsave(
   height = 6,
   units = "in",
   file = nicefile(figslug, "Simulation-Curves-by-Template", "png"),
+  dev = "png"
+)
+
+tempsim_boxplot <- crv[crvtype == "Simulated"] %>%
+  ggplot(aes(x = factor(weekint), y = weekrate)) +
+  geom_line(
+    aes(group = cid),
+    alpha = 0.03,
+    size = 0.5,
+    color = "gray"
+  ) +
+  geom_boxplot(alpha = 0.3, outlier.size = 0.5) +
+  geom_line(
+    data = crv[crvtype == "Empirical"],
+    aes(x = weekint, y = weekrate, color = "Empirical"),
+    size = 1
+  ) +
+  facet_wrap(~ template, ncol = 5) +
+  xlab("Week") +
+  scale_color_manual(name = "Curve type", values = "#990000") +
+  scale_x_discrete(
+    labels = c(
+      "1", rep("", 3),
+      "5", rep("", 4),
+      "10", rep("", 4),
+      "15", rep("", 4),
+      "20", rep("", 4),
+      "25", rep("", 4), "30"
+    )
+  ) +
+  theme_base(base_family = global_plot_font) +
+  theme(axis.text.x = element_text(size = 8))
+
+tempsim_boxplot
+
+ggsave(
+  plot = tempsim_boxplot,
+  width = 8,
+  height = 7,
+  units = "in",
+  file = nicefile(figslug, "Simulation-Curves-by-Template-Boxplot", "png"),
   dev = "png"
 )
 
@@ -437,6 +477,23 @@ scdl <- dl[, target := factor(target, levels = names(facetlabs))
      value
      )]
 
+scdl[, type := factor(type, levels = c("sim.l1se", "sim.lmin", "empirical"))]
+
+scdl[, typef := fcase(
+         type == "empirical", "Empirical",
+         type == "sim.lmin", "Simulated(lambda[min])",
+         type == "sim.l1se", "Simulated(lambda[SE])"
+       )]
+
+scdl[, typef := factor(
+         typef,
+         levels = c(
+           "Simulated(lambda[SE])",
+           "Simulated(lambda[min])",
+           "Empirical"
+         )
+       )]
+
 ## Make labellers for plot facets and axes.
 target_labeller <- c(
   peakrate = "Peak rate\n(per 100,000 population)",
@@ -448,7 +505,7 @@ target_labeller <- c(
 ## targets and simulation/empirical categories.
 simcompare <- scdl %>%
   ggplot(
-    aes(x = value_jitter, y = factor(type))
+    aes(x = value_jitter, y = typef)
   ) +
   geom_boxplot(
     width = 0.2,
@@ -456,23 +513,24 @@ simcompare <- scdl %>%
     position = position_nudge(y = -0.11)
   ) +
   geom_point(
-    aes(alpha = type, size = type, color = type),
+    aes(alpha = typef, size = typef, color = typef),
     position = position_nudge(y = -0.11 + rnorm(nrow(scdl), 0, 0.03))
   ) +
   geom_density_ridges(
-    aes(fill = type),
+    aes(fill = typef),
     alpha = 0.5,
-    scale = 0.6
+    scale = 0.5
   ) +
-  scale_alpha_manual(values = c(1, 0.01, 0.01)) +
-  scale_size_manual(values = c(1, 0.1, 0.1)) +
-  scale_color_viridis_d(option = "magma", begin = 0.1, end = 0.8) +
-  scale_fill_viridis_d(option = "magma", begin = 0.1, end = 0.8) +
+  scale_alpha_manual(values = c(0.01, 0.01, 1)) +
+  scale_size_manual(values = c(0.1, 0.1, 1)) +
+  scale_color_viridis_d(option = "magma", begin = 0.8, end = 0.1) +
+  scale_fill_viridis_d(option = "magma", begin = 0.8, end = 0.1) +
   facet_wrap(
     ~ target,
     labeller = labeller(target = target_labeller),
     scales = "free_x"
   ) +
+  scale_y_discrete(labels = scales::parse_format()) +
   labs(y = "Data", x = "Value") +
   guides(
     alpha = FALSE,
