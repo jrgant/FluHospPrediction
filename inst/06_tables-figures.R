@@ -1100,7 +1100,7 @@ apply_rf_relabel(pkrate_rwsum_1se)
 ### Risk tile plot
 prt_pr_1se <- plot_risktiles(
   pkrate_rwsum_1se,
-  titlestring = "Peak rate (alternate trend filter penalty)"
+  titlestring = paste("Peak rate:", l1se_slug)
 )
 
 prt_pr_1se_out <- prt_pr_1se +
@@ -1117,17 +1117,16 @@ ggsave(
   nicefile(figslug, "Risktiles_Peak-Rate-L1SE", "png"),
   prt_pr_1se_out,
   width = 12,
-  height = 6.5,
+  height = 6,
   unit = "in",
   device = "png"
 )
-
 
 ### Super Learner performance
 pep_pr_1se <- plot_ensemble_performance(
   pkrate_rwsum_1se,
   sl_pkrate_risktables_1se,
-  titlestring = "Peak rate (alternate trend filter penalty)"
+  titlestring = paste("Peak rate:", l1se_slug)
 )
 
 ## Median prediction risk.
@@ -1159,7 +1158,6 @@ ggsave(
   unit = "in",
   device = "png"
 )
-
 
 
 ### Summarize learner selection
@@ -1211,7 +1209,7 @@ apply_rf_relabel(pkweek_rwsum_1se)
 ### Risk tile plot
 prt_pw_1se <- plot_risktiles(
   pkweek_rwsum_1se,
-  titlestring = "Peak week (alternate trend filter penalty)"
+  titlestring = paste("Peak week:", l1se_slug)
 )
 
 prt_pw_1se_out <- prt_pw_1se +
@@ -1237,7 +1235,7 @@ ggsave(
 pep_pw_1se <- plot_ensemble_performance(
   pkweek_rwsum_1se,
   sl_pkweek_risktables_1se,
-  titlestring = "Peak week (alternate trend filter penalty)"
+  titlestring = paste("Peak week:", l1se_slug)
 )
 
 ## Median prediction risk.
@@ -1317,7 +1315,7 @@ apply_rf_relabel(cumhosp_rwsum_1se)
 ### Risk tile plot
 prt_ch_1se <- plot_risktiles(
   cumhosp_rwsum_1se,
-  titlestring = "Cumulative hospitalizations (alternate trend filter penalty)"
+  titlestring = paste("Cumulative hospitalizations:", l1se_slug)
 )
 
 prt_ch_1se_out <- prt_ch_1se +
@@ -1344,7 +1342,7 @@ ggsave(
 pep_ch_1se <- plot_ensemble_performance(
   cumhosp_rwsum_1se,
   sl_cumhosp_risktables_1se,
-  titlestring = "Cumulative hospitalizations (alternate trend filter penalty)"
+  titlestring = paste("Cumulative hospitalizations:", l1se_slug)
 )
 
 ## Median prediction risk.
@@ -1487,7 +1485,6 @@ ggsave(
   unit = "in",
   device = "png"
 )
-
 
 
 ### Summarize learner selection
@@ -1775,7 +1772,7 @@ ggsave(
   nicefile(figslug, "Risktiles_Peak-Rate-SQE", "png"),
   prt_pr_sqe_out,
   width = 12,
-  height = 3.25,
+  height = 4.5,
   unit = "in",
   device = "png"
 )
@@ -1834,6 +1831,8 @@ fwrite(
 ## SENSITIVITY ANALYSIS: PEAK WEEK, SQUARED ERROR LOSS ##
 ################################################################################
 
+sqe_slug <- "Squared error loss"
+
 pkweek_risks_sqe <- fmt_risk_table(
   dir = respw_sqe,
   slug = "sl_pkweek",
@@ -1886,7 +1885,7 @@ ggsave(
   nicefile(figslug, "Risktiles_Peak-Week-SQE", "png"),
   prt_pw_sqe_out,
   width = 12,
-  height = 3.25,
+  height = 4.5,
   unit = "in",
   device = "png"
 )
@@ -1895,7 +1894,7 @@ ggsave(
 pep_pw_sqe <- plot_ensemble_performance(
   pkweek_rwsum_sqe,
   sl_pkweek_risktables_sqe,
-  titlestring = "Peak week (alternate trend filter penalty)"
+  titlestring = paste("Peak week:", sqe_slug)
 )
 
 ## Median prediction risk.
@@ -1994,7 +1993,7 @@ ggsave(
   nicefile(figslug, "Risktiles_Cum-Hosp-SQE", "png"),
   prt_ch_sqe_out,
   width = 12,
-  height = 6.5,
+  height = 4.5,
   unit = "in",
   device = "png"
 )
