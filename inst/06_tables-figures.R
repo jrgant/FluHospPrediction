@@ -28,8 +28,10 @@ nicefile <- function(slug, description, ext, date = Sys.Date(),
 
 ## Load font database.
 loadfonts(device = "win")
-global_plot_font <- "Garamond"
+global_plot_font <- "CMU Serif"
 
+## Universal breaks for week labeling in plots.
+week_breaks <- c("01", "05", "10", "15", "20", "25", "30")
 
 ################################################################################
 ## TABLE ONE: PARAMETER TARGETS ##
