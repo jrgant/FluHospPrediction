@@ -81,7 +81,6 @@ respw_sqe <- file.path(resdir, "PeakWeek-SqErrLoss")
 resch_sqe <- file.path(resdir, "CumHosp-SqErrLoss")
 
 ## Simulated curves
-# sim_lr <- readRDS(file.path(clndir, "hypothetical-curves.Rds"))
 sim_lm <- readRDS(file.path(clndir, "hypothetical-curves_lambda-min.Rds"))
 sim_ls <- readRDS(file.path(clndir, "hypothetical-curves_lambda-1se.Rds"))
 
@@ -570,7 +569,6 @@ riskdist_pkweek
 
 fwrite(riskdist_pkweek, nicefile(tabslug, "Risk-Week_Peak-Week", "csv"))
 
-
 ## Cum. hosp.
 riskdist_cumhosp <- get_risk_dist("sl_cumhosp")
 riskdist_cumhosp
@@ -1042,6 +1040,7 @@ pep_main_all <- pep_main_weights %>%
     name = "Prediction source",
     values = c("#dddddd", "#990000", "black")
   ) +
+  scale_x_discrete(breaks = week_breaks) +
   scale_size(name = "Weight") +
   guides(linetype = FALSE) +
   theme_base(base_family = global_plot_font) +
