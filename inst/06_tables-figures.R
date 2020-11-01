@@ -34,7 +34,7 @@ global_plot_font <- "CMU Serif"
 week_breaks <- c("01", "05", "10", "15", "20", "25", "30")
 
 ################################################################################
-## TABLE ONE: PARAMETER TARGETS ##
+## TABLE: PARAMETER TARGETS ##
 ################################################################################
 
 emp <- fread(file.path(clndir, "empdat.csv"))
@@ -299,13 +299,7 @@ ggsave(
 
 tempsim_boxplot <- crv[crvtype == "Simulated"] %>%
   ggplot(aes(x = factor(weekint), y = weekrate)) +
-  geom_line(
-    aes(group = cid),
-    alpha = 0.03,
-    size = 0.5,
-    color = "gray"
-  ) +
-  geom_boxplot(alpha = 0.3, outlier.size = 0.5) +
+  geom_boxplot(color = "gray80", outlier.size = 0.5) +
   geom_line(
     data = crv[crvtype == "Empirical"],
     aes(x = weekint, y = weekrate, color = "Empirical"),
@@ -315,17 +309,14 @@ tempsim_boxplot <- crv[crvtype == "Simulated"] %>%
   xlab("Week") +
   scale_color_manual(name = "Curve type", values = "#990000") +
   scale_x_discrete(
-    labels = c(
-      "1", rep("", 3),
-      "5", rep("", 4),
-      "10", rep("", 4),
-      "15", rep("", 4),
-      "20", rep("", 4),
-      "25", rep("", 4), "30"
-    )
+    breaks = c(1, 5, 10, 15, 20, 25, 30),
+    labels = c("1", "5", "10", "15", "20", "25", "30")
   ) +
   theme_base(base_family = global_plot_font) +
-  theme(axis.text.x = element_text(size = 8))
+  theme(
+    axis.text.x = element_text(size = 8),
+    legend.position = "bottom"
+  )
 
 tempsim_boxplot
 
@@ -2337,11 +2328,11 @@ sens_normscale <- sens_risktab %>%
     linetype = "dashed"
   ) +
   geom_linerange(
-    aes(ymin = ll95, ymax = ul95, color = "Ensemble (95% CL)"),
+    aes(ymin = ll95, ymax = ul95, color = "Ensemble (95% CI)"),
     alpha = 0.3
   ) +
   geom_point(
-    aes(color = "Ensemble (95% CL)"),
+    aes(color = "Ensemble (95% CI)"),
     fill = "white",
     shape = 21
   ) +
