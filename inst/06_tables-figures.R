@@ -27,11 +27,36 @@ nicefile <- function(slug, description, ext, date = Sys.Date(),
 }
 
 ## Load font database.
-loadfonts(device = "win")
-global_plot_font <- "CMU Serif"
+loadfonts(device = "pdf")
+global_plot_font <- "Gentium Book Basic"
 
 ## Universal breaks for week labeling in plots.
 week_breaks <- c("01", "05", "10", "15", "20", "25", "30")
+
+## This function saves plots in pdf and png formats.
+plotsave <- function(name, plot, width, height) {
+
+  ggsave(
+    nicefile(figslug, name, "pdf"),
+    plot,
+    width = width,
+    height = height,
+    units = "in",
+    device = cairo_pdf
+  )
+
+  ggsave(
+    nicefile(figslug, name, "png"),
+    plot,
+    width = width,
+    height = height,
+    units = "in",
+    device = "png",
+    dpi = 1200
+  )
+
+}
+
 
 ################################################################################
 ## TABLE: PARAMETER TARGETS ##
@@ -288,13 +313,11 @@ tempsim_plot <- crv %>%
 
 tempsim_plot
 
-ggsave(
+plotsave(
   plot = tempsim_plot,
   width = 6,
   height = 6,
-  units = "in",
-  file = nicefile(figslug, "Simulation-Curves-by-Template", "png"),
-  dev = "png"
+  name = "Simulation-Curves-by-Template"
 )
 
 tempsim_boxplot <- crv[crvtype == "Simulated"] %>%
@@ -306,13 +329,16 @@ tempsim_boxplot <- crv[crvtype == "Simulated"] %>%
     size = 1
   ) +
   facet_wrap(~ template, ncol = 5) +
-  xlab("Week") +
+  labs(
+    y = "Hospitalization rate (per 100,000 population)",
+    x = "Week"
+  ) +
   scale_color_manual(name = "Curve type", values = "#990000") +
   scale_x_discrete(
     breaks = c(1, 5, 10, 15, 20, 25, 30),
     labels = c("1", "5", "10", "15", "20", "25", "30")
   ) +
-  theme_base(base_family = global_plot_font) +
+  theme_base(base_family = "Times New Roman") +
   theme(
     axis.text.x = element_text(size = 8),
     legend.position = "bottom"
@@ -320,13 +346,11 @@ tempsim_boxplot <- crv[crvtype == "Simulated"] %>%
 
 tempsim_boxplot
 
-ggsave(
+plotsave(
   plot = tempsim_boxplot,
   width = 8,
   height = 7,
-  units = "in",
-  file = nicefile(figslug, "Simulation-Curves-by-Template-Boxplot", "png"),
-  dev = "png"
+  name = "Simulation-Curves-by-Template-Boxplot"
 )
 
 
@@ -404,31 +428,25 @@ bp_cumhosp <- ggplot(chsum, aes(x = template, y = cumhosp)) +
   ) +
   simtemp_bp_theme
 
-ggsave(
-  nicefile(figslug, "Sim-Dists_Peak-Rate", "png"),
-  bp_peakrate,
+plotsave(
+  name = "Sim-Dists_Peak-Rate",
+  plot = bp_peakrate,
   width = 10,
-  height = 8,
-  units = "in",
-  device = "png"
+  height = 8
 )
 
-ggsave(
-  nicefile(figslug, "Sim-Dists_Peak-Week", "png"),
-  bp_peakweek,
+plotsave(
+  name = "Sim-Dists_Peak-Week",
+  plot = bp_peakweek,
   width = 10,
-  height = 8,
-  units = "in",
-  device = "png"
+  height = 8
 )
 
-ggsave(
-  nicefile(figslug, "Sim-Dists_Cum-Hosp", "png"),
-  bp_cumhosp,
+plotsave(
+  name = "Sim-Dists_Cum-Hosp",
+  plot = bp_cumhosp,
   width = 10,
-  height = 8,
-  units = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -535,12 +553,11 @@ simcompare <- scdl %>%
 
 simcompare
 
-ggsave(
-  nicefile(figslug, "TargetDists-Emp-vs-Sim", "png"),
-  simcompare,
+plotsave(
+  name = "TargetDists-Emp-vs-Sim",
+  plot = simcompare,
   width = 10,
-  height = 4.8,
-  unit = "in"
+  height = 4.8
 )
 
 
@@ -624,13 +641,11 @@ prt_pr_out <- prt_pr +
 
 prt_pr_out
 
-ggsave(
-  nicefile(figslug, "Risktiles_Peak-Rate", "png"),
-  prt_pr_out,
+plotsave(
+  name = "Risktiles_Peak-Rate",
+  plot = prt_pr_out,
   width = 12,
-  height = 6.5,
-  unit = "in",
-  device = "png"
+  height = 6.5
 )
 
 ### Super Learner performance
@@ -668,13 +683,11 @@ pep_pr_out <- pep_pr +
 
 pep_pr_out
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_Peak-Rate", "png"),
-  pep_pr_out,
+plotsave(
+  name = "Ensemble-Summary_Peak-Rate",
+  plot = pep_pr_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -736,13 +749,11 @@ prt_pw_out <- prt_pw +
   ) +
   theme(axis.text.y = element_text(hjust = 0.5))
 
-ggsave(
-  nicefile(figslug, "Risktiles_Peak-Week", "png"),
-  prt_pw_out,
+plotsave(
+  name = "Risktiles_Peak-Week",
+  plot = prt_pw_out,
   width = 12,
-  height = 6.5,
-  unit = "in",
-  device = "png"
+  height = 6.5
 )
 
 # sparkline dat
@@ -795,13 +806,11 @@ pep_pw_out <- pep_pw +
 
 pep_pw_out
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_Peak-Week", "png"),
-  pep_pw_out,
+plotsave(
+  name = "Ensemble-Summary_Peak-Week",
+  plot = pep_pw_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -866,13 +875,11 @@ prt_ch_out <- prt_ch +
 
 prt_ch_out
 
-ggsave(
-  nicefile(figslug, "Risktiles_Cum-Hosp", "png"),
-  prt_ch_out,
+plotsave(
+  name = "Risktiles_Cum-Hosp",
+  plot = prt_ch_out,
   width = 12,
-  height = 6.5,
-  unit = "in",
-  device = "png"
+  height = 6.5
 )
 
 
@@ -904,13 +911,11 @@ pep_ch_out <- pep_ch +
 
 pep_ch_out
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_Cum-Hosp", "png"),
-  pep_ch_out,
+plotsave(
+  name = "Ensemble-Summary_Cum-Hosp",
+  plot = pep_ch_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -1003,23 +1008,26 @@ pep_main_all <- pep_main_weights %>%
     aes(size = weight, color = "Component"),
     shape = 21
   ) +
+  geom_point(
+    data = pep_main_naive[, .(Week = 1:30), .(target, naiverisk)],
+    aes(
+      y = naiverisk,
+      color = "Naive (median)"
+    ),
+    size = 1,
+    shape = 22,
+    fill = "white"
+  ) +
   geom_pointrange(
     data = pep_main_ens,
     aes(x = Week, y = log(mean_risk),
         ymin = log(ll95), ymax = log(ul95),
         color = "Ensemble"
         ),
-    size = 0.3,
+    size = 0.5,
     shape = 21,
-    fill = "white"
-  ) +
-  geom_hline(
-    data = pep_main_naive,
-    aes(
-      yintercept = naiverisk,
-      color = "Median predictor"
-    ),
-    linetype = "dashed"
+    fill = "black",
+    key_glyph = "pointrange"
   ) +
   facet_wrap(
     ~ target,
@@ -1028,25 +1036,31 @@ pep_main_all <- pep_main_weights %>%
     labeller = labeller(target = facetlabs)
   ) +
   scale_color_manual(
-    name = "Prediction source",
-    values = c("#dddddd", "#990000", "black")
+    name = "Prediction",
+    values = c("#dddddd", "black", "black")
   ) +
   scale_x_discrete(breaks = week_breaks) +
-  scale_size(name = "Weight") +
-  guides(linetype = FALSE) +
+  scale_size(name = "Component weight") +
+  guides(
+    color = guide_legend(
+      override.aes = list(
+        shape = c(21, 21, 22),
+        fill = c("white", "black", "white"),
+        linetype = c(0, 1, 0)
+      ))) +
   theme_base(base_family = global_plot_font) +
   theme(
     strip.text = element_text(face = "bold"),
     axis.text.x = element_text(size = 8)
   )
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_All-Targets", "png"),
-  pep_main_all,
+pep_main_all
+
+plotsave(
+  name = "Ensemble-Summary_All-Targets",
+  plot = pep_main_all,
   width = 6,
-  height = 10,
-  unit = "in",
-  device = "png"
+  height = 10
 )
 
 
@@ -1102,13 +1116,11 @@ prt_pr_1se_out <- prt_pr_1se +
 
 prt_pr_1se_out
 
-ggsave(
-  nicefile(figslug, "Risktiles_Peak-Rate-L1SE", "png"),
-  prt_pr_1se_out,
+plotsave(
+  name = "Risktiles_Peak-Rate-L1SE",
+  plot = prt_pr_1se_out,
   width = 12,
-  height = 6,
-  unit = "in",
-  device = "png"
+  height = 6
 )
 
 ### Super Learner performance
@@ -1139,13 +1151,11 @@ pep_pr_1se_out <- pep_pr_1se +
 
 pep_pr_1se_out
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_Peak-Rate-L1SE", "png"),
-  pep_pr_1se_out,
+plotsave(
+  name = "Ensemble-Summary_Peak-Rate-L1SE",
+  plot = pep_pr_1se_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -1211,13 +1221,11 @@ prt_pw_1se_out <- prt_pw_1se +
 
 prt_pw_1se_out
 
-ggsave(
-  nicefile(figslug, "Risktiles_Peak-Week-L1SE", "png"),
-  prt_pw_1se_out,
+plotsave(
+  name = "Risktiles_Peak-Week-L1SE",
+  plot = prt_pw_1se_out,
   width = 12,
-  height = 6.5,
-  unit = "in",
-  device = "png"
+  height = 6.5
 )
 
 ### Super Learner performance
@@ -1247,13 +1255,11 @@ pep_pw_1se_out <- pep_pw_1se +
   ) +
   scale_size_continuous(name = "Component Learner Weight")
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_Peak-Week-L1SE", "png"),
-  pep_pw_1se_out,
+plotsave(
+  name = "Ensemble-Summary_Peak-Week-L1SE",
+  plot = pep_pw_1se_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -1317,13 +1323,11 @@ prt_ch_1se_out <- prt_ch_1se +
 
 prt_ch_1se_out
 
-ggsave(
-  nicefile(figslug, "Risktiles_Cum-Hosp-L1SE", "png"),
-  prt_ch_1se_out,
+plotsave(
+  name = "Risktiles_Cum-Hosp-L1SE",
+  plot = prt_ch_1se_out,
   width = 12,
-  height = 6.5,
-  unit = "in",
-  device = "png"
+  height = 6.5
 )
 
 
@@ -1356,13 +1360,11 @@ pep_ch_1se_out <- pep_ch_1se +
 
 pep_ch_1se_out
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_CumHosp-L1SE", "png"),
-  pep_ch_1se_out,
+plotsave(
+  name = "Ensemble-Summary_CumHosp-L1SE",
+  plot = pep_ch_1se_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -1428,13 +1430,11 @@ prt_pr_erf_out <- prt_pr_erf +
 
 prt_pr_erf_out
 
-ggsave(
-  nicefile(figslug, "Risktiles_Peak-Rate-ERF", "png"),
-  prt_pr_erf_out,
+plotsave(
+  name = "Risktiles_Peak-Rate-ERF",
+  plot = prt_pr_erf_out,
   width = 12,
-  height = 6.5,
-  unit = "in",
-  device = "png"
+  height = 6.5
 )
 
 
@@ -1466,13 +1466,11 @@ pep_pr_erf_out <- pep_pr_erf +
 
 pep_pr_erf_out
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_Peak-Rate-ERF", "png"),
-  pep_pr_erf_out,
+plotsave(
+  name = "Ensemble-Summary_Peak-Rate-ERF",
+  plot = pep_pr_erf_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -1538,13 +1536,11 @@ prt_pw_erf_out <- prt_pw_erf +
 
 prt_pw_erf_out
 
-ggsave(
-  nicefile(figslug, "Risktiles_Peak-Week-ERF", "png"),
-  prt_pw_erf_out,
+plotsave(
+  name = "Risktiles_Peak-Week-ERF",
+  plot = prt_pw_erf_out,
   width = 12,
-  height = 6.5,
-  unit = "in",
-  device = "png"
+  height = 6.5
 )
 
 ### Super Learner performance
@@ -1576,13 +1572,11 @@ pep_pw_erf_out <- pep_pw_erf +
 
 pep_pw_erf_out
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_Peak-Week-ERF", "png"),
-  pep_pw_erf_out,
+plotsave(
+  name = "Ensemble-Summary_Peak-Week-ERF",
+  plot = pep_pw_erf_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -1646,13 +1640,11 @@ prt_ch_erf_out <- prt_ch_erf +
 
 prt_ch_erf_out
 
-ggsave(
-  nicefile(figslug, "Risktiles_Cum-Hosp-ERF", "png"),
-  prt_ch_erf_out,
+plotsave(
+  name = "Risktiles_Cum-Hosp-ERF",
+  plot = prt_ch_erf_out,
   width = 12,
-  height = 6.5,
-  unit = "in",
-  device = "png"
+  height = 6.5
 )
 
 
@@ -1685,13 +1677,11 @@ pep_ch_erf_out <- pep_ch_erf +
 
 pep_ch_erf_out
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_CumHosp-ERF", "png"),
-  pep_ch_erf_out,
+plotsave(
+  name = "Ensemble-Summary_CumHosp-ERF",
+  plot = pep_ch_erf_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -1757,13 +1747,11 @@ prt_pr_sqe_out <- prt_pr_sqe +
 
 prt_pr_sqe_out
 
-ggsave(
-  nicefile(figslug, "Risktiles_Peak-Rate-SQE", "png"),
-  prt_pr_sqe_out,
+plotsave(
+  name = "Risktiles_Peak-Rate-SQE",
+  plot = prt_pr_sqe_out,
   width = 12,
-  height = 4.5,
-  unit = "in",
-  device = "png"
+  height = 4.5
 )
 
 
@@ -1795,15 +1783,12 @@ pep_pr_sqe_out <- pep_pr_sqe +
 
 pep_pr_sqe_out
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_Peak-Rate-SQE", "png"),
-  pep_pr_sqe_out,
+plotsave(
+  name = "Ensemble-Summary_Peak-Rate-SQE",
+  plot = pep_pr_sqe_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
-
 
 
 ### Summarize learner selection
@@ -1870,13 +1855,11 @@ prt_pw_sqe_out <- prt_pw_sqe +
 
 prt_pw_sqe_out
 
-ggsave(
-  nicefile(figslug, "Risktiles_Peak-Week-SQE", "png"),
-  prt_pw_sqe_out,
+plotsave(
+  name = "Risktiles_Peak-Week-SQE",
+  plot = prt_pw_sqe_out,
   width = 12,
-  height = 4.5,
-  unit = "in",
-  device = "png"
+  height = 4.5
 )
 
 ### Super Learner performance
@@ -1908,13 +1891,11 @@ pep_pw_sqe_out <- pep_pw_sqe +
 
 pep_pw_sqe_out
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_Peak-Week-SQE", "png"),
-  pep_pw_sqe_out,
+plotsave(
+  name = "Ensemble-Summary_Peak-Week-SQE",
+  plot = pep_pw_sqe_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -1978,13 +1959,11 @@ prt_ch_sqe_out <- prt_ch_sqe +
 
 prt_ch_sqe_out
 
-ggsave(
-  nicefile(figslug, "Risktiles_Cum-Hosp-SQE", "png"),
-  prt_ch_sqe_out,
+plotsave(
+  name = "Risktiles_Cum-Hosp-SQE",
+  plot = prt_ch_sqe_out,
   width = 12,
-  height = 4.5,
-  unit = "in",
-  device = "png"
+  height = 4.5
 )
 
 
@@ -2017,13 +1996,11 @@ pep_ch_sqe_out <- pep_ch_sqe +
 
 pep_ch_sqe_out
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_CumHosp-SQE", "png"),
-  pep_ch_sqe_out,
+plotsave(
+  name = "Ensemble-Summary_CumHosp-SQE",
+  plot = pep_ch_sqe_out,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -2125,13 +2102,11 @@ pep_sqe_all <- pep_sqe_weights %>%
 
 pep_sqe_all
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_All-Targets-SQE", "png"),
-  pep_sqe_all,
+plotsave(
+  name = "Ensemble-Summary_All-Targets-SQE",
+  plot = pep_sqe_all,
   width = 6,
-  height = 10,
-  unit = "in",
-  device = "png"
+  height = 10
 )
 
 
@@ -2304,13 +2279,11 @@ pep_sens_compare <- ggplot(sens_rwsum) +
 
 pep_sens_compare
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_All-Targets_Main-1SE-ERF", "png"),
-  pep_sens_compare,
+plotsave(
+  name = "Ensemble-Summary_All-Targets_Main-1SE-ERF",
+  plot = pep_sens_compare,
   width = 10,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
 
 
@@ -2357,11 +2330,9 @@ sens_normscale <- sens_risktab %>%
 
 sens_normscale
 
-ggsave(
-  nicefile(figslug, "Ensemble-Summary_All-Targets_Regular-Scale", "png"),
-  sens_normscale,
+plotsave(
+  name = "Ensemble-Summary_All-Targets_Regular-Scale",
+  plot = sens_normscale,
   width = 11,
-  height = 8,
-  unit = "in",
-  device = "png"
+  height = 8
 )
