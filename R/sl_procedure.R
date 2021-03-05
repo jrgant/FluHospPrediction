@@ -203,7 +203,7 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_wee
   # specify the super learner
   sl <- Lrnr_sl$new(learners = stack_full, ...)
 
-  plan(multiprocess)
+  plan(multicore)
 
   sl_fit <- delayed_learner_train(sl, task)
 
@@ -219,13 +219,22 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_wee
 
   ## select a subset of the super learner outputs to reduce file size:
   ## component, cross-validated, and other learners save numerous fit objects
-  ## that contain multiple copies of the underlying datasets (unneeded for analysis)
+  ## that contain multiple copies of the underlying datasets
+  ## (unneeded for analysis)
+  lnames <- names(sl_trained$coefficients)
+
   sl_pruned <- list(
-    is_trained = sl_trained$is_trained,
-    params = sl_trained$params,
-    fit_uuid = sl_trained$fit_uuid,
-    learner_uuid = sl_trained$learner_uuid,
-    metalearner_fit = sl_trained$metalearner_fit()
+    is_trained        = sl_trained$is_trained,
+    params            = sl_trained$params,
+    fit_uuid          = sl_trained$fit_uuid,
+    learner_uuid      = sl_trained$learner_uuid,
+    metalearner_fit   = sl_trained$metalearner_fit(),
+    component_preds   = as.data.table(
+      lapply(
+        setNames(lnames, lnames),
+        function(.x) sl_trained$learner_fits[[.x]]$predict()
+      )
+    )
   )
 
   # get cross-validated risk
@@ -236,11 +245,12 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_wee
   full_preds <- sl_trained$fit_object$full_fit$predict()
 
   out <- list(
-      task = task,
-      sl_pruned = sl_pruned,
-      cv_risk_abserr = risk,
-      meta_preds = meta_preds,
-      full_preds = full_preds
+    task = task,
+    sl_trained = sl_trained,
+    sl_pruned = sl_pruned,
+    cv_risk_abserr = risk,
+    meta_preds = meta_preds,
+    full_preds = full_preds
   )
   #out <- sl_trained
   target <- task$nodes$outcome

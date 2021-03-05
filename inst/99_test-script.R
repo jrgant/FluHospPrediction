@@ -1,9 +1,15 @@
 # %% LOAD AND SETUP -----------------------------------------------------------
 
-suppressMessages(library(FluHospPrediction))
+## suppress warnings regarding conflict between
+## data.table::first and dplyr::first
+suppressWarnings(
+  suppressMessages(
+    library(FluHospPrediction)
+  )
+)
 
 target <- "pkrate"
-current_week <- 5
+current_week <- 15
 ltype <- "lambda-min"
 
 # %% SUPER LEARNER (PEAK RATE) ------------------------------------------------
@@ -21,7 +27,7 @@ task <- suppressWarnings(
 # specify component learners and send to global environment
 cat("\n\nLearners in Stack\n")
 fhp_spec_learners(
-  learner_pat = "elastnet|rf",
+  learner_pat = "svm",
   verbose = TRUE,
   currtask = task
 )
