@@ -198,7 +198,7 @@ fhp_spec_learners <-
 #' @import delayed future sl3 tictoc
 #' @export fhp_run_sl
 
-fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_week, ...) {
+fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_week, ...) {
 
   # specify the super learner
   sl <- Lrnr_sl$new(learners = stack_full, ...)
@@ -246,7 +246,7 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_wee
 
   out <- list(
     task = task,
-    sl_trained = sl_trained,
+    # sl_trained = sl_trained,
     sl_pruned = sl_pruned,
     cv_risk_abserr = risk,
     meta_preds = meta_preds,
@@ -262,7 +262,7 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "results", current_wee
 
   if (write) {
     if(!file.exists(results_path)) dir.create(results_path)
-    saveRDS(out, here::here(results_path, paste0(slug, ".Rds")))
+    saveRDS(out, file.path(results_path, paste0(slug, ".Rds")))
   } else {
     assign(slug, out, envir = .GlobalEnv)
   }
