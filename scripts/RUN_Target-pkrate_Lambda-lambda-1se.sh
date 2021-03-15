@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#SBATCH -J SL-FluHosp-pkrate-lambda-1se
+#SBATCH -J SL-FluHosp-pkrate-lambda-1se-NoLOESS
 #SBATCH --time=1:30:00
 #SBATCH -p bigmem
 #SBATCH --mem=500GB
 #SBATCH -n 32
 
 #SBATCH --array=01-30
-#SBATCH -o SL-FluHosp-Target-pkrate-Lambda-lambda-1se-ArrayID-%A-JobID-%J-Week-%a.log
+#SBATCH -o SL-FluHosp-Target-pkrate-Lambda-lambda-1se-NoLOESS-ArrayID-%A-JobID-%J-Week-%a.log
 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=jrgant@brown.edu
@@ -29,7 +29,7 @@ echo " INPUT PARAMETERS "
 echo "================================================================"
 
 export LAMBDA_SELECT=lambda-1se
-export LEARNER_SELECT=^lrnr
+export LEARNER_SELECT="elast|lasso|ridge|glm|nnet|mars|rf|svm"
 export TARGET_SELECT=pkrate
 
 echo "LAMBDA: $LAMBDA_SELECT"

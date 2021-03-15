@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#SBATCH -J SL-FluHosp-pkrate-lambda-min-Sens-SqErrLoss
-#SBATCH --time=1:45:00
-#SBATCH --partition=bigmem
+#SBATCH -J SL-FluHosp-pkrate-lambda-min-NoLOESS
+#SBATCH --time=1:30:00
+#SBATCH -p bigmem
 #SBATCH --mem=500GB
 #SBATCH -n 32
 
-#SBATCH --array=1,5,10,15,20,25,30
-#SBATCH -o SL-FluHosp-Target-pkrate-Lambda-lambda-min-Sens-SqErrLoss-ArrayID-%A-JobID-%J-Week-%a.log
+#SBATCH --array=01-30
+#SBATCH -o SL-FluHosp-Target-pkrate-Lambda-lambda-min-NoLOESS-ArrayID-%A-JobID-%J-Week-%a.log
 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=jrgant@brown.edu
@@ -47,7 +47,7 @@ echo "================================================================"
 echo " PRINT CODE "
 echo "================================================================"
 
-cat inst/05_run_sqerrloss_sensitivity.R
+cat inst/04_run_superlearner.R
 
 echo "================================================================"
 echo " EINDE ROLPAD"
@@ -61,4 +61,5 @@ echo "================================================================"
 echo " EXECUTE CODE"
 echo "================================================================"
 
-Rscript inst/05_run_sqerrloss_sensitivity.R --vanilla
+Rscript inst/04_run_superlearner.R --vanilla
+
