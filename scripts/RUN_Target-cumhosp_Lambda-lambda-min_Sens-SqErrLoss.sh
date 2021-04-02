@@ -29,7 +29,7 @@ echo " INPUT PARAMETERS "
 echo "================================================================"
 
 export LAMBDA_SELECT=lambda-min
-export LEARNER_SELECT=^lrnr
+export LEARNER_SELECT="elast|lasso|ridge|glm|nnet|mars|rf|svm"
 export TARGET_SELECT=cumhosp
 
 echo "LAMBDA: $LAMBDA_SELECT"

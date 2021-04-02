@@ -26,7 +26,6 @@ cat("\n\nLearners in Stack\n")
 fhp_spec_learners(
   learner_pat = learner_select,
   verbose = TRUE,
-  gamweek = current_week,
   currtask = task
 )
 
@@ -40,7 +39,7 @@ fhp_metalearner <- make_learner(
 
 # run the super learner algorithm
 spec_output_dir <- paste0(
-  "results/ArrayID-",
+  "~/scratch/ArrayID-",
   Sys.getenv("SLURM_ARRAY_JOB_ID"), "_",
   task$nodes$outcome
 )

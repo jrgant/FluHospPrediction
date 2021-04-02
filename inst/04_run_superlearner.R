@@ -39,7 +39,7 @@ fhp_metalearner <- make_learner(
 
 # run the super learner algorithm
 spec_output_dir <- paste0(
-  "results/ArrayID-",
+  "~/scratch/ArrayID-",
   Sys.getenv("SLURM_ARRAY_JOB_ID"), "_",
   task$nodes$outcome
 )
