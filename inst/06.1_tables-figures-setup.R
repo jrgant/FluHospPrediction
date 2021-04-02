@@ -1,0 +1,162 @@
+################################################################################
+## LOAD ##
+################################################################################
+
+pacman::p_load(
+  FluHospPrediction,
+  data.table,
+  extrafont
+)
+
+## Data directories.
+clndir <- here::here("data", "cleaned")
+paper_output <- here::here("results", "00_paper_output")
+
+## Slugs for table, figure, and value filenames.
+figslug <- "FIG"
+tabslug <- "TAB"
+valslug <- "VAL"
+
+## This function formats filenames during save operations, using both the
+## slugs above and the current date. If one file is updated, make sure to
+## update all files, as the manuscript Rmd selects files to use based on
+## a global date string.
+nicefile <- function(slug, description, ext, date = Sys.Date(),
+                     dir = paper_output) {
+  file.path(dir, paste0(slug, "_", description, "_", date, ".", ext))
+}
+
+## Load font database.
+loadfonts(device = "pdf")
+global_plot_font <- "Gentium Book Basic"
+
+## Universal breaks for week labeling in plots.
+week_breaks <- c("01", "05", "10", "15", "20", "25", "30")
+
+## This function saves plots in pdf and png formats.
+plotsave <- function(name, plot, width, height) {
+
+  ggsave(
+    nicefile(figslug, name, "pdf"),
+    plot,
+    width = width,
+    height = height,
+    units = "in",
+    device = cairo_pdf
+  )
+
+  ggsave(
+    nicefile(figslug, name, "png"),
+    plot,
+    width = width,
+    height = height,
+    units = "in",
+    device = "png",
+    dpi = 1200
+  )
+
+}
+
+
+################################################################################
+## RESULTS DIRECTORIES ##
+################################################################################
+
+resdir <- "results"
+
+## Main analysis files (NoLOESS)
+respr <- file.path(resdir, "PeakRate-LambdaMin-NoLOESS")
+respw <- file.path(resdir, "PeakWeek-LambdaMin-NoLOESS")
+resch <- file.path(resdir, "CumHosp-LambdaMin-NoLOESS")
+
+## Sensitivity analysis files (alternative trend filter lambda)
+respr_1se <- file.path(resdir, "PeakRate-LambdaSE")
+respw_1se <- file.path(resdir, "PeakWeek-LambdaSE")
+resch_1se <- file.path(resdir, "CumHosp-LambdaSE")
+
+## Sensitivity analysis files (elastic net, random forest subset)
+respr_erf <- file.path(resdir, "PeakRate-ElastNetRF")
+respw_erf <- file.path(resdir, "PeakWeek-ElastNetRF")
+resch_erf <- file.path(resdir, "CumHosp-ElastNetRF")
+
+## Sensitivity analysis files (squared error loss)
+respr_sqe <- file.path(resdir, "PeakRate-SqErrLoss")
+respw_sqe <- file.path(resdir, "PeakWeek-SqErrLoss")
+resch_sqe <- file.path(resdir, "CumHosp-SqErrLoss")
+
+## Sensitivity analysis files (with LOESS)
+respr_los <- file.path(resdir, "PeakRate-LambdaMin")
+respw_los <- file.path(resdir, "PeakWeek-LambdaMin")
+resch_los <- file.path(resdir, "CumHosp-LambdaMin")
+
+## Simulated curves
+sim_lm <- readRDS(file.path(clndir, "hypothetical-curves_lambda-min.Rds"))
+sim_ls <- readRDS(file.path(clndir, "hypothetical-curves_lambda-1se.Rds"))
+
+
+################################################################################
+## LEARNER NAME LOOKUP TABLE ##
+################################################################################
+
+# Learner lookup table (get submitted learners from a task)
+lid07 <- readRDS(file.path(respr, "sl_pkrate_07.Rds"))
+
+lchar <- data.table(
+  lname = names(lid07$sl_pruned$metalearner_fit$coefficients)
+)
+
+# Relabel the random forests
+relabel_rf(lchar)
+
+# Assign IDs to the component learners and create lookup table
+lchar[
+  grepl("glmnet.*(0\\.25|0\\.5|0\\.75)", lname),
+  lid := paste0("EN", 1:max(.I))
+]
+
+lchar[
+  grepl("glmnet.*1_100", lname),
+  lid := "LASSO"
+]
+
+lchar[
+  grepl("loess", lname),
+  lid := paste0("LOESS", 1:max(.I))
+]
+
+lchar[
+  grepl("nnet", lname),
+  lid := paste0("NNet", str_pad(1:max(.I), 2, "left", "0"))
+]
+
+lchar[
+  grepl("polspline", lname),
+  lid := paste0("PMARS", 1:max(.I))
+]
+
+lchar[
+  grepl("randomForest", lname),
+  lname := relabel_rf(lchar)
+]
+
+lchar[
+  grepl("randomForest", lname),
+  lid := paste0("RF", str_pad(1:max(.I), 2, "left", "0"))
+]
+
+lchar[
+  grepl("glmnet.*0_100", lname),
+  lid := "Ridge"
+]
+
+lchar[
+  grepl("Pipeline", lname),
+  lid := "ScreenGLM"
+]
+
+lchar[
+  grepl("svm", lname),
+  lid := paste0("SVM", 1:max(.I))
+][]
+
+lchar
