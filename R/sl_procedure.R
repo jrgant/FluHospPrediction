@@ -231,16 +231,16 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_w
     params            = sl_trained$params,
     fit_uuid          = sl_trained$fit_uuid,
     learner_uuid      = sl_trained$learner_uuid,
-    cv_fit            = sl_trained$fit_object$cv_fit,
-    cv_meta_fit       = sl_trained$fit_object$cv_meta_fit,
+    #cv_fit            = sl_trained$fit_object$cv_fit,
+    #cv_meta_fit       = sl_trained$fit_object$cv_meta_fit,
     cv_meta_task      = sl_trained$fit_object$cv_meta_task,
-    metalearner_fit   = sl_trained$metalearner_fit(),
-    component_preds   = as.data.table(
-      lapply(
-        setNames(lnames, lnames),
-        function(.x) sl_trained$learner_fits[[.x]]$predict()
-      )
-    )
+    metalearner_fit   = sl_trained$metalearner_fit()
+    #component_preds   = as.data.table(
+    #  lapply(
+    #    setNames(lnames, lnames),
+    #    function(.x) sl_trained$learner_fits[[.x]]$predict()
+    #  )
+    # )
   )
 
   # get cross-validated risk
