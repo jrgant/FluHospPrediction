@@ -231,6 +231,9 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_w
     params            = sl_trained$params,
     fit_uuid          = sl_trained$fit_uuid,
     learner_uuid      = sl_trained$learner_uuid,
+    cv_fit            = sl_trained$fit_object$cv_fit,
+    cv_meta_fit       = sl_trained$fit_object$cv_meta_fit,
+    cv_meta_task      = sl_trained$fit_object$cv_meta_task,
     metalearner_fit   = sl_trained$metalearner_fit(),
     component_preds   = as.data.table(
       lapply(
@@ -250,13 +253,12 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_w
   out <- list(
     slurm_jobid = Sys.getenv(("SLURM_JOB_ID")),
     task = task,
-    sl_trained = sl_trained,
-    sl_pruned = sl_pruned,
     cv_risk_abserr = risk,
+    sl_pruned = sl_pruned,
     meta_preds = meta_preds,
     full_preds = full_preds
   )
-  #out <- sl_trained
+
   target <- task$nodes$outcome
 
   slug <- paste0(
