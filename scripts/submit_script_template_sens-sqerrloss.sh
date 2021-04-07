@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #SBATCH -J SL-FluHosp-TARGET_INPUT-LAMBDA_INPUT-Sens-SqErrLoss
-#SBATCH --time=1:00:00
-#SBATCH --partition=bigmem
-#SBATCH --mem=500GB
+#SBATCH --time=1:30:00
+#SBATCH -p batch
+#SBATCH --mem=100GB
 #SBATCH -n 32
 
 #SBATCH --array=1,5,10,15,20,25,30
-#SBATCH -o SL-FluHosp-Target-TARGET_INPUT-Lambda-LAMBDA_INPUT-Sens-SqErrLoss-ArrayID-%A-JobID-%J-Week-%a.log
+#SBATCH -o SL-FluHosp-TARGET-TARGET_INPUT_LAMBDA-LAMBDA_INPUT_SENS-SqErrLoss-ArrayID-%A-JobID-%J-Week-%2a.log
 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=jrgant@brown.edu

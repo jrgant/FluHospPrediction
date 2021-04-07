@@ -1,13 +1,13 @@
 #!/bin/bash
 
 #SBATCH -J SL-FluHosp-TARGET_INPUT-LAMBDA_INPUT
-#SBATCH --time=1:30:00
-#SBATCH -p bigmem
-#SBATCH --mem=500GB
+#SBATCH --time=2:30:00
+#SBATCH -p batch
+#SBATCH --mem=100GB
 #SBATCH -n 32
 
 #SBATCH --array=01-30
-#SBATCH -o SL-FluHosp-Target-TARGET_INPUT-Lambda-LAMBDA_INPUT-ArrayID-%A-JobID-%J-Week-%a.log
+#SBATCH -o SL-FluHosp-TARGET-TARGET_INPUT-LAMBDA-LAMBDA_INPUT-ArrayID-%A-JobID-%J-Week-%2a.log
 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=jrgant@brown.edu

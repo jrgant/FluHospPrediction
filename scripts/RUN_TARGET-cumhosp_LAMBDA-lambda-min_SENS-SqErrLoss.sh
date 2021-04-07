@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#SBATCH -J SL-FluHosp-pkrate-lambda-1se-NoLOESS
+#SBATCH -J SL-FluHosp-cumhosp-lambda-min-Sens-SqErrLoss
 #SBATCH --time=1:30:00
-#SBATCH -p bigmem
-#SBATCH --mem=500GB
+#SBATCH -p batch
+#SBATCH --mem=100GB
 #SBATCH -n 32
 
-#SBATCH --array=01-30
-#SBATCH -o SL-FluHosp-Target-pkrate-Lambda-lambda-1se-NoLOESS-ArrayID-%A-JobID-%J-Week-%a.log
+#SBATCH --array=1,5,10,15,20,25,30
+#SBATCH -o SL-FluHosp-TARGET-cumhosp_LAMBDA-lambda-min_SENS-SqErrLoss-ArrayID-%A-JobID-%J-Week-%2a.log
 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=jrgant@brown.edu
@@ -28,9 +28,9 @@ echo "================================================================"
 echo " INPUT PARAMETERS "
 echo "================================================================"
 
-export LAMBDA_SELECT=lambda-1se
-export LEARNER_SELECT="elast|lasso|ridge|glm|nnet|mars|rf|svm"
-export TARGET_SELECT=pkrate
+export LAMBDA_SELECT=lambda-min
+export LEARNER_SELECT='elast|lasso|ridge|glm|nnet|mars|rf|svm'
+export TARGET_SELECT=cumhosp
 
 echo "LAMBDA: $LAMBDA_SELECT"
 echo "LEARNER: $LEARNER_SELECT"
@@ -47,7 +47,7 @@ echo "================================================================"
 echo " PRINT CODE "
 echo "================================================================"
 
-cat inst/04_run_superlearner.R
+cat inst/05_run_sqerrloss_sensitivity.R
 
 echo "================================================================"
 echo " EINDE ROLPAD"
@@ -61,5 +61,4 @@ echo "================================================================"
 echo " EXECUTE CODE"
 echo "================================================================"
 
-Rscript inst/04_run_superlearner.R --vanilla
-
+Rscript inst/05_run_sqerrloss_sensitivity.R --vanilla

@@ -1,12 +1,13 @@
 #!/bin/bash
 
 #SBATCH -J SL-FluHosp-TARGET_INPUT-LAMBDA_INPUT-Sens-ElastNetRF
-#SBATCH --time=30:00
+#SBATCH -p batch
+#SBATCH --time=1:30:00
 #SBATCH --mem=150GB
-#SBATCH -n 8
+#SBATCH -n 32
 
 #SBATCH --array=01-30
-#SBATCH -o SL-FluHosp-Target-TARGET_INPUT-Lambda-LAMBDA_INPUT-Sens-ElastNetRF-ArrayID-%A-JobID-%J-Week-%a.log
+#SBATCH -o SL-FluHosp-TARGET_TARGET_INPUT-LAMBDA-LAMBDA_INPUT_SENS-ElastNetRF-ArrayID-%A-JobID-%J-Week-%2a.log
 
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=jrgant@brown.edu
@@ -28,7 +29,7 @@ echo " INPUT PARAMETERS "
 echo "================================================================"
 
 export LAMBDA_SELECT=LAMBDA_INPUT
-export LEARNER_SELECT="elastnet|rf"
+export LEARNER_SELECT=LEARNER_INPUT
 export TARGET_SELECT=TARGET_INPUT
 
 echo "LAMBDA: $LAMBDA_SELECT"
