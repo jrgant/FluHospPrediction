@@ -248,8 +248,9 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_w
   full_preds <- sl_trained$fit_object$full_fit$predict()
 
   out <- list(
+    slurm_jobid = Sys.getenv(("SLURM_JOB_ID")),
     task = task,
-    # sl_trained = sl_trained,
+    sl_trained = sl_trained,
     sl_pruned = sl_pruned,
     cv_risk_abserr = risk,
     meta_preds = meta_preds,
