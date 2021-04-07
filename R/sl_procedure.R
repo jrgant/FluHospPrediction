@@ -38,9 +38,12 @@ fhp_make_task <- function(target, current_week, lambda_type) {
   covar_exclude_pat <- "pkrate|pkweek|cumhosp$|template|cid"
   covars <- names(curr)[!grepl(covar_exclude_pat, names(curr))]
 
-  # set folds to 15 (equivalent to leave-one-out CV, by template id)
+  # set folds to 15 (cluster ID: empirical shape template)
+  # NOTE: folds_vfold will complain of leave-one-out CV because
+  #       the n parameter is not provided explicitly but is
+  #       derived from cluster_ids.
   fold_scheme <- make_folds(
-    cluster_ids = season_template_ids,
+    cluster_ids = curr$template,
     V = 15
   )
 
@@ -49,8 +52,8 @@ fhp_make_task <- function(target, current_week, lambda_type) {
     covariates = covars,
     outcome = target,
     outcome_type = "continuous",
-    folds = fold_scheme,
-    id = "template_numeric"
+    folds = fold_scheme
+    #id = "template_numeric"
   )
 
 
