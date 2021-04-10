@@ -45,10 +45,9 @@ fmt_risk_table <- function(dir,
   } else {
     assign(paste0(slug, "_risktables"), risks, envir = .GlobalEnv)
   }
-  
 
   # format risks for output
-  keep_always <- c("Lrnr_mean", "SuperLearner")
+  keep_always <- "SuperLearner"
 
   rt <- lapply(risks, function(x) {
 
