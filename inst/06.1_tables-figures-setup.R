@@ -65,9 +65,9 @@ plotsave <- function(name, plot, width, height) {
 resdir <- "results"
 
 ## Main analysis files (NoLOESS)
-respr <- file.path(resdir, "PeakRate-LambdaMin-NoLOESS")
-respw <- file.path(resdir, "PeakWeek-LambdaMin-NoLOESS")
-resch <- file.path(resdir, "CumHosp-LambdaMin-NoLOESS")
+respr <- file.path(resdir, "PeakRate-LambdaMin")
+respw <- file.path(resdir, "PeakWeek-LambdaMin")
+resch <- file.path(resdir, "CumHosp-LambdaMin")
 
 ## Sensitivity analysis files (alternative trend filter lambda)
 respr_1se <- file.path(resdir, "PeakRate-LambdaSE")
@@ -83,11 +83,6 @@ resch_erf <- file.path(resdir, "CumHosp-ElastNetRF")
 respr_sqe <- file.path(resdir, "PeakRate-SqErrLoss")
 respw_sqe <- file.path(resdir, "PeakWeek-SqErrLoss")
 resch_sqe <- file.path(resdir, "CumHosp-SqErrLoss")
-
-## Sensitivity analysis files (with LOESS)
-respr_los <- file.path(resdir, "PeakRate-LambdaMin")
-respw_los <- file.path(resdir, "PeakWeek-LambdaMin")
-resch_los <- file.path(resdir, "CumHosp-LambdaMin")
 
 ## Simulated curves
 sim_lm <- readRDS(file.path(clndir, "hypothetical-curves_lambda-min.Rds"))
