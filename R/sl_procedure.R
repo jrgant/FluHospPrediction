@@ -267,7 +267,7 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_w
   )
 
   if (write) {
-    if(!file.exists(results_path)) dir.create(results_path)
+    if (!file.exists(results_path)) dir.create(results_path)
     saveRDS(out, file.path(results_path, paste0(slug, ".Rds")))
   } else {
     assign(slug, out, envir = .GlobalEnv)
