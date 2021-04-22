@@ -40,9 +40,10 @@ fhp_metalearner <- make_learner(
 # run the super learner algorithm
 spec_output_dir <- paste0(
   "~/scratch/ArrayID-",
-  Sys.getenv("SLURM_ARRAY_JOB_ID"), "_",
-  task$nodes$outcome
+  Sys.getenv("SLURM_ARRAY_JOB_ID"), "_", Sys.getenv("SLURM_JOB_NAME")
 )
+
+dir.create(spec_output_dir)
 
 cat("\n\n\n", "Output will be written to:", spec_output_dir, "\n\n\n")
 
@@ -52,7 +53,8 @@ fhp_run_sl(
   results_path = spec_output_dir,
   current_week = current_week,
   metalearner = fhp_metalearner,
-  keep_extra = TRUE
+  output = "fit",
+  keep_extra = FALSE
 )
 
 cat("WARNING LIST", rep("=", 60), "\n\n", sep = "")
