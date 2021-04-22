@@ -27,7 +27,7 @@ task <- suppressWarnings(
 # specify component learners and send to global environment
 cat("\n\nLearners in Stack\n")
 fhp_spec_learners(
-  learner_pat = "svm",
+  learner_pat = "lasso|ridge",
   verbose = TRUE,
   currtask = task
 )
@@ -41,11 +41,13 @@ fhp_metalearner <- make_learner(
 )
 
 # run the super learner algorithm
-fhpl1 <- fhp_run_sl(
+fhp_run_sl(
   task,
   write = FALSE,
   current_week = current_week,
-  metalearner = fhp_metalearner
+  metalearner = fhp_metalearner,
+  output = "fit",
+  keep_extra = FALSE
 )
 
 devtools::session_info()
