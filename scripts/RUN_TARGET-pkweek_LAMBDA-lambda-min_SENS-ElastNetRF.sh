@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#SBATCH -J SL-FluHosp-pkweek-lambda-min-Sens-ElastNetRF
+#SBATCH -J SL-FluHosp-TARGET-pkweek_LAMBDA-lambda-min_SENS-ElastNetRF
 #SBATCH -p batch
-#SBATCH --time=1:30:00
+#SBATCH --time=3:30:00
 #SBATCH --mem=150GB
 #SBATCH -n 32
 

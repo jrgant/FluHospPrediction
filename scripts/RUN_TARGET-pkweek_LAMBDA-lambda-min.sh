@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH -J SL-FluHosp-pkweek-lambda-min
-#SBATCH --time=2:30:00
+#SBATCH -J SL-FluHosp-TARGET-pkweek_LAMBDA-lambda-min
+#SBATCH --time=3:30:00
 #SBATCH -p batch
 #SBATCH --mem=100GB
 #SBATCH -n 32

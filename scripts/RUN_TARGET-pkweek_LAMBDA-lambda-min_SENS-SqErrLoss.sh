@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH -J SL-FluHosp-pkweek-lambda-min-Sens-SqErrLoss
-#SBATCH --time=1:30:00
+#SBATCH -J SL-FluHosp-TARGET-pkweek_LAMBDA-lambda-min_SENS-SqErrLoss
+#SBATCH --time=3:30:00
 #SBATCH -p batch
 #SBATCH --mem=100GB
 #SBATCH -n 32

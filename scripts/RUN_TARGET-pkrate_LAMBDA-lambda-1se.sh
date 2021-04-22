@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH -J SL-FluHosp-pkrate-lambda-1se
-#SBATCH --time=2:30:00
+#SBATCH -J SL-FluHosp-TARGET-pkrate_LAMBDA-lambda-1se
+#SBATCH --time=3:30:00
 #SBATCH -p batch
 #SBATCH --mem=100GB
 #SBATCH -n 32
