@@ -187,6 +187,7 @@ fhp_spec_learners <-
 #' @param write A logical indicating whether to write results to a file. Defaults to TRUE.
 #' @param results_path Relative to project root, where to save the results files.
 #' @param current_week The week number at which predictions are made.
+#' @param output One of `tailored` or `fit`. The first returns an object with selected elements from the super learner algorithm, while the second returns the super learner fit object itself.
 #' @param ... Pass arguments to Lrnr_sl$new(...)
 #'
 #' @describeIn super_learner_proc Runs the parallelized super learner procedure based on `fhp_make_tasks()` and `fhp_spec_learners()`.
@@ -194,7 +195,7 @@ fhp_spec_learners <-
 #' @import delayed future sl3 tictoc
 #' @export fhp_run_sl
 
-fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_week, ...) {
+fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_week, output = c("tailored", "fit"), ...) {
 
   # specify the super learner
   sl <- Lrnr_sl$new(learners = stack_full, ...)
@@ -236,21 +237,27 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_w
     # )
   )
 
-  # get cross-validated risk
-  risk <- sl_trained$cv_risk(loss_absolute_error)
+  if (output == "tailored") {
+    out <- list(
+      slurm_jobid = Sys.getenv(("SLURM_JOB_ID")),
+      task = task,
+      cv_risk_abserr = risk,
+      sl_pruned = sl_pruned,
+      meta_preds = meta_preds,
+      full_preds = full_preds
+    )
 
-  # get ensemble predictions for each fold (season template)
-  meta_preds <- sl_trained$fit_object$cv_meta_fit$predict()
-  full_preds <- sl_trained$fit_object$full_fit$predict()
+    # get cross-validated risk
+    risk <- sl_trained$cv_risk(loss_absolute_error)
 
-  out <- list(
-    slurm_jobid = Sys.getenv(("SLURM_JOB_ID")),
-    task = task,
-    cv_risk_abserr = risk,
-    sl_pruned = sl_pruned,
-    meta_preds = meta_preds,
-    full_preds = full_preds
-  )
+    # get ensemble predictions for each fold (season template)
+    meta_preds <- sl_trained$fit_object$cv_meta_fit$predict()
+    full_preds <- sl_trained$fit_object$full_fit$predict()
+  }
+
+  if (output == "fit") {
+    out <- sl_trained
+  }
 
   target <- task$nodes$outcome
 

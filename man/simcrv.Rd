@@ -12,7 +12,7 @@ simcrv(
   peakdist = dist_tf_peaks,
   hstdat = ed,
   predfits = tf_pred,
-  fitseas = tf_seas_pmat,
+  fitseas = tf_seas,
   nu.min = 0.75,
   nu.max = 1.25,
   cv_list = cv_tf,
