@@ -43,8 +43,7 @@ spec_output_dir <- paste0(
   Sys.getenv("SLURM_ARRAY_JOB_ID"), "_", Sys.getenv("SLURM_JOB_NAME")
 )
 
-dir.create(spec_output_dir)
-
+if (!file.exists(spec_output_dir)) dir.create(spec_output_dir)
 cat("\n\n\n", "Output will be written to:", spec_output_dir, "\n\n\n")
 
 fhp_run_sl(
