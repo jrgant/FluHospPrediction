@@ -185,9 +185,11 @@ fhp_spec_learners <-
 
 #' @param task A learning task created by `fhp_make_task()`.
 #' @param write A logical indicating whether to write results to a file. Defaults to TRUE.
+#' @param returnobj Return object as a normal function would. Defaults to FALSE.
 #' @param results_path Relative to project root, where to save the results files.
 #' @param current_week The week number at which predictions are made.
 #' @param output One of `tailored` or `fit`. The first returns an object with selected elements from the super learner algorithm, while the second returns the super learner fit object itself.
+#' @param set_keep_extra Set the argument `keep_extra` in `Lrnr_sl$new()`. Defaults to FALSE.
 #' @param ... Pass arguments to Lrnr_sl$new(...)
 #'
 #' @describeIn super_learner_proc Runs the parallelized super learner procedure based on `fhp_make_tasks()` and `fhp_spec_learners()`.
@@ -195,10 +197,17 @@ fhp_spec_learners <-
 #' @import delayed future sl3 tictoc
 #' @export fhp_run_sl
 
-fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_week, output = c("tailored", "fit"), ...) {
+fhp_run_sl <- function(task, write = TRUE, returnobj = FALSE, results_path = "~/scratch", current_week, output = c("tailored", "fit"), set_keep_extra = FALSE, ...) {
+
+  if (output == "tailored") {
+    ske <- TRUE
+    message("The 'output' argument was set to 'tailored'. so 'set_keep_extra' was set to TRUE automatically.")
+  } else {
+    ske <- set_keep_extra
+  }
 
   # specify the super learner
-  sl <- Lrnr_sl$new(learners = stack_full, ...)
+  sl <- Lrnr_sl$new(learners = stack_full, keep_extra = ske, ...)
 
   plan(multicore)
 
@@ -238,6 +247,13 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_w
   )
 
   if (output == "tailored") {
+    # get ensemble predictions for each fold (season template)
+    meta_preds <- sl_trained$fit_object$cv_meta_fit$predict()
+    full_preds <- sl_trained$fit_object$full_fit$predict()
+
+    # get cross-validated component risks
+    risk <- sl_trained$cv_risk(loss_absolute_error)
+
     out <- list(
       slurm_jobid = Sys.getenv(("SLURM_JOB_ID")),
       task = task,
@@ -247,12 +263,7 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_w
       full_preds = full_preds
     )
 
-    # get cross-validated risk
-    risk <- sl_trained$cv_risk(loss_absolute_error)
 
-    # get ensemble predictions for each fold (season template)
-    meta_preds <- sl_trained$fit_object$cv_meta_fit$predict()
-    full_preds <- sl_trained$fit_object$full_fit$predict()
   }
 
   if (output == "fit") {
@@ -269,11 +280,17 @@ fhp_run_sl <- function(task, write = TRUE, results_path = "~/scratch", current_w
   if (write) {
     if (!file.exists(results_path)) dir.create(results_path)
     saveRDS(out, file.path(results_path, paste0(slug, ".Rds")))
-  } else {
+  }
+
+  if (write == FALSE & returnobj == FALSE) {
     assign(slug, out, envir = .GlobalEnv)
   }
 
   print(warnings())
+
+  if (returnobj) {
+    out
+  }
 
 }
 

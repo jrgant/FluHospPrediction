@@ -14,9 +14,11 @@ fhp_spec_learners(learner_pat = "^lrnr_", currtask, verbose = FALSE)
 fhp_run_sl(
   task,
   write = TRUE,
+  returnobj = FALSE,
   results_path = "~/scratch",
   current_week,
   output = c("tailored", "fit"),
+  set_keep_extra = FALSE,
   ...
 )
 
@@ -40,19 +42,27 @@ calculate number of covariates to sample in random forest learners.}
 \item{verbose}{Logical indicating whether to print the full component learner
 stack. Defaults to FALSE.}
 
-\item{task}{A learning task created by `fhp_make_task()`.}
+\item{task}{The master sl3 task as created by `fhp_make_task`.}
 
 \item{write}{A logical indicating whether to write results to a file. Defaults to TRUE.}
+
+\item{returnobj}{Return object as a normal function would. Defaults to FALSE.}
 
 \item{results_path}{Relative to project root, where to save the results files.}
 
 \item{output}{One of `tailored` or `fit`. The first returns an object with selected elements from the super learner algorithm, while the second returns the super learner fit object itself.}
 
-\item{...}{Pass arguments to Lrnr_sl$new(...)}
+\item{set_keep_extra}{Set the argument `keep_extra` in `Lrnr_sl$new()`. Defaults to FALSE.}
+
+\item{...}{Pass arguments to `fhp_run_sl`.}
 
 \item{w}{Numerical integer week (1--30). Used in script testing.}
 
 \item{slurm}{Logical indicating whether job is submitted via batch script in SLURM. If TRUE, will take job ID from job array.}
+
+\item{fold}{Fold object from \code{origami}}
+
+\item{data}{Underlying data set.}
 }
 \value{
 A list containing the sl3 tasks for each week of the flu season.
