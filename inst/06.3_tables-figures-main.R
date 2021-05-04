@@ -1,5 +1,6 @@
 source(here::here("inst", "06.1_tables-figures-setup.R"))
 
+
 ################################################################################
 ## RISK TABLES ##
 ################################################################################
@@ -131,22 +132,12 @@ pep_pr <- plot_ensemble_performance(
   titlestring = "Peak rate"
 )
 
-mn_pkrate_lmin <- simsum[type == "sim.lmin", mean(peakrate)]
-
-pkr_mnrisks <- simsum[
-  type == "sim.lmin",
-  .(risks = mean(abs(mn_pkrate_lmin - peakrate))),
-  template
-]
-
-pkr_mnrisks[, mean(risks)]
-
-## Median (naive) prediction risk.
-pr_medrisk <- pr_dist[type == "sim.lmin", log(median(abs(mean(value) - value)))]
-
 pep_pr_out <- pep_pr +
   geom_hline(
-    aes(yintercept = pr_medrisk, linetype = "Median benchmark risk"),
+    aes(
+      yintercept = pr_medrisk$log_mean_risk,
+      linetype = "Median benchmark risk"
+    ),
     color = "red"
   ) +
   scale_linetype_manual(values = c("dashed"), name = "") +
@@ -224,7 +215,7 @@ prt_pw_out <- prt_pw +
   guides(alpha = FALSE) +
   scale_size_continuous(
     name = "Weight",
-    labels = c("> 0.00", "0.25", "0.50", "0.75", "1")
+    labels = c("> 0.00", "0.2", "0.4", "0.6", "0.8")
   ) +
   theme(axis.text.y = element_text(hjust = 0.5))
 
@@ -266,11 +257,15 @@ pep_pw <- plot_ensemble_performance(
 pep_pw
 
 ## Median (naive) risk.
-pw_medrisk <- pw_dist[type == "sim.lmin", log(mean(abs(median(value) - value)))]
+pkw_w1 <- readRDS(file.path(respw, "sl_pkweek_01.Rds"))
+pkw_w1 <- pkw_w1$task$get_data()
 
 pep_pw_out <- pep_pw +
   geom_hline(
-    aes(yintercept = pw_medrisk, linetype = "Median prediction risk"),
+    aes(
+      yintercept = pw_medrisk$log_mean_risk,
+      linetype = "Median prediction risk"
+    ),
     color = "red"
   ) +
   scale_linetype_manual(values = "dashed", name = "") +
@@ -348,7 +343,7 @@ prt_ch_out <- prt_ch +
   guides(alpha = FALSE) +
   scale_size_continuous(
    name = "Weight",
-   labels = c("> 0.00", "0.2", "0.4", "0.6")
+   labels = c("> 0.0", "0.2", "0.4", "0.6", "0.8")
   ) +
   theme(axis.text.y = element_text(hjust = 0.5))
 
@@ -372,11 +367,15 @@ pep_ch <- plot_ensemble_performance(
 pep_ch
 
 ## Median prediction risk.
-ch_medrisk <- ch_dist[type == "sim.lmin", log(mean(abs(median(value) - value)))]
+cmh_w1 <- readRDS(file.path(resch, "sl_cumhosp_01.Rds"))
+cmh_w1 <- cmh_w1$task$get_data()
 
 pep_ch_out <- pep_ch +
   geom_hline(
-    aes(yintercept = ch_medrisk, linetype = "Median prediction risk"),
+    aes(
+      yintercept = ch_medrisk$log_mean_risk,
+      linetype = "Median prediction risk"
+    ),
     color = "red"
   ) +
   scale_color_viridis_d(
@@ -462,9 +461,22 @@ pep_main_ens[, ":="(
 pep_main_ens
 
 ## Bind together the risks of the naive predictions
+pep_main_naive_log <- data.table(
+  target = c("peakrate", "peakweek", "cumhosp"),
+  naiverisk = c(
+    pr_medrisk$log_mean_risk,
+    pw_medrisk$log_mean_risk,
+    ch_medrisk$log_mean_risk
+  )
+)
+
 pep_main_naive <- data.table(
   target = c("peakrate", "peakweek", "cumhosp"),
-  naiverisk = c(pr_medrisk, pw_medrisk, ch_medrisk)
+  naiverisk = c(
+    pr_medrisk$mean_risk,
+    pw_medrisk$mean_risk,
+    ch_medrisk$mean_risk
+  )
 )
 
 ## Make nice lables for each facet and set facet order.
@@ -480,27 +492,111 @@ pep_main_weights[, target := factor(target, levels = forder, ordered = TRUE)]
 pep_main_ens[, target := factor(target, levels = forder, ordered = TRUE)]
 pep_main_naive[, target := factor(target, levels = forder, ordered = TRUE)]
 
-## Plot ensemble performance across all prediction targets.
-pep_main_all <- pep_main_weights %>%
+pep_main_wts_no_ch30 <- pep_main_weights[!(target == "cumhosp" & Week == "30")]
+pep_main_ens_no_ch30 <- pep_main_ens[!(target == "cumhosp" & Week == "30")]
+
+
+## Plot ensemble performance across all prediction targets (LOG SCALE).
+pep_main_all <- pep_main_wts_no_ch30 %>%
   ggplot(aes(x = Week, y = log(mean_risk))) +
   geom_point(
     aes(size = weight, color = "Component"),
     shape = 21
   ) +
-  geom_point(
-    data = pep_main_naive[, .(Week = 1:30), .(target, naiverisk)],
+  geom_hline(
+    data = data.table(
+      logmeanrisk = c(
+        pr_medrisk$log_mean_risk,
+        pw_medrisk$log_mean_risk,
+        ch_medrisk$log_mean_risk
+      ),
+      target = factor(forder, levels = forder)
+    ),
     aes(
-      y = naiverisk,
+      yintercept = logmeanrisk,
       color = "Naive (median)"
     ),
-    size = 1,
-    shape = 22,
-    fill = "white"
+    linetype = "dashed"
   ) +
   geom_pointrange(
-    data = pep_main_ens,
-    aes(x = Week, y = log(mean_risk),
-        ymin = log(ll95), ymax = log(ul95),
+    data = pep_main_ens_no_ch30,
+    aes(
+      x = Week, y = log(mean_risk),
+      ymin = log(ll95), ymax = log(ul95),
+      color = "Ensemble"
+    ),
+    size = 0.1,
+    shape = 21,
+    fill = "black",
+    key_glyph = "pointrange"
+  ) +
+  facet_wrap(
+    ~ target,
+    ncol = 2,
+    scales = "free_y",
+    labeller = labeller(target = facetlabs)
+  ) +
+  labs(y = "Mean prediction risk (natural log scale)") +
+  scale_color_manual(
+    name = "Prediction",
+    values = c("#dddddd", "black", "salmon")
+  ) +
+  scale_x_discrete(breaks = week_breaks) +
+  scale_size(name = "Component weight") +
+  guides(
+    color = guide_legend(
+      override.aes = list(
+        shape = c(21, 21, NA),
+        fill = c("white", "black", "black"),
+        linetype = c(0, 0, 2)
+      ))) +
+  theme_base(base_family = global_plot_font) +
+  theme(
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(size = 8),
+    plot.background = element_blank(),
+    panel.spacing = unit(0.5, "in"),
+    legend.box = "horizontal",
+    legend.position = c(0.75, 0.25),
+    legend.box.background = element_rect(color = "black"),
+  )
+
+pep_main_all
+
+plotsave(
+  name = "Ensemble-Summary_All-Targets",
+  plot = pep_main_all,
+  width = 6,
+  height = 6
+)
+
+
+## Plot ensemble performance across all prediction targets (STANDARD SCALE).
+pep_main_all_rs <- pep_main_wts_no_ch30 %>%
+  ggplot(aes(x = Week, y = mean_risk)) +
+  geom_point(
+    aes(size = weight, color = "Component"),
+    shape = 21
+  ) +
+  geom_hline(
+    data = data.table(
+      logmeanrisk = c(
+        pr_medrisk$mean_risk,
+        pw_medrisk$mean_risk,
+        ch_medrisk$mean_risk
+      ),
+      target = c("peakrate", "peakweek", "cumhosp")
+    ),
+    aes(
+      yintercept = logmeanrisk,
+      color = "Naive (median)"
+    ),
+    linetype = "dashed"
+  ) +
+  geom_pointrange(
+    data = pep_main_ens_no_ch30,
+    aes(x = Week, y = mean_risk,
+        ymin = ll95, ymax = ul95,
         color = "Ensemble"
         ),
     size = 0.5,
@@ -516,7 +612,7 @@ pep_main_all <- pep_main_weights %>%
   ) +
   scale_color_manual(
     name = "Prediction",
-    values = c("#dddddd", "black", "black")
+    values = c("#aaaaaa", "black", "black")
   ) +
   scale_x_discrete(breaks = week_breaks) +
   scale_size(name = "Component weight") +
@@ -533,10 +629,10 @@ pep_main_all <- pep_main_weights %>%
     axis.text.x = element_text(size = 8)
   )
 
-pep_main_all
+pep_main_all_rs
 
 plotsave(
-  name = "Ensemble-Summary_All-Targets",
+  name = "Ensemble-Summary_All-Targets_Reg-Scale-Components",
   plot = pep_main_all,
   width = 6,
   height = 10

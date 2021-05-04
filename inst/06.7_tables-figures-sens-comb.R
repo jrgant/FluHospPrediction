@@ -1,5 +1,19 @@
 source(here::here("inst", "06.1_tables-figures-setup.R"))
 
+# load risktables into environment
+fmt_risk_table(dir = respr, slug = "sl_pkrate")
+fmt_risk_table(dir = respw, slug = "sl_pkweek")
+fmt_risk_table(dir = resch, slug = "sl_cumhosp")
+
+fmt_risk_table(dir = respr_1se, slug = "sl_pkrate", altslug = "1se")
+fmt_risk_table(dir = respw_1se, slug = "sl_pkweek", altslug = "1se")
+fmt_risk_table(dir = resch_1se, slug = "sl_cumhosp", altslug = "1se")
+
+fmt_risk_table(dir = respr_erf, slug = "sl_pkrate", altslug = "erf")
+fmt_risk_table(dir = respw_erf, slug = "sl_pkweek", altslug = "erf")
+fmt_risk_table(dir = resch_erf, slug = "sl_cumhosp", altslug = "erf")
+
+
 ################################################################################
 ## SENSITIVITY ANALYSIS: COMBINED FIGURE ##
 ################################################################################
@@ -94,9 +108,15 @@ sens_naive <- data.table(
   analysis = c(rep("main", 3), rep("lse", 3), rep("erf", 3)),
   target = rep(c("pkrate", "pkweek", "cumhosp"), 3),
   naiverisk = c(
-    pr_medrisk, pw_medrisk, ch_medrisk,
-    pr_1se_medrisk, pw_1se_medrisk, ch_1se_medrisk,
-    pr_medrisk, pw_medrisk, ch_medrisk
+    pr_medrisk$log_mean_risk,
+    pw_medrisk$log_mean_risk,
+    ch_medrisk$log_mean_risk,
+    pr_medrisk_1se$log_mean_risk,
+    pw_medrisk_1se$log_mean_risk,
+    ch_medrisk_1se$log_mean_risk,
+    pr_medrisk$log_mean_risk,
+    pw_medrisk$log_mean_risk,
+    ch_medrisk$log_mean_risk
   )
 )
 
@@ -130,28 +150,28 @@ invislab <- rep("", length(hide_xticks))
 names(invislab) <- hide_xticks
 
 ## Plot analysis comparisons.
-pep_sens_compare <- ggplot(sens_rwsum) +
+pep_sens_compare <- ggplot(sens_risktab) +
   geom_point(
     aes(
       x = Week, y = log(mean_risk),
-      size = weight, color = "Component learner"
+      size = coefficients, color = "Component learner"
     ),
     shape = 21
   ) +
-  geom_segment(
-    ## This geom_segment adds an arrow where log(ll95) is undefined because the
-    ## ll95 on the original scale was a negative number.
-    data = sens_risktab[target == "pkweek" & Week == "20" & analysis == "erf"],
-    aes(
-      x = as.numeric(Week), xend = as.numeric(Week),
-      y = log(ul95), yend = -3.308303,
-      color = "Ensemble"
-    ),
-    lineend = "butt",
-    linejoin = "mitre",
-    size = 0.3,
-    arrow = arrow(length = unit(0.02, "npc"))
-  ) +
+  ## geom_segment(
+  ##   ## This geom_segment adds an arrow where log(ll95) is undefined because the
+  ##   ## ll95 on the original scale was a negative number.
+  ##   data = sens_risktab[target == "pkweek" & Week == "20" & analysis == "erf"],
+  ##   aes(
+  ##     x = as.numeric(Week), xend = as.numeric(Week),
+  ##     y = log(ul95), yend = -3.308303,
+  ##     color = "Ensemble"
+  ##   ),
+  ##   lineend = "butt",
+  ##   linejoin = "mitre",
+  ##   size = 0.3,
+  ##   arrow = arrow(length = unit(0.02, "npc"))
+  ## ) +
   geom_pointrange(
     data = sens_risktab,
     aes(
@@ -263,71 +283,63 @@ plotsave(
 ## COMPONENT LEARNER INSPECTION ##
 ################################################################################
 
-sel_weeks <- c(1, 5, 10, 15, 20, 25, 30)
+## This function extracts the validation set predictions and weights from
+## the SL output objects.
+bind_components <- function(sl_files) {
+    sl <- readRDS(sl_files)
 
-prcomp <- lapply(
-  setNames(sel_weeks, paste0("Week", sel_weeks)),
-  function(.x) {
-    readRDS(
-      file.path(respr, paste0("sl_pkrate_", sprintf("%02d", .x), ".Rds"))
-    )
-  }
-)
+    w <- as.data.table(
+      sl$sl_pruned$metalearner_fit$coefficients,
+      keep.rownames = TRUE
+    )[, .(learner = V1, weight = V2)]
 
-prcomp_preds <- lapply(
-  prcomp,
-  function(.x) {
-    sel_comp <- which(.x$sl_pruned$metalearner_fit$coefficients > 0)
-
-    comp_preds <- rbindlist(
-      lapply(
-        sel_comp,
-        function(.y) {
-          data.table(
-            pred = .x$sl_pruned$component_preds[[.y]],
-            weight = .x$sl_pruned$metalearner_fit$coefficients[.y]
-          )
-        }
-      ),
-      idcol = "learner"
+    dt <- sl$sl_pruned$cv_meta_task$X
+    dtm <- suppressWarnings(
+      melt(dt, value.name = "pred", variable.name = "learner")
     )
 
-    ens_add <- rbindlist(
-      list(
-        comp_preds,
-        data.table(learner = "ensembleSL", pred = .x$full_preds, weight = NA)
+    wk <- stringr::str_extract(sl_files, "[0-9]{2}")
+    dtm[, Week := wk]
+
+    out <- rbind(
+      merge(dtm, w, by = "learner"),
+      data.table(
+        learner = "SuperLearner",
+        pred = sl$full_preds,
+        Week = wk,
+        weight = NA
       )
     )
 
-    ens_add[, sim_Y := rep(.x$task$Y, .N / length(.x$task$Y))]
-    ens_add
-  }
-)
+    out[, truth := rep(sl$task$Y, .N / length(sl$task$Y))]
+    out
+}
 
-theme_set(theme_tufte(ticks = F, base_size = 20))
-pkrate
+pkrate_cp <- rbindlist(lapply(
+  list.files(respr, pattern = "Rds", full.names = TRUE),
+  bind_components
+))
 
-prcomp_plist <- lapply(
-  prcomp_preds,
-  function(.x) {
-    ggplot(.x, aes(x = pred, y = sim_Y)) +
-      geom_point(aes(color = weight), alpha = 0.3) +
-      facet_wrap(~ learner) +
-      scale_color_viridis()
-  })
+pkweek_cp <- rbindlist(lapply(
+  list.files(respw, pattern = "Rds", full.names = TRUE),
+  bind_components
+))
 
-ens_predl <- rbindlist(
-  lapply(1:30, function(.x) {
-    sl <- readRDS(file.path(respr, paste0("sl_pkrate_", sprintf("%02d", .x), ".Rds")))
-    data.table(ensembleSL_pred = sl$full_preds, Y = sl$task$Y)
-  }),
-  idcol = "Week"
-)
+cumhosp_cp <- rbindlist(lapply(
+  list.files(resch, pattern = "Rds", full.names = TRUE),
+  bind_components
+))
 
-ens_predl[, absdiff := abs(ensembleSL_pred - Y)]
+theme_set(theme_tufte(ticks = F, base_size = 25))
 
-ens_predl %>%
-  ggplot(aes(x = ensembleSL_pred, y = Y)) +
-  geom_point(aes(color = absdiff), alpha = 0.3) +
-  scale_color_viridis() +
-  facet_wrap(~ Week)
+ggplot(
+  pkrate_cp[learner == "SuperLearner"],
+  aes(x = pred, y = truth)
+  ) +
+  geom_point(aes(color = weight), alpha = 0.3) +
+  facet_wrap(~ Week) +
+  scale_color_viridis()
+
+pkrate_cp[weight > 0, .(weight = round(first(weight), 4)), .(learner, Week)]
+pkweek_cp[weight > 0, .(weight = round(first(weight), 4)), .(learner, Week)]
+cumhosp_cp[weight > 0, .(weight = round(first(weight), 4)), .(learner, Week)]

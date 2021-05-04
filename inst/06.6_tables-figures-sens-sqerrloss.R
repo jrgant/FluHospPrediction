@@ -78,15 +78,12 @@ pep_pr_sqe <- plot_ensemble_performance(
   titlestring = paste("Peak rate:", sqeslug)
 )
 
-## Median prediction risk.
-pr_sqe_mnrisk <- pr_dist[
-  type == "sim.lmin",
-  log(mean((mean(value) - value)^2))
-]
-
 pep_pr_sqe_out <- pep_pr_sqe +
   geom_hline(
-    aes(yintercept = pr_sqe_mnrisk, linetype = "Mean prediction risk"),
+    aes(
+      yintercept = pr_mnrisk$log_mean_risk,
+      linetype = "Mean prediction risk"
+    ),
     color = "red"
   ) +
   scale_color_viridis_d(
@@ -185,15 +182,9 @@ pep_pw_sqe <- plot_ensemble_performance(
   titlestring = paste("Peak week:", sqe_slug)
 )
 
-## Median prediction risk.
-pw_sqe_mnrisk <- pw_dist[
-  type == "sim.lmin",
-  log(mean((mean(value) - value)^2))
-]
-
 pep_pw_sqe_out <- pep_pw_sqe +
   geom_hline(
-    aes(yintercept = pw_sqe_mnrisk, linetype = "Median prediction risk"),
+    aes(yintercept = pw_mnrisk$log_mean_risk, linetype = "Median prediction risk"),
     color = "red"
   ) +
   scale_linetype_manual(values = "dashed", name = "") +
@@ -290,15 +281,12 @@ pep_ch_sqe <- plot_ensemble_performance(
   titlestring = paste("Cumulative hospitalizations:", sqeslug)
 )
 
-## Median prediction risk.
-ch_sqe_mnrisk <- ch_dist[
-  type == "sim.lmin",
-  log(mean((mean(value) - value)^2))
-]
-
 pep_ch_sqe_out <- pep_ch_sqe +
   geom_hline(
-    aes(yintercept = ch_sqe_mnrisk, linetype = "Mean prediction risk"),
+    aes(
+      yintercept = ch_mnrisk$log_mean_risk,
+      linetype = "Mean prediction risk"
+    ),
     color = "red"
   ) +
   scale_linetype_manual(values = "dashed", name = "") +
@@ -366,7 +354,11 @@ pep_sqe_ens
 ## Bind together the risks of the naive predictions
 pep_sqe_naive <- data.table(
   target = c("peakrate", "peakweek", "cumhosp"),
-  naiverisk = c(pr_sqe_mnrisk, pw_sqe_mnrisk, ch_sqe_mnrisk)
+  naiverisk = c(
+    pr_mnrisk$log_mean_risk,
+    pw_mnrisk$log_mean_risk,
+    ch_mnrisk$log_mean_risk
+  )
 )
 
 ## Make nice lables for each facet and set facet order.

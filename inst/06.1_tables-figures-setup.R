@@ -155,3 +155,56 @@ lchar[
 ][]
 
 lchar
+
+
+################################################################################
+## Median Prediction Risks ##
+################################################################################
+
+est_cv_risk_naive <- function(data, outcome, loss = c("abs", "sqe")) {
+  if (loss == "abs") {
+    fold_risks <- sapply(data[, unique(template)], function(.x) {
+      mean(abs(
+        data[template != .x, median(get(outcome))] -
+        data[template == .x, get(outcome)]
+      ))
+    })
+  } else {
+    fold_risks <- sapply(data[, unique(template)], function(.x) {
+      mean((
+        data[template != .x, mean(get(outcome))] -
+        data[template == .x, get(outcome)]
+      )^2)
+    })
+  }
+
+  mean_risk <- mean(fold_risks)
+  log_mean_risk <- log(mean_risk)
+
+  list(
+    fold_risks = fold_risks,
+    mean_risk = mean_risk,
+    log_mean_risk = log_mean_risk
+  )
+}
+
+## LambdaMin
+lmin_sim <-
+  fread(here::here("data", "cleaned", "sim_dataset_wide_lambda-min.csv"))
+
+pr_medrisk <- est_cv_risk_naive(lmin_sim, "pkrate", "abs")
+pw_medrisk <- est_cv_risk_naive(lmin_sim, "pkweek", "abs")
+ch_medrisk <- est_cv_risk_naive(lmin_sim, "cumhosp", "abs")
+
+pr_mnrisk <- est_cv_risk_naive(lmin_sim, "pkrate", "sqe")
+pw_mnrisk <- est_cv_risk_naive(lmin_sim, "pkweek", "sqe")
+ch_mnrisk <- est_cv_risk_naive(lmin_sim, "cumhosp", "sqe")
+
+
+## LambdaSE
+lmin_1se <-
+  fread(here::here("data", "cleaned", "sim_dataset_wide_lambda-1se.csv"))
+
+pr_medrisk_1se <- est_cv_risk_naive(lmin_1se, "pkrate", "abs")
+pw_medrisk_1se <- est_cv_risk_naive(lmin_1se, "pkweek", "abs")
+ch_medrisk_1se <- est_cv_risk_naive(lmin_1se, "cumhosp", "abs")

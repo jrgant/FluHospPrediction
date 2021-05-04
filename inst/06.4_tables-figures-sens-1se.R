@@ -77,15 +77,12 @@ pep_pr_1se <- plot_ensemble_performance(
   titlestring = paste("Peak rate:", l1se_slug)
 )
 
-## Median prediction risk.
-pr_1se_medrisk <- pr_dist[
-  type == "sim.l1se",
-  log(mean(abs(median(value) - value)))
-]
-
 pep_pr_1se_out <- pep_pr_1se +
   geom_hline(
-    aes(yintercept = pr_1se_medrisk, linetype = "Median prediction risk"),
+    aes(
+      yintercept = pr_medrisk_1se$log_mean_risk,
+      linetype = "Median prediction risk"
+    ),
     color = "red"
   ) +
   scale_color_viridis_d(
@@ -190,7 +187,10 @@ pw_1se_medrisk <- pw_dist[
 
 pep_pw_1se_out <- pep_pw_1se +
   geom_hline(
-    aes(yintercept = pw_1se_medrisk, linetype = "Median prediction risk"),
+    aes(
+      yintercept = pw_medrisk_1se$log_mean_risk,
+      linetype = "Median prediction risk"
+    ),
     color = "red"
   ) +
   scale_linetype_manual(values = "dashed", name = "") +
@@ -293,7 +293,10 @@ ch_1se_medrisk <- ch_dist[
 
 pep_ch_1se_out <- pep_ch_1se +
   geom_hline(
-    aes(yintercept = ch_1se_medrisk, linetype = "Median prediction risk"),
+    aes(
+      yintercept = ch_medrisk_1se$log_mean_risk,
+      linetype = "Median prediction risk"
+    ),
     color = "red"
   ) +
   scale_linetype_manual(values = "dashed", name = "") +
