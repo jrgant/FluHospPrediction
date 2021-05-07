@@ -52,7 +52,8 @@ fhp_metalearner <- make_learner(
 # run the super learner algorithm
 spec_output_dir <- paste0(
   "~/scratch/ArrayID-",
-  Sys.getenv("SLURM_ARRAY_JOB_ID"), "_", Sys.getenv("SLURM_JOB_NAME")
+  Sys.getenv("SLURM_ARRAY_JOB_ID"), "_", Sys.getenv("SLURM_JOB_NAME"),
+  "_PROSP"
 )
 
 if (!file.exists(spec_output_dir)) dir.create(spec_output_dir)
@@ -214,7 +215,10 @@ pred_compare <- list(
 
 saveRDS(
   pred_compare,
-  file = file.path(spec_output_dir, "pred_compare.Rds")
+  file = file.path(
+    spec_output_dir,
+    paste("s", obs_season, "_pred_compare.Rds")
+  )
 )
 
 cat("WARNING LIST", rep("=", 60), "\n\n", sep = "")
