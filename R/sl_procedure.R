@@ -6,7 +6,7 @@
 #' @param target One of "pkrate", "pkweek", or "cumhosp". No default.
 #' @param current_week Week of flu season for which to make a task.
 #' @param lambda_type Pick the curves simulated based on trendfilter lambda. Should be one of "lambda-min" or "lambda-1se".
-#' 
+#' @param prosp A character string naming an observed season to predict on, example "2015-16". The super learner will be fit on simulated curves based only on prior seasons. Default is NULL to avoid interfering with the specification of tasks in the original main and sensitivity analyses.
 #' @return A list containing the sl3 tasks for each week of the flu season.
 #'
 #' @describeIn super_learner_proc Specify learning tasks for each week.
@@ -14,7 +14,7 @@
 #' @import origami sl3 stringr
 #' @export fhp_make_task
 
-fhp_make_task <- function(target, current_week, lambda_type) {
+fhp_make_task <- function(target, current_week, lambda_type, prosp = NULL) {
 
   clndir <- here::here("data", "cleaned")
 
@@ -34,6 +34,11 @@ fhp_make_task <- function(target, current_week, lambda_type) {
   # season templates (to use as fold ids in cross-validation)
   curr$template_numeric <- as.numeric(curr$template)
 
+  # subset to training data if prospective training task specified
+  if (!is.null(prosp)) {
+    curr <- curr[template_numeric < which(levels(curr$template) == prosp)]
+  }
+
   covar_exclude_pat <- "pkrate|pkweek|cumhosp$|template|cid"
   covars <- names(curr)[!grepl(covar_exclude_pat, names(curr))]
 
@@ -42,6 +47,14 @@ fhp_make_task <- function(target, current_week, lambda_type) {
     cluster_ids = curr$template,
     V = 15
   )
+
+  # reassign the fold task if prospective aim specified
+  if(!is.null(prosp)) {
+    fold_scheme <- make_folds(
+      cluster_ids = curr$template,
+      V = length(unique(curr$template))
+    )
+  }
 
   task_spec <- make_sl3_Task(
     data = curr,

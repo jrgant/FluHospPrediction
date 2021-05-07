@@ -7,7 +7,7 @@
 \alias{get_week}
 \title{Super Learner Procedure}
 \usage{
-fhp_make_task(target, current_week, lambda_type)
+fhp_make_task(target, current_week, lambda_type, prosp = NULL)
 
 fhp_spec_learners(learner_pat = "^lrnr_", currtask, verbose = FALSE)
 
@@ -31,6 +31,8 @@ get_week(w = NULL, slurm = TRUE)
 
 \item{lambda_type}{Pick the curves simulated based on trendfilter lambda. Should be one of "lambda-min" or "lambda-1se".}
 
+\item{prosp}{A character string naming an observed season to predict on, example "2015-16". The super learner will be fit on simulated curves based only on prior seasons. Default is NULL to avoid interfering with the specification of tasks in the original main and sensitivity analyses.}
+
 \item{learner_pat}{Regular expression specifying which learners to include in
 the learner stack. Defaults to "^lrnr_", which adds any object whose name
 starts with "lrnr" in the global environment to the learner stack. To select
@@ -42,7 +44,7 @@ calculate number of covariates to sample in random forest learners.}
 \item{verbose}{Logical indicating whether to print the full component learner
 stack. Defaults to FALSE.}
 
-\item{task}{The master sl3 task as created by `fhp_make_task`.}
+\item{task}{A learning task created by `fhp_make_task()`.}
 
 \item{write}{A logical indicating whether to write results to a file. Defaults to TRUE.}
 
@@ -54,15 +56,11 @@ stack. Defaults to FALSE.}
 
 \item{set_keep_extra}{Set the argument `keep_extra` in `Lrnr_sl$new()`. Defaults to FALSE.}
 
-\item{...}{Pass arguments to `fhp_run_sl`.}
+\item{...}{Pass arguments to Lrnr_sl$new(...)}
 
 \item{w}{Numerical integer week (1--30). Used in script testing.}
 
 \item{slurm}{Logical indicating whether job is submitted via batch script in SLURM. If TRUE, will take job ID from job array.}
-
-\item{fold}{Fold object from \code{origami}}
-
-\item{data}{Underlying data set.}
 }
 \value{
 A list containing the sl3 tasks for each week of the flu season.
