@@ -2,13 +2,13 @@
 
 suppressMessages(library(FluHospPrediction))
 
-## code to run while testing
+# code to run while testing
 ## Sys.setenv(
-##   "SLURM_ARRAY_TASK_ID" = 15,
-##   "LAMBDA_SELECT" = "lambda-min",
-##   "LEARNER_SELECT" = "glm|lasso|ridge",
-##   "TARGET_SELECT" = "pkrate",
-##   "OBS_SEASON" = "2015-16"
+## "SLURM_ARRAY_TASK_ID" = 5,
+## "LAMBDA_SELECT" = "lambda-min",
+## "LEARNER_SELECT" = "glm|lasso|ridge",
+## "TARGET_SELECT" = "pkrate",
+## "OBS_SEASON" = "2015-16"
 ## )
 
 current_week   <- get_week(slurm = TRUE)
@@ -31,8 +31,6 @@ task <- suppressWarnings(
   )
 )
 
-task
-
 # specify component learners and send to global environment
 cat("\n\nLearners in Stack\n")
 fhp_spec_learners(
@@ -53,7 +51,7 @@ fhp_metalearner <- make_learner(
 spec_output_dir <- paste0(
   "~/scratch/ArrayID-",
   Sys.getenv("SLURM_ARRAY_JOB_ID"), "_", Sys.getenv("SLURM_JOB_NAME"),
-  "_PROSP"
+  "_PROSP-s", obs_season
 )
 
 if (!file.exists(spec_output_dir)) dir.create(spec_output_dir)
@@ -154,33 +152,33 @@ format_empirical_season <- function(week, predict_on, origtask = task) {
                                     get(paste0("cumhosp_100k_", week - i))
       )]
     }
+  }
 
-    if (week > 1) {
-      currnames <- names(fmtdat)
+  if (week > 1) {
+    currnames <- names(fmtdat)
 
-      # get all variable names beginning with "hosprate" and save
-      # the name of the current week's hosprate separately
-      hr_vars <- currnames[grepl("^hosprate", currnames)]
-      hr_curr <- hr_vars[length(hr_vars)]
+    # get all variable names beginning with "hosprate" and save
+    # the name of the current week's hosprate separately
+    hr_vars <- currnames[grepl("^hosprate", currnames)]
+    hr_curr <- hr_vars[length(hr_vars)]
 
-      # do the same for cumhosp variable
-      ch_vars <- currnames[grepl("^cumhosp\\_100", currnames)]
-      ch_curr <- ch_vars[length(ch_vars)]
+    # do the same for cumhosp variable
+    ch_vars <- currnames[grepl("^cumhosp\\_100", currnames)]
+    ch_curr <- ch_vars[length(ch_vars)]
 
-      # get all diff variables
-      hr_diff <- currnames[grepl("^diff_hosprate", currnames)]
-      ch_diff <- currnames[grepl("^diff_cumhosp", currnames)]
+    # get all diff variables
+    hr_diff <- currnames[grepl("^diff_hosprate", currnames)]
+    ch_diff <- currnames[grepl("^diff_cumhosp", currnames)]
 
-      # create interactions between hr_curr and cumhosp diffs
-      hr_ixnames <- paste0("hr", week, "xdchl", 1:length(ch_diff))
-      ch_ixnames <- paste0("ch", week, "xdhrl", 1:length(hr_diff))
+    # create interactions between hr_curr and cumhosp diffs
+    hr_ixnames <- paste0("hr", week, "xdchl", 1:length(ch_diff))
+    ch_ixnames <- paste0("ch", week, "xdhrl", 1:length(hr_diff))
 
-      fmtdat[, (hr_ixnames) :=
+    fmtdat[, (hr_ixnames) :=
                lapply(hr_diff, function(x) get(x) * get(ch_diff))]
 
-      fmtdat[, (ch_ixnames) :=
+    fmtdat[, (ch_ixnames) :=
                lapply(ch_diff, function(x) get(x) * get(hr_diff))]
-    }
   }
 
   # predicting on new data requires that new data to be fed to
@@ -206,6 +204,7 @@ ptask <- format_empirical_season(
 )
 
 pred_compare <- list(
+  obs_season = obs_season,
   obs_outcome = ptask$task$Y,
   sl_pred = ft$predict(ptask$task),
   sl_pred_abserr = abs(ft$predict(ptask$task) - ptask$task$Y),
@@ -217,7 +216,11 @@ saveRDS(
   pred_compare,
   file = file.path(
     spec_output_dir,
-    paste("s", obs_season, "_pred_compare.Rds")
+    paste0(
+      "s", obs_season,
+      "_w", sprintf("%02d", current_week),
+      "_pred_compare.Rds"
+    )
   )
 )
 
