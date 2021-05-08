@@ -52,8 +52,7 @@ fhp_run_sl(
   results_path = spec_output_dir,
   current_week = current_week,
   metalearner = fhp_metalearner,
-  output = "fit",
-  keep_extra = FALSE
+  output = "tailored"
 )
 
 cat("WARNING LIST", rep("=", 60), "\n\n", sep = "")
