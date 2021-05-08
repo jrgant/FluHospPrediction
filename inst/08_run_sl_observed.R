@@ -245,7 +245,7 @@ saveRDS(
     spec_output_dir,
     paste0(
       "s", obs_season,
-      "_w", current_week,
+      "_w", sprintf("%02d", current_week),
       "_pred_compare.Rds"
     )
   )
