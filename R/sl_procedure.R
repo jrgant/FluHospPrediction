@@ -85,115 +85,115 @@ fhp_make_task <- function(target, current_week, lambda_type, prosp = NULL) {
 fhp_spec_learners <-
   function(learner_pat = "^lrnr_", currtask, verbose = FALSE) {
 
-  # GLM
-  scrn_glm <- Lrnr_screener_corP$new()
-  lrnr_glm_gauss <- Lrnr_glm$new(family = gaussian())
-  lrnr_screen_glm <<- Pipeline$new(scrn_glm, lrnr_glm_gauss)
+    # GLM
+    scrn_glm <- Lrnr_screener_corP$new()
+    lrnr_glm_gauss <- Lrnr_glm$new(family = gaussian())
+    lrnr_screen_glm <<- Pipeline$new(scrn_glm, lrnr_glm_gauss)
 
-  # Specify polymars learners
-  pmars_tune <- seq(2, 10, 2)
+    # Specify polymars learners
+    pmars_tune <- seq(2, 10, 2)
 
-  for (i in seq_along(pmars_tune)) {
-    assign(
-      paste0("lrnr_polymars_", stringr::str_pad(i, width = 2, pad = "0")),
-      Lrnr_polspline$new(gcv = pmars_tune[i]),
-      envir = .GlobalEnv
+    for (i in seq_along(pmars_tune)) {
+      assign(
+        paste0("lrnr_polymars_", stringr::str_pad(i, width = 2, pad = "0")),
+        Lrnr_polspline$new(gcv = pmars_tune[i]),
+        envir = .GlobalEnv
+      )
+    }
+
+    # Specify random forest learners
+    numcovs <- length(currtask$nodes$covariates)
+    rf_tune <- expand.grid(
+      ntree = c(50, 100, 500), # number of trees
+      nodesize = c(5, 10, 50),  # minimum number of observations in terminal nodes
+      mtry = c(numcovs / 3, numcovs / 2, numcovs / 1.5)
     )
+
+    for (i in 1:nrow(rf_tune)) {
+      assign(
+        paste0("lrnr_rf_", stringr::str_pad(i, width = 2, pad = "0")),
+        Lrnr_randomForest$new(
+                            ntree = rf_tune[i, 1],
+                            nodesize = rf_tune[i, 2],
+                            mtry = round(rf_tune[i, 3])
+                          ),
+        envir = .GlobalEnv
+      )
+    }
+
+    # Specify neural network variants
+    nnet_tune <- expand.grid(
+      nodes = c(5, 10, 25, 50, 75, 100),
+      penalty = c(0, 0.005, 0.1, 0.2, 0.4)
+    )
+
+    for (i in 1:nrow(nnet_tune)) {
+      assign(
+        paste0("lrnr_nnet_", stringr::str_pad(i, width = 2, pad = "0")),
+        Lrnr_pkg_SuperLearner$new(
+                                SL_wrapper = "SL.nnet",
+                                size = nnet_tune[i, 1],
+                                decay = nnet_tune[i, 2]
+                              ),
+        envir = .GlobalEnv
+      )
+    }
+
+    # Specify SVM variants
+    lrnr_svm_radial <<- Lrnr_svm$new(kernel = "radial")
+    lrnr_svm_poly1  <<- Lrnr_svm$new(kernel = "polynomial", degree = 1)
+    lrnr_svm_poly2  <<- Lrnr_svm$new(kernel = "polynomial", degree = 2)
+    lrnr_svm_poly3  <<- Lrnr_svm$new(kernel = "polynomial", degree = 3)
+
+    # Specify Elastic Net learners
+    glmnet_folds <- 10 # n folds to use for glmnet's internal cross-validation
+
+    lrnr_lasso <<- Lrnr_glmnet$new(
+                                 alpha = 1,
+                                 standardize = TRUE,
+                                 nfolds = glmnet_folds
+                               )
+
+    lrnr_ridge <<- Lrnr_glmnet$new(
+                                 alpha = 0,
+                                 standardize = TRUE,
+                                 nfolds = glmnet_folds
+                               )
+
+    elastic_tune <- c(0.25, 0.5, 0.75)
+
+    for (i in seq_along(elastic_tune)) {
+      assign(
+        paste0("lrnr_elastnet_", stringr::str_pad(i, width = 2, pad = "0")),
+        Lrnr_glmnet$new(alpha = elastic_tune[i]),
+        envir = .GlobalEnv
+      )
+    }
+
+    # Specify LOESS learners
+    loess_tune <- c(0.25, 0.5, 0.75, 1)
+
+    for (i in seq_along(loess_tune)) {
+      assign(
+        paste0("lrnr_loess_", stringr::str_pad(i, width = 2, pad = "0")),
+        Lrnr_pkg_SuperLearner$new(
+                                SL_wrapper = "SL.loess",
+                                span = loess_tune[i]
+                              ),
+        envir = .GlobalEnv
+      )
+    }
+
+    # define learner stack
+    stack_full <<- Stack$new(
+                           lapply(
+                             ls(pattern = learner_pat, envir = .GlobalEnv),
+                             get
+                           )
+                         )
+
+    if (verbose) print(stack_full)
   }
-
-  # Specify random forest learners
-  numcovs <- length(currtask$nodes$covariates)
-  rf_tune <- expand.grid(
-    ntree = c(50, 100, 500), # number of trees
-    nodesize = c(5, 10, 50),  # minimum number of observations in terminal nodes
-    mtry = c(numcovs / 3, numcovs / 2, numcovs / 1.5)
-  )
-
-  for (i in 1:nrow(rf_tune)) {
-    assign(
-      paste0("lrnr_rf_", stringr::str_pad(i, width = 2, pad = "0")),
-      Lrnr_randomForest$new(
-        ntree = rf_tune[i, 1],
-        nodesize = rf_tune[i, 2],
-        mtry = round(rf_tune[i, 3])
-        ),
-      envir = .GlobalEnv
-    )
-  }
-
-  # Specify neural network variants
-  nnet_tune <- expand.grid(
-    nodes = c(5, 10, 25, 50, 75, 100),
-    penalty = c(0, 0.005, 0.1, 0.2, 0.4)
-  )
-
-  for (i in 1:nrow(nnet_tune)) {
-    assign(
-      paste0("lrnr_nnet_", stringr::str_pad(i, width = 2, pad = "0")),
-      Lrnr_pkg_SuperLearner$new(
-        SL_wrapper = "SL.nnet",
-        size = nnet_tune[i, 1],
-        decay = nnet_tune[i, 2]
-      ),
-      envir = .GlobalEnv
-    )
-  }
-
-  # Specify SVM variants
-  lrnr_svm_radial <<- Lrnr_svm$new(kernel = "radial")
-  lrnr_svm_poly1  <<- Lrnr_svm$new(kernel = "polynomial", degree = 1)
-  lrnr_svm_poly2  <<- Lrnr_svm$new(kernel = "polynomial", degree = 2)
-  lrnr_svm_poly3  <<- Lrnr_svm$new(kernel = "polynomial", degree = 3)
-
-  # Specify Elastic Net learners
-  glmnet_folds <- 10 # n folds to use for glmnet's internal cross-validation
-
-  lrnr_lasso <<- Lrnr_glmnet$new(
-    alpha = 1,
-    standardize = TRUE,
-    nfolds = glmnet_folds
-  )
-
-  lrnr_ridge <<- Lrnr_glmnet$new(
-    alpha = 0,
-    standardize = TRUE,
-    nfolds = glmnet_folds
-  )
-
-  elastic_tune <- c(0.25, 0.5, 0.75)
-
-  for (i in seq_along(elastic_tune)) {
-    assign(
-      paste0("lrnr_elastnet_", stringr::str_pad(i, width = 2, pad = "0")),
-      Lrnr_glmnet$new(alpha = elastic_tune[i]),
-      envir = .GlobalEnv
-    )
-  }
-
-  # Specify LOESS learners
-  loess_tune <- c(0.25, 0.5, 0.75, 1)
-
-  for (i in seq_along(loess_tune)) {
-    assign(
-      paste0("lrnr_loess_", stringr::str_pad(i, width = 2, pad = "0")),
-      Lrnr_pkg_SuperLearner$new(
-        SL_wrapper = "SL.loess",
-        span = loess_tune[i]
-      ),
-      envir = .GlobalEnv
-    )
-  }
-
-  # define learner stack
-  stack_full <<- Stack$new(
-    lapply(
-      ls(pattern = learner_pat, envir = .GlobalEnv),
-      get
-    )
-  )
-
-  if (verbose) print(stack_full)
-}
 
 
 #' @param task A learning task created by `fhp_make_task()`.
