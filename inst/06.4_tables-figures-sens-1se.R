@@ -326,3 +326,62 @@ fwrite(
   cumhosp_lrnr_sel_1se,
   file.path(paper_output, paste0(Sys.Date(), "_cumhosp_lrnr_selection_1se.csv"))
 )
+
+################################################################################
+## FIGURE: SCATTERPLOTS OF WEIGHT BY MEAN_RISK ##
+################################################################################
+
+plot_weight_coef <- function(data, titleslug) {
+  ggplot(
+    data[learner != "SuperLearner"],
+    aes(x = mean_risk, coefficients)
+  ) +
+    geom_vline(
+      data = data[learner == "SuperLearner"],
+      aes(xintercept = mean_risk, color = "Ensemble risk"),
+      linetype = "dashed"
+    ) +
+    geom_point(size = 0.75, alpha = 0.5) +
+    facet_wrap(~ Week, scales = "free_x") +
+    coord_cartesian(ylim = c(0, 1)) +
+    scale_color_manual(values = "red") +
+    ggtitle(titleslug) +
+    theme_base(base_size = 12) +
+    theme(legend.position = "bottom")
+}
+
+pr_scatter_1se <- plot_weight_coef(
+  rbindlist(sl_pkrate_risktables_1se),
+  "Peak rate (alternate trend filter analysis)"
+)
+
+pw_scatter_1se <- plot_weight_coef(
+  rbindlist(sl_pkweek_risktables_1se),
+  "Peak week (alternate trend filter analysis)"
+)
+
+ch_scatter_1se <- plot_weight_coef(
+  rbindlist(sl_cumhosp_risktables_1se),
+  "Cumulative rate (alternate_trend analysis)"
+)
+
+plotsave(
+  name = "Scatter_WeightxRisk_PeakRate_LambdaSE",
+  plot = pr_scatter_1se,
+  width = 12,
+  height = 10
+)
+
+plotsave(
+  name = "Scatter_WeightxRisk_PeakWeek_LambdaSE",
+  plot = pw_scatter_1se,
+  width = 12,
+  height = 10
+)
+
+plotsave(
+  name = "Scatter_WeightxRisk_CumHosp_LambdaSE",
+  plot = ch_scatter_1se,
+  width = 12,
+  height = 10
+)

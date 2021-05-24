@@ -637,3 +637,63 @@ plotsave(
   width = 6,
   height = 10
 )
+
+
+################################################################################
+## FIGURE: SCATTERPLOTS OF WEIGHT BY MEAN_RISK ##
+################################################################################
+
+plot_weight_coef <- function(data, titleslug) {
+  ggplot(
+    data[learner != "SuperLearner"],
+    aes(x = mean_risk, coefficients)
+  ) +
+    geom_vline(
+      data = data[learner == "SuperLearner"],
+      aes(xintercept = mean_risk, color = "Ensemble risk"),
+      linetype = "dashed"
+    ) +
+    geom_point(size = 0.75, alpha = 0.5) +
+    facet_wrap(~ Week, scales = "free_x") +
+    coord_cartesian(ylim = c(0, 1)) +
+    scale_color_manual(values = "red") +
+    ggtitle(titleslug) +
+    theme_base(base_size = 12) +
+    theme(legend.position = "bottom")
+}
+
+pr_scatter <- plot_weight_coef(
+  rbindlist(sl_pkrate_risktables),
+  "Peak rate (main analysis)"
+)
+
+pw_scatter <- plot_weight_coef(
+  rbindlist(sl_pkweek_risktables),
+  "Peak week (main_analysis)"
+)
+
+ch_scatter <- plot_weight_coef(
+  rbindlist(sl_cumhosp_risktables),
+  "Cumulative rate (main analysis)"
+)
+
+plotsave(
+  name = "Scatter_WeightxRisk_PeakRate_LambdaMin",
+  plot = pr_scatter,
+  width = 12,
+  height = 10
+)
+
+plotsave(
+  name = "Scatter_WeightxRisk_PeakWeek_LambdaMin",
+  plot = pw_scatter,
+  width = 12,
+  height = 10
+)
+
+plotsave(
+  name = "Scatter_WeightxRisk_CumHosp_LambdaMin",
+  plot = ch_scatter,
+  width = 12,
+  height = 10
+)
