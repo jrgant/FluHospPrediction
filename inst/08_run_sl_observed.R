@@ -8,7 +8,7 @@ suppressMessages(library(FluHospPrediction))
 ## "LAMBDA_SELECT" = "lambda-min",
 ## "LEARNER_SELECT" = "glm|lasso|ridge|svm",
 ## "TARGET_SELECT" = "pkrate",
-## "OBS_SEASON" = "2015-16"
+## "OBS_SEASON" = "2016-17"
 ## )
 
 current_week   <- get_week(slurm = TRUE)
@@ -24,7 +24,8 @@ obs_season     <- Sys.getenv("OBS_SEASON")
 # on it.
 # This function is adapted from the code in inst/03_create_analysis_dataset.R
 # that formats the simulated curves.
-format_empirical_season <- function(week, predict_on, origtask = task, training = FALSE) {
+format_empirical_season <- function(week, predict_on,
+                                    origtask = task, training = FALSE) {
 
   dt <- fread(here::here("data", "cleaned", "empdat.csv"))
 
@@ -134,8 +135,8 @@ format_empirical_season <- function(week, predict_on, origtask = task, training 
       cumhosp = median(cumhosp)
     )]
 
-    print(md_extract)
-    print(md_preds)
+    ## print(md_extract)
+    ## print(md_preds)
 
     # predicting on new data requires that new data to be fed to
     # the fitted SL as an sl3 task

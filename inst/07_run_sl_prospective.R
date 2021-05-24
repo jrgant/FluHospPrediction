@@ -1,4 +1,4 @@
-# %% LOAD AND SETUP -----------------------------------------------------------
+# %% LOAD AND SETUP ------------------------------------------------------------
 
 suppressMessages(library(FluHospPrediction))
 
@@ -17,7 +17,7 @@ learner_select <- Sys.getenv("LEARNER_SELECT")
 target_select  <- Sys.getenv("TARGET_SELECT")
 obs_season     <- Sys.getenv("OBS_SEASON")
 
-# %% SUPER LEARNER ------------------------------------------------
+# %% SUPER LEARNER -------------------------------------------------------------
 
 # ignore leave-one-out CV warning: specification intended due to- clustering
 
@@ -71,7 +71,8 @@ ft <- fhp_run_sl(
 
 # Format the selected empirical season and return an sl3 task so we can predict
 # on it.
-# This function is adapted from the code in inst/03_create_analysis_dataset.R
+
+# This function is adapted from code in inst/03_create_analysis_dataset.R
 # that formats the simulated curves.
 format_empirical_season <- function(week, predict_on, origtask = task) {
 
@@ -86,7 +87,7 @@ format_empirical_season <- function(week, predict_on, origtask = task) {
 
   md_extract <- md[, .(
     pkrate = max(weekrate),
-    # if season has peak rate is the same in more than one week, we take the
+    # if season has peak rate that's the same in more than one week, we take the
     # average the indicated weeks
     pkweek = mean(weekint[weekrate == max(weekrate)]),
     cumhosp = cumrates[weekint == 30]
