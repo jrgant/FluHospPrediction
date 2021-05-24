@@ -437,6 +437,6 @@ pep_sqe_all
 plotsave(
   name = "Ensemble-Summary_All-Targets-SQE",
   plot = pep_sqe_all,
-  width = 6,
+  width = 10,
   height = 10
 )
