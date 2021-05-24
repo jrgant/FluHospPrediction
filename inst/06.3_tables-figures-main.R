@@ -556,9 +556,9 @@ pep_main_all <- pep_main_wts_no_ch30 %>%
     axis.text.x = element_text(size = 8),
     plot.background = element_blank(),
     panel.spacing = unit(0.5, "in"),
-    legend.box = "horizontal",
+    legend.box = "vertical",
     legend.position = c(0.75, 0.25),
-    legend.box.background = element_rect(color = "black"),
+    legend.box.background = element_blank(),
   )
 
 pep_main_all
@@ -566,8 +566,8 @@ pep_main_all
 plotsave(
   name = "Ensemble-Summary_All-Targets",
   plot = pep_main_all,
-  width = 6,
-  height = 6
+  width = 10,
+  height = 10
 )
 
 
