@@ -374,14 +374,17 @@ pep_sqe_weights[, target := factor(target, levels = forder, ordered = TRUE)]
 pep_sqe_ens[, target := factor(target, levels = forder, ordered = TRUE)]
 pep_sqe_naive[, target := factor(target, levels = forder, ordered = TRUE)]
 
-pep_sqe_all <- pep_sqe_weights %>%
+pep_sqe_weights_no_ch30 <- pep_sqe_weights[!(target == "cumhosp" & Week == "30")]
+pep_sqe_ens_no_ch30 <- pep_sqe_ens[!(target == "cumhosp" & Week == "30")]
+
+pep_sqe_all <- pep_sqe_weights_no_ch30 %>%
   ggplot(aes(x = Week, y = log(mean_risk))) +
   geom_point(
     aes(size = weight, color = "Component"),
     shape = 21
   ) +
   geom_pointrange(
-    data = pep_sqe_ens,
+    data = pep_sqe_ens_no_ch30,
     aes(x = Week, y = log(mean_risk),
         ymin = log(ll95), ymax = log(ul95),
         color = "Ensemble"
@@ -400,21 +403,33 @@ pep_sqe_all <- pep_sqe_weights %>%
   ) +
   facet_wrap(
     ~ target,
-    ncol = 1,
+    ncol = 2,
     scales = "free_y",
     labeller = labeller(target = facetlabs)
   ) +
+  labs(y = "Mean prediction risk (natural log scale)") +
   scale_color_manual(
     name = "Prediction source",
     values = c("#dddddd", "#990000", "black")
   ) +
   scale_x_discrete(breaks = week_breaks) +
   scale_size(name = "Weight") +
-  guides(linetype = FALSE) +
+  guides(
+    color = guide_legend(
+      override.aes = list(
+        shape = c(21, 21, NA),
+        fill = c("white", "black", "black"),
+        linetype = c(0, 0, 2)
+      ))) +
   theme_base(base_family = global_plot_font) +
   theme(
     strip.text = element_text(face = "bold"),
-    axis.text.x = element_text(size = 8)
+    axis.text.x = element_text(size = 8),
+    plot.background = element_blank(),
+    panel.spacing = unit(0.5, "in"),
+    legend.box = "vertical",
+    legend.position = c(0.75, 0.25),
+    legend.box.background = element_blank()
   )
 
 pep_sqe_all

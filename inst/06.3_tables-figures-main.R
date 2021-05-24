@@ -539,7 +539,7 @@ pep_main_all <- pep_main_wts_no_ch30 %>%
   labs(y = "Mean prediction risk (natural log scale)") +
   scale_color_manual(
     name = "Prediction",
-    values = c("#dddddd", "black", "salmon")
+    values = c("#dddddd", "black", "black")
   ) +
   scale_x_discrete(breaks = week_breaks) +
   scale_size(name = "Component weight") +

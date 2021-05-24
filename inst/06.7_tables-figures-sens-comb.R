@@ -238,15 +238,13 @@ sens_normscale <- sens_risktab %>%
   ) +
   geom_hline(
     data = sens_naive,
-    aes(yintercept = exp(naiverisk), color = "Median predictor"),
-    linetype = "dashed"
+    aes(
+      yintercept = exp(naiverisk),
+      linetype = "Median predictor"
+    )
   ) +
-  geom_linerange(
+  geom_pointrange(
     aes(ymin = ll95, ymax = ul95, color = "Ensemble (95% CI)"),
-    alpha = 0.3
-  ) +
-  geom_point(
-    aes(color = "Ensemble (95% CI)"),
     fill = "white",
     shape = 21
   ) +
@@ -261,12 +259,21 @@ sens_normscale <- sens_risktab %>%
   ) +
   ylab("Mean risk") +
   xlab("Week") +
-  scale_color_manual(name = "Prediction", values = c("#990000", "black")) +
+  scale_linetype_manual(name = "Prediction type", values = "dashed") +
+  scale_color_manual(
+    name = "",
+    values = "black"
+  ) +
+  guides(
+    linetype = guide_legend(order = 1),
+    color = guide_legend(order = 2, title.position = "bottom")
+  ) +
   scale_x_discrete(breaks = week_breaks) +
   theme_base(base_family = global_plot_font) +
   theme(
     strip.text = element_text(face = "bold", size = 11),
-    axis.text.x = element_text(size = 8)
+    axis.text.x = element_text(size = 8),
+    legend.margin = ggplot2::margin(0, 0, 0, 0, "cm")
   )
 
 sens_normscale

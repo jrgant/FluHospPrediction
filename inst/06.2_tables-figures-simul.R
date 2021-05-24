@@ -139,7 +139,7 @@ tempsim_boxplot <- crv[crvtype == "Simulated"] %>%
     y = "Hospitalization rate (per 100,000 population)",
     x = "Week"
   ) +
-  scale_color_manual(name = "Curve type", values = "#990000") +
+  scale_color_manual(name = "Curve type", values = "black") +
   scale_x_discrete(
     breaks = c(1, 5, 10, 15, 20, 25, 30),
     labels = c("1", "5", "10", "15", "20", "25", "30")
