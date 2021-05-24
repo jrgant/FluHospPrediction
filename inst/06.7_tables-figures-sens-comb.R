@@ -347,6 +347,6 @@ ggplot(
   facet_wrap(~ Week) +
   scale_color_viridis()
 
-pkrate_cp[weight > 0, .(weight = round(first(weight), 4)), .(learner, Week)]
-pkweek_cp[weight > 0, .(weight = round(first(weight), 4)), .(learner, Week)]
-cumhosp_cp[weight > 0, .(weight = round(first(weight), 4)), .(learner, Week)]
+pkrate_cp[weight > 0, .(weight = round(data.table::first(weight), 4)), .(learner, Week)]
+pkweek_cp[weight > 0, .(weight = round(data.table::first(weight), 4)), .(learner, Week)]
+cumhosp_cp[weight > 0, .(weight = round(data.table::first(weight), 4)), .(learner, Week)]
