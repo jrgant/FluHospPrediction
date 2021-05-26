@@ -14,7 +14,6 @@ Depends:
     rvest,
     stringr,
     readr,
-    dplyr,
     forcats,
     here,
     lubridate,

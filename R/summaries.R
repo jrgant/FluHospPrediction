@@ -10,10 +10,9 @@
 #'
 #' @describeIn summary_functions Formats risk tables that compare average risks of the ensemble super learner, discrete super learner, and mean prediction.
 #'
-#' @rawNamespace import(data.table, except = first)
 #' @import magrittr
 #' @import stringr
-#' @importFrom dplyr first
+#' @import data.table
 #'
 #' @export fmt_risk_table
 
