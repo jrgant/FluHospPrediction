@@ -110,10 +110,6 @@ prt_pr <- plot_risktiles(pkrate_rwsum, titlestring = "Peak rate")
 
 prt_pr_out <- prt_pr +
   guides(alpha = FALSE) +
-  scale_size_continuous(
-    name = "Weight",
-    labels = c("> 0.0", "0.2", "0.4", "0.6", "0.8")
-  ) +
   theme(axis.text.y = element_text(hjust = 0.5))
 
 prt_pr_out
@@ -213,10 +209,6 @@ prt_pw
 
 prt_pw_out <- prt_pw +
   guides(alpha = FALSE) +
-  scale_size_continuous(
-    name = "Weight",
-    labels = c("> 0.00", "0.2", "0.4", "0.6", "0.8")
-  ) +
   theme(axis.text.y = element_text(hjust = 0.5))
 
 plotsave(
@@ -341,10 +333,6 @@ prt_ch <- plot_risktiles(
 
 prt_ch_out <- prt_ch +
   guides(alpha = FALSE) +
-  scale_size_continuous(
-   name = "Weight",
-   labels = c("> 0.0", "0.2", "0.4", "0.6", "0.8")
-  ) +
   theme(axis.text.y = element_text(hjust = 0.5))
 
 prt_ch_out

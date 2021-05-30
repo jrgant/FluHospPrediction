@@ -296,6 +296,10 @@ plot_risktiles <- function(data, titlestring = "", font = "serif") {
       direction = -1
     ) +
     scale_alpha_manual(values = c(0, 0.7)) +
+    scale_size_continuous(
+      name = "Weight",
+      breaks = c(0, 0.25, 0.5, 0.75, 1),
+      labels = c("> 0.00", "0.25", "0.50", "0.75", "1")) +
     expand_limits(y = c(0, 1)) +
     labs(
       x = "Learner ID",
