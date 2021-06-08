@@ -55,10 +55,6 @@ prt_pr_1se <- plot_risktiles(
 
 prt_pr_1se_out <- prt_pr_1se +
   guides(alpha = FALSE) +
-  scale_size_continuous(
-    name = "Weight",
-    labels = c("> 0.00", "0.25", "0.50", "0.75", "1")
-  ) +
   theme(axis.text.y = element_text(hjust = 0.5))
 
 prt_pr_1se_out
@@ -157,10 +153,6 @@ prt_pw_1se <- plot_risktiles(
 
 prt_pw_1se_out <- prt_pw_1se +
   guides(alpha = FALSE) +
-  scale_size_continuous(
-    name = "Weight",
-    labels = c("> 0.00", "0.25", "0.50", "0.75", "1.0")
-  ) +
   theme(axis.text.y = element_text(hjust = 0.5))
 
 prt_pw_1se_out
@@ -262,10 +254,6 @@ prt_ch_1se <- plot_risktiles(
 
 prt_ch_1se_out <- prt_ch_1se +
   guides(alpha = FALSE) +
-  scale_size_continuous(
-    name = "Weight",
-    labels = c("> 0.00", "0.25", "0.50", "0.75", "1")
-  ) +
   theme(axis.text.y = element_text(hjust = 0.5))
 
 prt_ch_1se_out
