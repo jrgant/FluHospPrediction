@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# not the most elegant/programmatic set up, but a quick and dirty way to selectively
-# submit jobs if there are random failures on SLURM
+# use sed to feed new parameters/files into the standard analysis batch script
+# for the prospective analysis
 
 # peak rate
 sed -e 's/01-30/5,10,15,20,25/' -e 's/04_run_superlearner.R/08_run_sl_observed.R/' -e 's/-n 32/-n 16/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,OBS_SEASON='2016-17'

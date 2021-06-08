@@ -3,7 +3,7 @@
 #SBATCH -J SL-FluHosp-TARGET-pkrate_LAMBDA-lambda-min
 #SBATCH --time=3:30:00
 #SBATCH -p batch
-#SBATCH --mem=100GB
+#SBATCH --mem=150GB
 #SBATCH -n 32
 
 #SBATCH --array=01-30
@@ -29,7 +29,7 @@ echo " INPUT PARAMETERS "
 echo "================================================================"
 
 export LAMBDA_SELECT=lambda-min
-export LEARNER_SELECT='elast|lasso|ridge|glm|nnet|mars|rf|svm'
+export LEARNER_SELECT=^lrnr
 export TARGET_SELECT=pkrate
 
 echo "LAMBDA: $LAMBDA_SELECT"
