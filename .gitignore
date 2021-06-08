@@ -7,9 +7,7 @@ scratch.R
 
 **/*.log
 **/*.tex
-**/*.pdf
 **/*.docx
-**/*.png
 **/*.jpg
 **/*.dat
 **/*.inv
