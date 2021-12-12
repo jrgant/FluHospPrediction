@@ -3,13 +3,13 @@
 suppressMessages(library(FluHospPrediction))
 
 # code to run while testing
-Sys.setenv(
-"SLURM_ARRAY_TASK_ID" = 5,
-"LAMBDA_SELECT" = "lambda-min",
-"LEARNER_SELECT" = "glm|lasso|ridge",
-"TARGET_SELECT" = "pkrate",
-"HOLDOUT_TEMPLATE" = 1
-)
+## Sys.setenv(
+## "SLURM_ARRAY_TASK_ID" = 5,
+## "LAMBDA_SELECT" = "lambda-min",
+## "LEARNER_SELECT" = "glm|lasso|ridge",
+## "TARGET_SELECT" = "pkrate",
+## "HOLDOUT_TEMPLATE" = 1
+## )
 
 current_week   <- get_week(slurm = TRUE)
 lambda_select  <- Sys.getenv("LAMBDA_SELECT")
