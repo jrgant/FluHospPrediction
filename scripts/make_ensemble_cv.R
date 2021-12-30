@@ -9,13 +9,14 @@ make_batch_job <- function(outcome,
   paste0(
     "sed -e ", "'s/", base_file, "/", cv_file,
     "/' RUN_TARGET-", outcome,
-    "_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=", holdout_template
+    "_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=", holdout_template,
+    " --mem=100GB"
   )
 }
 
 batchlines <- unlist(lapply(outcomes, make_batch_job))
 
-fn = "scripts/RUN_ENSEMBLE_CV.sh"
+fn = here::here("scripts", "RUN_ENSEMBLE_CV.sh")
 file.remove(fn)
 
 sapply(

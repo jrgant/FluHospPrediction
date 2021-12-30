@@ -1,45 +1,45 @@
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=1 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=2 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=3 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=4 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=5 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=6 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=7 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=8 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=9 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=10 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=11 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=12 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=13 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=14 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=15 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=1 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=2 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=3 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=4 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=5 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=6 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=7 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=8 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=9 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=10 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=11 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=12 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=13 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=14 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=15 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=1 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=2 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=3 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=4 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=5 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=6 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=7 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=8 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=9 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=10 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=11 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=12 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=13 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=14 
-sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=15 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=1 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=2 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=3 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=4 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=5 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=6 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=7 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=8 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=9 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=10 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=11 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=12 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=13 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=14 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkrate_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=15 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=1 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=2 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=3 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=4 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=5 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=6 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=7 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=8 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=9 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=10 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=11 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=12 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=13 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=14 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-pkweek_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=15 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=1 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=2 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=3 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=4 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=5 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=6 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=7 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=8 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=9 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=10 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=11 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=12 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=13 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=14 --mem=100GB 
+sed -e 's/04_run_superlearner.R/10_ensemble-cv.R/' RUN_TARGET-cumhosp_LAMBDA-lambda-min.sh | sbatch --export=ALL,HOLDOUT_TEMPLATE=15 --mem=100GB 
