@@ -330,7 +330,7 @@ pep_sqe_ens <- rbindlist(
     peakweek = rbindlist(sl_pkweek_risktables_sqe),
     cumhosp = rbindlist(sl_cumhosp_risktables_sqe)
   )
-)[learner == "SuperLearner"]
+)[learner == "SuperLearnerCV"]
 
 pep_sqe_ens[, ":="(
   ll95 = mean_risk - qnorm(0.975) * SE_risk,
@@ -427,4 +427,23 @@ plotsave(
   plot = pep_sqe_all,
   width = 10,
   height = 10
+)
+
+
+################################################################################
+## REFERENCE: SAVE DATA SET WITH NAIVE AND CV ENSEMBLE RISKS##
+################################################################################
+
+ensemble_risk_compare <- rbindlist(
+  list(
+    PeakRate = rbindlist(sl_pkrate_risktables_sqe),
+    PeakWeek = rbindlist(sl_pkweek_risktables_sqe),
+    CumHosp  = rbindlist(sl_cumhosp_risktables_sqe)
+  ), idcol = "target"
+)[learner %like% "^SuperLearner"
+  ][, -c("coefficients")][, analysis := "SqErrLoss"]
+
+fwrite(
+  ensemble_risk_compare,
+  file.path(resdir, "Ensemble-Optimism-SqErrLoss.csv")
 )

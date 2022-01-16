@@ -38,6 +38,51 @@ fmt_risk_table <- function(dir,
     return(r)
   })
 
+  # pull CV ensemble risk
+  cvfiles <- list.files(here::here(dir, "EnsembleCV"), full.names = T)
+
+  cvens_dat <- rbindlist(
+    lapply(cvfiles, function(.x) {
+      tmp <- readRDS(.x)
+
+      data.table(
+        hseason     = tmp$holdout_season$template,
+        hseason_num = tmp$holdout_season$template_numeric,
+        Week        = stringr::str_extract(.x, "(?<=week\\-)[0-9]{2}"),
+        outcome     = tmp$holdout_outcome,
+        enspred     = tmp$sl_pred,
+        prederr     = tmp$sl_pred_abserr
+      )
+    })
+  )
+
+  fold_risks <- cvens_dat[, .(risk = mean(prederr)), .(hseason, Week)]
+
+  cv_SE_risk <- cvens_dat[, .(SE_risk = sd(prederr) / sqrt(.N)), Week]
+
+  fold_sum <- fold_risks[, .(
+    learner = "SuperLearnerCV",
+    coefficients = NA,
+    mean_risk = mean(risk),
+    fold_SD = sd(risk),
+    fold_min_risk = min(risk),
+    fold_max_risk = max(risk)
+  ), .(Week)]
+
+  cvrisk <- merge(fold_sum, cv_SE_risk, by = "Week")
+  risktab_names <- names(risks[[1]])
+
+  if (all(risktab_names %in% names(cvrisk))) {
+    setcolorder(cvrisk, risktab_names)
+  } else {
+    stop("Mismatch between risk table and ensemble CV data formats.")
+  }
+
+  ## add cross-validated ensemble risks to each week's risk table
+  risks <- lapply(risks, function(.x) {
+    rbind(.x, cvrisk[Week == unique(.x$Week)])
+  })
+
   # will use this exported object in subsequent tables
   if (!is.null(altslug)) {
     assign(paste0(slug, "_risktables_", altslug), risks, envir = .GlobalEnv)
@@ -46,19 +91,19 @@ fmt_risk_table <- function(dir,
   }
 
   # format risks for output
-  keep_always <- "SuperLearner"
+  slslug <- "SuperLearner"
 
   rt <- lapply(risks, function(x) {
 
     disc_sl_name <- x[
-      learner != "SuperLearner"
+      !(learner %like% slslug)
     ][mean_risk == min(mean_risk), learner]
 
     # get risk information;
-    esl <- x[learner == "SuperLearner"]
+    esl <- x[learner %like% slslug]
 
     dsl <- x[
-      learner != "SuperLearner"
+      !(learner %like% slslug)
     ][mean_risk == min(mean_risk)
     ][1][, learner := "DiscreteSL"]
 
@@ -76,7 +121,7 @@ fmt_risk_table <- function(dir,
   risksout <- lapply(1:length(files), function(x) {
     currwk <- str_extract(files[x], "[0-9]{2}(?=\\.Rds)")
     rt[[x]][, Week := currwk
-            ][, .(Week, SuperLearner, DiscreteSL)]
+            ][, .(Week, SuperLearnerCV, DiscreteSL)]
   }) %>% rbindlist
 
   return(risksout)
@@ -97,7 +142,7 @@ get_risk_dist <- function(outcome = c("pkrate", "pkweek", "cumhosp")) {
   curr <- get(paste0(outcome, "_risktables"))
 
   rtbl <- lapply(1:length(curr), function (x) {
-    curr[[x]][learner != "SuperLearner"][]
+    curr[[x]][!(learner %like% "SuperLearner")][]
   }) %>% rbindlist
 
   distbyweek <-
@@ -178,7 +223,7 @@ join_learner_stats <- function(risktables, weights) {
     risktables[[x]][
     weights[[x]], on = "learner"
     ][, .(Week, learner, mean_risk, SE_risk, weight)
-      ][learner != "SuperLearner"]
+      ][!(learner %like% "SuperLearner")]
   }) %>% rbindlist
 
   return(out)
@@ -328,7 +373,7 @@ plot_ensemble_performance <- function(data, risktables, titlestring = "", font =
 
   ## Calculate 95% confidence intervals for mean risk.
   cntens <- lapply(risktables, function(x) {
-    x[learner == "SuperLearner", .(
+    x[learner == "SuperLearnerCV", .(
       learner, ens_mean_risk = mean_risk, SE = SE_risk, Week
     )][, ":="(
       ll95 = ens_mean_risk - qnorm(0.975) * SE,

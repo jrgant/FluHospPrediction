@@ -39,6 +39,25 @@ fwrite(
 
 
 ################################################################################
+## REFERENCE: SAVE DATA SET WITH NAIVE AND CV ENSEMBLE RISKS##
+################################################################################
+
+ensemble_risk_compare <- rbindlist(
+  list(
+    PeakRate = rbindlist(sl_pkrate_risktables),
+    PeakWeek = rbindlist(sl_pkweek_risktables),
+    CumHosp  = rbindlist(sl_cumhosp_risktables)
+  ), idcol = "target"
+)[learner %like% "^SuperLearner"
+  ][, -c("coefficients")][, analysis := "LambdaMin"]
+
+fwrite(
+  ensemble_risk_compare,
+  file.path(resdir, "Ensemble-Optimism-LambdaMin.csv")
+)
+
+
+################################################################################
 ## TABLES: AVERAGE RISK BY WEEK, ACROSS COMPONENT MODELS ##
 ################################################################################
 
@@ -220,7 +239,7 @@ plotsave(
 
 # sparkline dat
 slpw_spark <- lapply(sl_pkweek_risktables, function(x) {
-  x[learner == "SuperLearner", .(learner, mean_risk)]
+  x[learner == "SuperLearnerCV", .(learner, mean_risk)]
 }) %>% rbindlist(, idcol = "Week") %>%
   .[, Week := stringr::str_pad(Week, 2, "left", "0")]
 
@@ -439,7 +458,7 @@ pep_main_ens <- rbindlist(
     peakweek = rbindlist(sl_pkweek_risktables),
     cumhosp = rbindlist(sl_cumhosp_risktables)
   )
-)[learner == "SuperLearner"]
+)[learner == "SuperLearnerCV"]
 
 pep_main_ens[, ":="(
   ll95 = mean_risk - qnorm(0.975) * SE_risk,
@@ -633,11 +652,11 @@ plotsave(
 
 plot_weight_coef <- function(data, titleslug) {
   ggplot(
-    data[learner != "SuperLearner"],
+    data[!(learner %like% "SuperLearner")],
     aes(x = mean_risk, coefficients)
   ) +
     geom_vline(
-      data = data[learner == "SuperLearner"],
+      data = data[learner == "SuperLearnerCV"],
       aes(xintercept = mean_risk, color = "Ensemble risk"),
       linetype = "dashed"
     ) +
