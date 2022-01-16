@@ -1,0 +1,43 @@
+lid,cnt_selected,P,lclass
+SVM2,21,0.7,Support vector regression
+SVM3,15,0.5,Support vector regression
+SVM4,14,0.466666666666667,Support vector regression
+RF01,10,0.333333333333333,Random forest
+PMARS5,9,0.3,PolyMARS
+RF03,9,0.3,Random forest
+RF05,9,0.3,Random forest
+RF06,9,0.3,Random forest
+SVM1,8,0.266666666666667,Support vector regression
+PMARS3,7,0.233333333333333,PolyMARS
+PMARS4,7,0.233333333333333,PolyMARS
+RF07,7,0.233333333333333,Random forest
+RF08,7,0.233333333333333,Random forest
+Ridge,7,0.233333333333333,Penalized regression
+PMARS1,6,0.2,PolyMARS
+RF04,6,0.2,Random forest
+PMARS2,4,0.133333333333333,PolyMARS
+RF02,4,0.133333333333333,Random forest
+RF09,4,0.133333333333333,Random forest
+RF10,4,0.133333333333333,Random forest
+RF13,4,0.133333333333333,Random forest
+RF12,3,0.1,Random forest
+RF22,3,0.1,Random forest
+RF26,3,0.1,Random forest
+EN1,2,0.0666666666666667,Penalized regression
+EN2,2,0.0666666666666667,Penalized regression
+LASSO,2,0.0666666666666667,Penalized regression
+RF11,2,0.0666666666666667,Random forest
+RF14,2,0.0666666666666667,Random forest
+RF15,2,0.0666666666666667,Random forest
+RF16,2,0.0666666666666667,Random forest
+RF19,2,0.0666666666666667,Random forest
+RF20,2,0.0666666666666667,Random forest
+RF23,2,0.0666666666666667,Random forest
+EN3,1,0.0333333333333333,Penalized regression
+RF17,1,0.0333333333333333,Random forest
+RF18,1,0.0333333333333333,Random forest
+RF21,1,0.0333333333333333,Random forest
+RF24,1,0.0333333333333333,Random forest
+RF25,1,0.0333333333333333,Random forest
+RF27,1,0.0333333333333333,Random forest
+ScreenGLM,1,0.0333333333333333,GLM
