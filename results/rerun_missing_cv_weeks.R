@@ -31,6 +31,7 @@ jobs[analysis == "SqErrLoss" & target == "pkweek", folder := "PeakWeek-SqErrLoss
 jobs[analysis == "SqErrLoss" & target == "cumhosp", folder := "CumHosp-SqErrLoss"]
 
 ## copy jobs from ~/scratch to correct project results folder
+cvcopied <- list()
 for (i in seq_len(nrow(jobs))) {
   sfiles <- list.files(
     "~/scratch",
@@ -39,44 +40,63 @@ for (i in seq_len(nrow(jobs))) {
   )
 
   cvfiles <- list.files(sfiles, full.names = T, recursive = T)
-
   cvdest <- here::here("results", jobs[i, folder], "EnsembleCV")
+  
   if (!dir.exists(cvdest)) dir.create(cvdest)
-
   file.copy(cvfiles, cvdest)
-
-  cat("Files copied: \n")
-  print(cvfiles)
+  cvcopied[[i]] <- cvfiles
 }
 
+copylist <- which(sapply(cvcopied, function(.x) length(.x) > 0))
+
+anycopy <- rbindlist(lapply(copylist, function(.x) {
+  dt <- data.table(
+    target =
+      unique(str_extract(cvcopied[[.x]], "pkrate|pkweek|cumhosp")),
+    analysis =
+      unique(str_extract(
+        cvcopied[[.x]], "lambda\\-min|lambda\\-1se|sqerrloss|elastnetrf"
+      ))
+  )
+  # update analysis name to join with jobs dt
+  dt[analysis == "lambda-min", analysis := "min_H"]
+  dt[analysis == "lambda-1se", analysis := "1se"]
+  dt[analysis == "sqerrloss", analysis == "SqErrLoss"]
+  dt[analysis == "elastnetrf", analysis == "ElastNet"]
+  dt
+})
+)
+
+checkjobs <- jobs[anycopy, on = c("target", "analysis")]
 
 ## look for bad weeks or incomplete prediction sets
-ensemble_cv <- lapply(setNames(jobs[, folder], jobs[, folder]), function(.x) {
+ensemble_cv <- lapply(
+  setNames(checkjobs[ , folder], checkjobs[, folder]),
+  function(.x) {
 
-  folder <- here::here("results", .x, "EnsembleCV")
-  cvf <- list.files(folder)
+    folder <- here::here("results", .x, "EnsembleCV")
+    cvf <- list.files(folder)
 
-  preds <- lapply(
-    setNames(cvf, str_remove(cvf, "\\.Rds")),
-    function(.y) {
+    preds <- lapply(
+      setNames(cvf, str_remove(cvf, "\\.Rds")),
+      function(.y) {
+        print(file.path(folder, .y))
+        tmp <- readRDS(file.path(folder, .y))
+        data.table(
+          holdout_season = str_extract(.y, "(?<=out\\-)[0-9]{2}"),
+          week = str_extract(.y, "(?<=week\\-)[0-9]{2}"),
+          pred = tmp$sl_pred,
+          outcome = tmp$holdout_outcome,
+          pred_error = tmp$sl_pred_abserr,
+          ## original files have squared error in the Squared Error Loss sensitivity
+          ## labeled as absolute error
+          error_type = ifelse(.x %like% "SqErrLoss", "squared", "absolute")
+        )
+      }
+    )
 
-      tmp <- readRDS(file.path(folder, .y))
-
-      data.table(
-        holdout_season = str_extract(.y, "(?<=out\\-)[0-9]{2}"),
-        week = str_extract(.y, "(?<=week\\-)[0-9]{2}"),
-        pred = tmp$sl_pred,
-        outcome = tmp$holdout_outcome,
-        pred_error = tmp$sl_pred_abserr,
-        ## original files have squared error in the Squared Error Loss sensitivity
-        ## labeled as absolute error
-        error_type = ifelse(.x %like% "SqErrLoss", "squared", "absolute")
-      )
-    }
-  )
-
-  rbindlist(preds)
-})
+    rbindlist(preds)
+  })
 
 ecvl <- rbindlist(ensemble_cv, idcol = "analysis")
 
