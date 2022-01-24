@@ -18,16 +18,18 @@ fmt_risk_table(dir = resch_erf, slug = "sl_cumhosp", altslug = "erf")
 ## SENSITIVITY ANALYSIS: COMBINED FIGURE ##
 ################################################################################
 
+written_tabs_date <- "2022-01-24"
+
 ## Need to run prior 06.X files first to create the CSV files referenced here.
 risktabs <- list.files(
   here::here("results", "00_paper_output"),
-  pattern = "Risks",
+  pattern = paste0("Risks.*", written_tabs_date),
   full.names = TRUE
 )
 
 lu_file <- data.table(
   fn_slug = c(
-    "PeakRate_2021",  "PeakWeek_2021",  "CumHosp_2021",
+    "PeakRate_20",  "PeakWeek_20",  "CumHosp_20",
     "PeakRate-L1SE",  "PeakWeek-L1SE",  "CumHosp-L1SE",
     "PeakRate-ERF",   "PeakWeek-ERF",   "CumHosp-ERF"
   ),
@@ -50,7 +52,7 @@ lapply(seq_len(nrow(lu_file)), function(.x) {
 })
 
 ## Main analysis objects did not have a suffix.
-analysis <- c("", "_1se", "_erf")
+analysis <- c("main" = "", "1se" = "_1se", "erf" = "_erf")
 
 sens_compare <- lapply(setNames(analysis, analysis), function(x) {
 
@@ -72,33 +74,40 @@ sens_compare <- lapply(setNames(analysis, analysis), function(x) {
     )
   )
 
-  list(rwsum = rwsum, risktab = risktab[learner == "SuperLearner"])
-})
+  if (x == "") {
+    rwsum[, analysis := "main"]
+    risktab[, analysis := "main"]
+  } else {
+    slug <- names(analysis)[grep(x, analysis)]
+    rwsum[, analysis := slug]
+    risktab[, analysis := slug]
+  }
 
-names(sens_compare) <- c("main", "lse", "erf")
-sens_compare
+  list(
+    rwsum = rwsum,
+    risktab = risktab[learner == "SuperLearnerCV"]
+  )
+})
 
 ## Bind up component learner weight summaries.
 sens_rwsum <- rbindlist(
-  idcol = "analysis",
   list(
-    main = sens_compare$main$rwsum,
-    lse = sens_compare$lse$rwsum,
-    erf = sens_compare$erf$rwsum
+    sens_compare[[1]]$rwsum,
+    sens_compare[[2]]$rwsum,
+    sens_compare[[3]]$rwsum
   )
 )
 
 ## Bind up risk tables.
 sens_risktab <- rbindlist(
-  idcol = "analysis",
   list(
-    main = sens_compare$main$risktab,
-    lse = sens_compare$lse$risktab,
-    erf = sens_compare$erf$risktab
+    sens_compare[[1]]$risktab,
+    sens_compare[[2]]$risktab,
+    sens_compare[[3]]$risktab
   )
 )
 
-sens_risktab[, ":="(
+sens_risktab[, ":=" (
   ll95 = mean_risk - qnorm(0.975) * SE_risk,
   ul95 = mean_risk + qnorm(0.975) * SE_risk
 )]
@@ -149,8 +158,10 @@ hide_xticks <- c(paste0("0", c(2:4, 6:9)), 11:14, 16:19, 21:24, 26:29)
 invislab <- rep("", length(hide_xticks))
 names(invislab) <- hide_xticks
 
+## NOTE Log scale figure is not in the paper.
 ## Plot analysis comparisons.
-pep_sens_compare <- ggplot(sens_risktab) +
+pep_sens_compare <-
+  ggplot(sens_risktab) +
   geom_point(
     aes(
       x = Week, y = log(mean_risk),
@@ -158,20 +169,6 @@ pep_sens_compare <- ggplot(sens_risktab) +
     ),
     shape = 21
   ) +
-  ## geom_segment(
-  ##   ## This geom_segment adds an arrow where log(ll95) is undefined because the
-  ##   ## ll95 on the original scale was a negative number.
-  ##   data = sens_risktab[target == "pkweek" & Week == "20" & analysis == "erf"],
-  ##   aes(
-  ##     x = as.numeric(Week), xend = as.numeric(Week),
-  ##     y = log(ul95), yend = -3.308303,
-  ##     color = "Ensemble"
-  ##   ),
-  ##   lineend = "butt",
-  ##   linejoin = "mitre",
-  ##   size = 0.3,
-  ##   arrow = arrow(length = unit(0.02, "npc"))
-  ## ) +
   geom_pointrange(
     data = sens_risktab,
     aes(
@@ -234,39 +231,47 @@ plotsave(
 
 sens_normscale <- sens_risktab %>%
   ggplot(
-    aes(x = Week, y = mean_risk, group = analysis)
+    aes(x = Week, y = mean_risk, group = analysis, color = analysis)
   ) +
   geom_hline(
-    data = sens_naive,
+    data = sens_naive[analysis != "erf"],
     aes(
       yintercept = exp(naiverisk),
-      linetype = "Median predictor"
+      linetype = analysis
     )
   ) +
+  geom_line(aes(group = analysis), alpha = 0.5) +
   geom_pointrange(
-    aes(ymin = ll95, ymax = ul95, color = "Ensemble (95% CI)"),
+    aes(ymin = ll95, ymax = ul95),
     fill = "white",
     shape = 21
   ) +
-  facet_grid(
-    target ~ analysis,
-    scales = "free_y",
-    switch = "y",
+  facet_wrap(
+    ~ target,
+    scales = "free",
     labeller = labeller(
-      target = targ_labs,
-      analysis = anlys_labs
+      target = targ_labs
     )
   ) +
   ylab("Mean risk") +
   xlab("Week") +
-  scale_linetype_manual(name = "Prediction type", values = "dashed") +
-  scale_color_manual(
-    name = "",
-    values = "black"
+  scale_linetype_manual(
+    name = "Median prediction",
+    values = c("dashed", "dotted"),
+    labels = c("Main analysis", "Alternate trend filter")
+  ) +
+  scale_color_viridis_d(
+    name = "Ensemble risks",
+    option = "magma",
+    end = 0.1,
+    begin = 0.7,
+    labels = c("Main analysis", "Alternative trend filter", "Component subset")
   ) +
   guides(
     linetype = guide_legend(order = 1),
-    color = guide_legend(order = 2, title.position = "bottom")
+    color = guide_legend(
+      order = 2
+    )
   ) +
   scale_x_discrete(breaks = week_breaks) +
   theme_base(base_family = global_plot_font) +
@@ -282,7 +287,7 @@ plotsave(
   name = "Ensemble-Summary_All-Targets_Regular-Scale",
   plot = sens_normscale,
   width = 11,
-  height = 8
+  height = 4
 )
 
 
@@ -311,7 +316,7 @@ bind_components <- function(sl_files) {
     out <- rbind(
       merge(dtm, w, by = "learner"),
       data.table(
-        learner = "SuperLearner",
+        learner = "SuperLearnerCV",
         pred = sl$full_preds,
         Week = wk,
         weight = NA
@@ -340,13 +345,27 @@ cumhosp_cp <- rbindlist(lapply(
 theme_set(theme_tufte(ticks = F, base_size = 25))
 
 ggplot(
-  pkrate_cp[learner == "SuperLearner"],
+  pkrate_cp[learner == "SuperLearnerCV"],
   aes(x = pred, y = truth)
   ) +
   geom_point(aes(color = weight), alpha = 0.3) +
   facet_wrap(~ Week) +
   scale_color_viridis()
 
-pkrate_cp[weight > 0, .(weight = round(data.table::first(weight), 4)), .(learner, Week)]
-pkweek_cp[weight > 0, .(weight = round(data.table::first(weight), 4)), .(learner, Week)]
-cumhosp_cp[weight > 0, .(weight = round(data.table::first(weight), 4)), .(learner, Week)]
+pkrate_cp[
+  weight > 0,
+  .(weight = round(data.table::first(weight), 4)),
+  .(learner, Week)
+]
+
+pkweek_cp[
+  weight > 0,
+  .(weight = round(data.table::first(weight), 4)),
+  .(learner, Week)
+]
+
+cumhosp_cp[
+  weight > 0,
+  .(weight = round(data.table::first(weight), 4)),
+  .(learner, Week)
+]
