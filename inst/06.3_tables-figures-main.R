@@ -255,7 +255,7 @@ pkweek_rwsum %>%
     linetype = "dashed",
     color = "red"
   ) +
-  theme_tufte()
+  theme_tufte(base_size = 30)
 
 
 ### Super Learner performance
