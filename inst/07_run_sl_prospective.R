@@ -64,7 +64,8 @@ ft <- fhp_run_sl(
   results_path = spec_output_dir,
   current_week = current_week,
   metalearner = fhp_metalearner,
-  output = "fit"
+  output = "fit",
+  set_keep_extra = TRUE
 )
 
 # Format observed season of interest and predict on data -----------------------
@@ -213,6 +214,7 @@ pred_compare <- list(
   md_pred_abserr = abs(ptask$median_pred - ptask$task$Y)
 )
 
+## predictions
 saveRDS(
   pred_compare,
   file = file.path(
@@ -224,6 +226,24 @@ saveRDS(
     )
   )
 )
+
+## component model fits and risks
+comps <- list(
+  cvrisks = ft$cv_risk(loss_absolute_error),
+  learner_fits = ft$learner_fits
+)
+saveRDS(
+  comps,
+  file = file.path(
+    spec_output_dir,
+    paste0(
+      "s", obs_season,
+      "_w", sprintf("%02d", current_week),
+      "_compfits.Rds"
+    )
+  )
+)
+
 
 cat("WARNING LIST", rep("=", 60), "\n\n", sep = "")
 warnings()

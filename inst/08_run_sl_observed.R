@@ -223,7 +223,8 @@ ft <- fhp_run_sl(
   results_path = spec_output_dir,
   current_week = current_week,
   metalearner = fhp_metalearner,
-  output = "fit"
+  output = "fit",
+  set_keep_extra = TRUE
 )
 
 ptask <- format_empirical_season(
@@ -240,6 +241,7 @@ pred_compare <- list(
   md_pred_abserr = abs(ptask$median_pred - ptask$task$Y)
 )
 
+## ensemble predictions
 saveRDS(
   pred_compare,
   file = file.path(
@@ -248,6 +250,19 @@ saveRDS(
       "s", obs_season,
       "_w", sprintf("%02d", current_week),
       "_pred_compare.Rds"
+    )
+  )
+)
+
+## model fits
+saveRDS(
+  ft,
+  file = file.path(
+    spec_output_dir,
+    paste0(
+      "s", obs_season,
+      "_w", sprintf("%02d", current_week),
+      "_slfit.Rds"
     )
   )
 )
