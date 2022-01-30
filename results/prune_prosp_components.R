@@ -50,12 +50,7 @@ prunecf <- function(cfobj) {
 
 ## Loop through and process files in parallel
 
-ifelse(detectCores() >= length(cfits)) {
-  ncores <- detectCores()
-} else {
-  stop("Check number of cores.")
-}
-
+ncores <- detectCores()
 registerDoParallel(ncores)
 
 pfits <- foreach(i = seq_along(cfits), .packages = "stringr") %dopar% {
