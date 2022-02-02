@@ -18,7 +18,7 @@ fmt_risk_table(dir = resch_erf, slug = "sl_cumhosp", altslug = "erf")
 ## SENSITIVITY ANALYSIS: COMBINED FIGURE ##
 ################################################################################
 
-written_tabs_date <- "2022-01-24"
+written_tabs_date <- "2022-02-01"
 
 ## Need to run prior 06.X files first to create the CSV files referenced here.
 risktabs <- list.files(
@@ -114,7 +114,7 @@ sens_risktab[, ":=" (
 
 ## Match up naive (median predictor) risk estimates.
 sens_naive <- data.table(
-  analysis = c(rep("main", 3), rep("lse", 3), rep("erf", 3)),
+  analysis = c(rep("main", 3), rep("1se", 3), rep("erf", 3)),
   target = rep(c("pkrate", "pkweek", "cumhosp"), 3),
   naiverisk = c(
     pr_medrisk$log_mean_risk,
@@ -132,7 +132,7 @@ sens_naive <- data.table(
 ## Make nice facet labels.
 anlys_labs <- c(
   main = "Main analysis",
-  lse = "Alternate trend filter penalty",
+  `1se` = "Alternate trend filter penalty",
   erf = "Component learner subset"
 )
 
@@ -148,7 +148,7 @@ sens_rwsum[, target := factor(target, levels = forder2, ordered = TRUE)]
 sens_risktab[, target := factor(target, levels = forder2, ordered = TRUE)]
 sens_naive[, target := factor(target, levels = forder2, ordered = TRUE)]
 
-forder3 <- c("main", "lse", "erf")
+forder3 <- c("main", "1se", "erf")
 sens_rwsum[, analysis := factor(analysis, levels = forder3, ordered = TRUE)]
 sens_risktab[, analysis := factor(analysis, levels = forder3, ordered = TRUE)]
 sens_naive[, analysis := factor(analysis, levels = forder3, ordered = TRUE)]
