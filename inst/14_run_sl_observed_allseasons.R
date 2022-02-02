@@ -203,7 +203,7 @@ fhp_metalearner <- make_learner(
 spec_output_dir <- paste0(
   "~/scratch/ArrayID-",
   Sys.getenv("SLURM_ARRAY_JOB_ID"), "_", Sys.getenv("SLURM_JOB_NAME"),
-  "ObsTraining-AllSeasons"
+  "_ObsTraining-AllSeasons"
 )
 
 if (!file.exists(spec_output_dir)) dir.create(spec_output_dir)
@@ -226,7 +226,7 @@ saveRDS(
   file = file.path(
     spec_output_dir,
     paste0(
-      "_w", sprintf("%02d", current_week),
+      "w", sprintf("%02d", current_week),
       "_slfit.Rds"
     )
   )
