@@ -4,8 +4,7 @@
 
 pacman::p_load(
   FluHospPrediction,
-  data.table,
-  extrafont
+  data.table
 )
 
 ## Data directories.
@@ -27,34 +26,53 @@ nicefile <- function(slug, description, ext, date = Sys.Date(),
 }
 
 ## Load font database.
-loadfonts(device = "pdf")
-global_plot_font <- "Gentium Book Basic"
+## If a 'font not available' warning is thrown when saving plots:
+##   1) Change font (if font not installed on system), or
+##   2) run extrafont::font_import() and then load fonts again
+extrafont::loadfonts(device = "pdf")
+extrafont::loadfonts(device = "postscript")
+global_plot_font <- "Arial"
 
 ## Universal breaks for week labeling in plots.
 week_breaks <- c("01", "05", "10", "15", "20", "25", "30")
 
 ## This function saves plots in pdf and png formats.
-plotsave <- function(name, plot, width, height) {
+plotsave <- function(name, plot, width, height,
+                     pdf = TRUE, png = TRUE, eps = FALSE) {
 
-  ggsave(
-    nicefile(figslug, name, "pdf"),
-    plot,
-    width = width,
-    height = height,
-    units = "in",
-    device = cairo_pdf
-  )
+  if (pdf == TRUE) {
+    ggsave(
+      nicefile(figslug, name, "pdf"),
+      plot,
+      width = width,
+      height = height,
+      units = "in",
+      device = cairo_pdf
+    )
+  }
 
-  ggsave(
-    nicefile(figslug, name, "png"),
-    plot,
-    width = width,
-    height = height,
-    units = "in",
-    device = "png",
-    dpi = 1200
-  )
+  if (png == TRUE) {
+    ggsave(
+      nicefile(figslug, name, "png"),
+      plot,
+      width = width,
+      height = height,
+      units = "in",
+      device = "png",
+      dpi = 300
+    )
+  }
 
+  if (eps == TRUE) {
+    ggsave(
+      nicefile(figslug, name, "eps"),
+      plot,
+      width = width,
+      height = height,
+      units = "in",
+      device = cairo_ps
+    )
+  }
 }
 
 

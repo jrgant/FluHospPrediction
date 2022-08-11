@@ -321,7 +321,7 @@ fwrite(
 
 plot_weight_coef <- function(data, titleslug) {
   ggplot(
-    data[!(learner %like% "SuperLearner")],
+    data[!(learner %like% "SuperLearner$|SuperLearnerCV")],
     aes(x = mean_risk, coefficients)
   ) +
     geom_vline(

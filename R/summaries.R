@@ -91,7 +91,7 @@ fmt_risk_table <- function(dir,
   }
 
   # format risks for output
-  slslug <- "SuperLearner"
+  slslug <- "SuperLearner$|SuperLearnerCV"
 
   rt <- lapply(risks, function(x) {
 
@@ -142,7 +142,7 @@ get_risk_dist <- function(outcome = c("pkrate", "pkweek", "cumhosp")) {
   curr <- get(paste0(outcome, "_risktables"))
 
   rtbl <- lapply(1:length(curr), function (x) {
-    curr[[x]][!(learner %like% "SuperLearner")][]
+    curr[[x]][!(learner %like% "SuperLearner$|SuperLearnerCV")][]
   }) %>% rbindlist
 
   distbyweek <-
@@ -223,7 +223,7 @@ join_learner_stats <- function(risktables, weights) {
     risktables[[x]][
     weights[[x]], on = "learner"
     ][, .(Week, learner, mean_risk, SE_risk, weight)
-      ][!(learner %like% "SuperLearner")]
+      ][!(learner %like% "SuperLearner$|SuperLearnerCV")]
   }) %>% rbindlist
 
   return(out)

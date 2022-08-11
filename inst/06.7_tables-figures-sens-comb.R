@@ -18,7 +18,7 @@ fmt_risk_table(dir = resch_erf, slug = "sl_cumhosp", altslug = "erf")
 ## SENSITIVITY ANALYSIS: COMBINED FIGURE ##
 ################################################################################
 
-written_tabs_date <- "2022-02-01"
+written_tabs_date <- "2022-08-09"
 
 ## Need to run prior 06.X files first to create the CSV files referenced here.
 risktabs <- list.files(
@@ -229,66 +229,126 @@ plotsave(
 ## DIFFERENCE PLOTS ACROSS SENSITIVITY ANALYSIS ##
 ################################################################################
 
-sens_normscale <- sens_risktab %>%
-  ggplot(
-    aes(x = Week, y = mean_risk, group = analysis, color = analysis)
-  ) +
-  geom_hline(
-    data = sens_naive[analysis != "erf"],
-    aes(
-      yintercept = exp(naiverisk),
-      linetype = analysis
+make_sens_normscale_panel <- function(targ, base_font_size = 14,
+                                      data = sens_risktab,
+                                      legend = FALSE) {
+
+  ylimits <- data[target == targ, unlist(.(floor(min(mean_risk)),
+                                           ceiling(max(mean_risk))))]
+
+  # set upper limit of cumhosp y-axis to 40 to get a label
+  if (targ == "cumhosp") ylimits[2] <- 40
+
+  plot <- data[target == targ] %>%
+    ggplot(aes(x = Week, y = mean_risk, group = analysis, color = analysis)) +
+    ylim(ylimits) +
+    geom_hline(
+      data = sens_naive[analysis != "erf" & target == targ],
+      aes(
+        yintercept = exp(naiverisk),
+        linetype = analysis
+      )
+    ) +
+    geom_line(aes(group = analysis), alpha = 0.5) +
+    geom_pointrange(
+      aes(ymin = ll95, ymax = ul95),
+      fill = "white",
+      shape = 21
+    ) +
+    ylab("Mean Risk") +
+    xlab("Week") +
+    scale_linetype_manual(
+      name = expression(underline(Median ~ Prediction)),
+      values = c("dashed", "dotted"),
+      labels = c("Main", "ATF")
+    ) +
+    scale_color_viridis_d(
+      name = expression(underline(Ensemble ~ Risk)),
+      option = "magma",
+      end = 0.1,
+      begin = 0.7,
+      labels = c("Main", "ATF", "CS")
+    ) +
+    scale_x_discrete(breaks = week_breaks)
+
+  if (legend == TRUE) {
+    plot <- plot +
+      guides(
+        linetype = guide_legend(order = 1),
+        color = guide_legend(order = 2)
+      )
+  } else {
+    plot <- plot +
+      guides(linetype = FALSE, color = FALSE)
+  }
+
+  plot <- plot +
+    theme_tufte(
+      base_family = global_plot_font,
+      base_size = base_font_size
+    ) +
+    theme(
+      axis.text = element_text(size = base_font_size),
+      axis.title.x = element_text(
+        size = base_font_size,
+        margin = ggplot2::margin(t = 0.2, unit = "in")
+      ),
+      axis.title.y = element_text(
+        size = base_font_size,
+        margin = ggplot2::margin(r = 0.2, unit = "in")
+      ),
+      axis.line = element_line(),
+      legend.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
+      legend.text = element_text(size = base_font_size),
+      legend.title.align = 0.5,
+      legend.position = c(0.23, 0.27),
+      legend.box = "vertical",
+      legend.box.background = element_rect(color = "black"),
+      legend.box.margin = ggplot2::margin(0.1, 0.1, 0.1, 0.1, "in"),
+      plot.margin = unit(rep(0.3, 4), "in"),
+      plot.background = element_blank()
     )
-  ) +
-  geom_line(aes(group = analysis), alpha = 0.5) +
-  geom_pointrange(
-    aes(ymin = ll95, ymax = ul95),
-    fill = "white",
-    shape = 21
-  ) +
-  facet_wrap(
-    ~ target,
-    scales = "free",
-    labeller = labeller(
-      target = targ_labs
-    )
-  ) +
-  ylab("Mean risk") +
-  xlab("Week") +
-  scale_linetype_manual(
-    name = "Median prediction",
-    values = c("dashed", "dotted"),
-    labels = c("Main analysis", "Alternate trend filter")
-  ) +
-  scale_color_viridis_d(
-    name = "Ensemble risks",
-    option = "magma",
-    end = 0.1,
-    begin = 0.7,
-    labels = c("Main analysis", "Alternative trend filter", "Component subset")
-  ) +
-  guides(
-    linetype = guide_legend(order = 1),
-    color = guide_legend(
-      order = 2
-    )
-  ) +
-  scale_x_discrete(breaks = week_breaks) +
-  theme_base(base_family = global_plot_font) +
-  theme(
-    strip.text = element_text(face = "bold", size = 11),
-    axis.text.x = element_text(size = 8),
-    legend.margin = ggplot2::margin(0, 0, 0, 0, "cm")
-  )
+
+  plot
+}
+
+sens_normscale_list <- list(
+  pkrate = make_sens_normscale_panel("pkrate", 20, legend = TRUE),
+  pkweek = make_sens_normscale_panel("pkweek", 20),
+  cumhosp = make_sens_normscale_panel("cumhosp", 20)
+)
+
+sens_normscale <- cowplot::plot_grid(
+  plotlist = sens_normscale_list,
+  labels = paste0(LETTERS[1:3], ")"),
+  label_fontfamily = sens_normscale_list[[1]]$theme$text$family,
+  label_size = sens_normscale_list[[1]]$theme$text$size,
+  label_fontface = "plain",
+  nrow = 1,
+  hjust = 0.5,
+  vjust = 0
+) + theme(plot.margin = unit(c(0.3, 0.1, 0.1, 0.2), "in"))
 
 sens_normscale
 
 plotsave(
   name = "Ensemble-Summary_All-Targets_Regular-Scale",
   plot = sens_normscale,
-  width = 11,
-  height = 4
+  width = 22,
+  height = 7
 )
+
+lapply(seq_along(sens_normscale_list), function(x) {
+  plotsave(
+    name = paste0(
+      "Ensemble-Summary_All-Targets_Regular-Scale-Panel-",
+      LETTERS[x]
+    ),
+    plot = sens_normscale_list[[x]],
+    width = 22 / 3,
+    height = 7
+  )
+})
 
 
 ################################################################################
