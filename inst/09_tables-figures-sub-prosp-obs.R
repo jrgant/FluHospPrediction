@@ -134,7 +134,7 @@ process_odsl <- function(fp) {
 getdsl <- function(string, paths = obsdslpaths) {
   active_paths <- paths[paths %like% string]
 
-  ncores <- detectCores() - 2
+  ncores <- detectCores() - 4
   registerDoParallel(ncores)
 
   dsllist <- foreach(
@@ -412,75 +412,199 @@ bg <- data.table(
   x2 = c(2.5, 4.5)
 )
 
-pl_pobs <- sll %>%
-  ggplot(aes(x = as.numeric(factor(week)))) +
-  geom_rect(
-    data = bg,
-    aes(xmin = x1, xmax = x2,
-        ymin = -Inf, ymax = Inf),
-    fill = "khaki", alpha = 0.2
-  ) +
-  geom_linerange(
-    data = sll_segments,
-    aes(x = as.numeric(factor(week)),
+make_pl_pobs_panel <- function(targ = c("pkrate", "pkweek", "cumhosp"),
+                               season = c("2016-17", "2017-18", "2018-19"),
+                               base_font_size = 14,
+                               data = sll,
+                               legend = FALSE) {
+
+  plot <- data[outcome == targ & obs_season == season] %>%
+    ggplot(aes(x = as.numeric(factor(week)))) +
+    geom_linerange(
+      data = sll_segments[outcome == targ & obs_season == season],
+      aes(
+        x = as.numeric(factor(week)),
         ymin = obs_outcome, ymax = value,
-        group = interaction(sltype, traindat)),
-    position = position_dodge(width = 0.75),
-    linetype = "dashed",
-    color = "gray50"
-  ) +
-  geom_hline(
-    data = obsout,
-    aes(yintercept = obs_outcome, linetype = "Target")
-  ) +
-  geom_point(
-    aes(fill = traindat, shape = sltype, y = value,
-        group = interaction(sltype, traindat)),
-    position = position_dodge(width = 0.75),
-    size = 4
-  ) +
-  facet_grid(
-    outcome ~ obs_season,
-    scales = "free",
-    space = "free_y",
-    labeller = labeller(outcome = targlabs)
-  ) +
-  labs(x = "Week", y = "Value") +
-  scale_x_continuous(
-    breaks = 1:5,
-    labels = c("05", "10", "15", "20", "25")
-  ) +
-  scale_linetype_manual(name = "", values = "solid") +
-  scale_shape_manual(name = "SuperLearner", values = c(22, 21)) +
-  scale_fill_scico_d(
-    name = "Training data",
-    palette = "berlin"
-  ) +
-  guides(
-    fill = guide_legend(override.aes = list(shape = 21, size = 7)),
-    shape = guide_legend(override.aes = list(size = 7))
-  ) +
-  theme_few(
-    base_size = 25
-  ) +
-  theme(
-    legend.position = "bottom",
-    strip.text = element_text(face = "bold"),
-    axis.text = element_text(size = 12)
+        group = interaction(sltype, traindat)
+      ),
+      position = position_dodge(width = 0.75),
+      linetype = "dashed",
+      color = "gray50"
+    ) +
+    geom_hline(
+      data = obsout[outcome == targ & obs_season == season],
+      aes(yintercept = obs_outcome, linetype = "Target")
+    ) +
+    geom_point(
+      data = data.table(
+        x = c(0.5, 1.5, 2.5, 3.5, 4.5),
+        y = obsout[outcome == targ & obs_season == season, obs_outcome]
+      ),
+      aes(x = x, y = y),
+      shape = 15,
+      size = 2,
+      color = "white",
+      fill = "white"
+    ) +
+    geom_point(
+      aes(
+        fill = traindat, shape = sltype, y = value,
+        group = interaction(sltype, traindat)
+      ),
+      position = position_dodge(width = 0.75),
+      size = 4
+    ) +
+    labs(x = "Week") +
+    scale_x_continuous(
+      breaks = 1:5,
+      labels = c("05", "10", "15", "20", "25")
+    ) +
+    scale_linetype_manual(name = "", values = "solid") +
+    scale_shape_manual(
+      name = expression(underline(SuperLearner)),
+      values = c(22, 21)
+    ) +
+    scale_fill_scico_d(
+      name = expression(underline(Training~Data)),
+      palette = "berlin"
+    )
+
+  if (legend == T) {
+    plot <- plot +
+      guides(
+        fill = guide_legend(override.aes = list(shape = 21, size = 7)),
+        shape = guide_legend(override.aes = list(size = 7)),
+        linetype = FALSE
+      )
+  } else {
+    plot <- plot +
+          guides(fill = FALSE, shape = FALSE, linetype = FALSE)
+  }
+
+  plot +
+    theme_tufte(
+      base_family = "sans",
+      base_size = base_font_size
+    ) +
+    theme(
+      legend.box = "vertical",
+      legend.box.background = element_rect(),
+      legend.box.spacing = ggplot2::margin(0.1, unit = "in"),
+      legend.position = c(0.5, 0.65),
+      legend.title = element_text(size = base_font_size, hjust = 0.5),
+      legend.text = element_text(size = base_font_size),
+      axis.text = element_text(size = base_font_size),
+      axis.line = element_line(),
+      axis.title.x = element_text(
+        margin = ggplot2::margin(t = 0.125, unit = "in")
+      ),
+      axis.title.y = element_text(
+        margin = ggplot2::margin(r = 0.1, unit = "in")
+      )
+    )
+}
+
+plot_targets <- c("pkrate", "pkweek", "cumhosp")
+plot_seasons <- c("2016-17", "2017-18", "2018-19")
+
+pgrid <- as.data.table(expand.grid(ptarg = plot_targets, pseas = plot_seasons))
+setkey(pgrid, ptarg)
+pgrid
+
+pgrid[, ":="(
+  add_legend = fcase(
+    ptarg == "cumhosp" & pseas == "2018-19", TRUE,
+    default = FALSE
+  ),
+  yll = fcase(
+    ptarg == "pkrate", 0,
+    ptarg == "pkweek", -25,
+    ptarg == "cumhosp", 0
+  ),
+  yul = fcase(
+    ptarg == "pkrate", 50,
+    ptarg == "pkweek", 25,
+    ptarg == "cumhosp", 350
   )
+)]
+
+pgrid
+
+pl_pobs_list <- lapply(seq_len(nrow(pgrid)), function(x) {
+  tmp <- pgrid[x]
+  tlim <- tmp[, unlist(.(yll, yul))]
+  tp <- make_pl_pobs_panel(
+    targ = tmp[, ptarg],
+    season = tmp[, pseas],
+    legend = tmp[, add_legend]
+  )
+  if (tmp[, ptarg] == "pkrate") {
+    tp <- tp +
+      scale_y_continuous(
+        breaks = seq(tlim[1], tlim[2], 10),
+        limits = tlim
+      ) +
+      labs(y = "Peak Rate")
+  } else if (tmp[, ptarg] == "pkweek") {
+    tp <- tp +
+      scale_y_continuous(
+        breaks = seq(tlim[1], tlim[2], 5),
+        limits = tlim
+      ) +
+      labs(y = "Peak Week")
+  } else if (tmp[, ptarg] == "cumhosp") {
+    tp <- tp +
+      scale_y_continuous(
+        breaks = seq(tlim[1], tlim[2], 50),
+        limits = tlim
+      ) +
+      labs(y = "Cumulative Hospitalizations")
+  }
+  tp
+})
+
+relheights_cp <- c(peakrate = 1, peakweek = 1.4, cumhosp = 1.8)
+pl_pobs <- cowplot::plot_grid(
+  plotlist = pl_pobs_list,
+  labels = paste0(LETTERS[seq_len(length(pl_pobs_list))], ")"),
+  label_size = pl_pobs_list[[1]]$theme$text$size,
+  label_fontface = "plain",
+  hjust = 0.5,
+  vjust = 0,
+  rel_heights = relheights_cp
+) + theme(plot.margin = unit(c(0.2, 0, 0, 0.2), "in"))
 
 pl_pobs
 
+pl_pobs_width <- 12
+pl_pobs_height <- 12
+
 plotsave(
   plot = pl_pobs,
-  width = 15,
-  height = 20,
+  width = pl_pobs_width,
+  height = pl_pobs_height,
   name = "Prospective-Observed-Application"
 )
 
+lapply(seq_along(pl_pobs_list), function(x) {
+  cumht <- sum(relheights_cp)
+  plotsave(
+    plot = pl_pobs_list[[x]],
+    name = paste0("Prospective-Observed-Application-Panel-", LETTERS[x]),
+    width = pl_pobs_width / 3,
+    height = switch(
+      pl_pobs_list[[x]]$labels$y,
+      "Peak Rate" = pl_pobs_height * (relheights_cp["peakrate"] / cumht),
+      "Peak Week" = pl_pobs_height * (relheights_cp["peakweek"] / cumht),
+      "Cumulative Hospitalizations" =
+        pl_pobs_height * (relheights_cp["cumhosp"] / cumht)
+    )
+  )
+})
+
 
 ################################################################################
-## COMPAR ENSEMBLE ERRORS ##
+## COMPARE ENSEMBLE ERRORS ##
 ################################################################################
 
 abserr <- merge(
@@ -504,10 +628,35 @@ seclabs <- paste0(
   " data"
 )
 
+## plotlabs <- data.table(
+##   outcome = c(rep("pkrate", 2), rep("pkweek", 2), rep("cumhosp", 2)),
+##   Observed = c(12, 20,
+##                8.25, 14.75,
+##                85, 150), # x-axis
+##   Simulated = c(18.75, 12,
+##                 13, 9,
+##                 130, 95), # y-axis
+##   label = rep(seclabs, 3)
+## )
+
 plotlabs <- data.table(
   outcome = c(rep("pkrate", 2), rep("pkweek", 2), rep("cumhosp", 2)),
-  Observed = c(  12, 20, 8.25, 14.75, 85, 150), # x-axis
-  Simulated = c( 18.75, 12,    13, 9,  130, 95), # y-axis
+  Observed = c(
+    mean(c(0, 0, 32)),   # pkrate, label 1, x
+    mean(c(0, 32, 32)),  # pkrate, label 2, x
+    mean(c(0, 0, 21)),   # pkweek, label 1, x
+    mean(c(0, 21, 21)),  # pkweek, label 2, x
+    mean(c(0, 0, 205)),  # cumhosp, label 1, x
+    mean(c(0, 205, 205)) # cumhosp, label 2, x
+  ),
+  Simulated = c(
+    mean(c(0, 32, 32)),   # pkrate, label 1, y
+    mean(c(0, 0, 32)),    # pkrate, label 2, y
+    mean(c(0, 21, 21)),   # pkweek, label 1, y
+    mean(c(0, 0, 21)),    # pkweek, label 2, y
+    mean(c(0, 205, 205)), # cumhosp, label 1, y
+    mean(c(0, 0, 205))    # cumhosp, label 2, y
+  ),
   label = rep(seclabs, 3)
 )
 
