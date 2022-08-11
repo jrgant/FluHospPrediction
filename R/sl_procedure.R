@@ -1,12 +1,13 @@
 #' Super Learner Procedure
 #'
-#' Functions used to specify and execute the enesemble learning procedure.
+#' Functions used to specify and execute the ensemble learning procedure.
 #'
 
 #' @param target One of "pkrate", "pkweek", or "cumhosp". No default.
 #' @param current_week Week of flu season for which to make a task.
 #' @param lambda_type Pick the curves simulated based on trendfilter lambda. Should be one of "lambda-min" or "lambda-1se".
 #' @param prosp A character string naming an observed season to predict on, example "2015-16". The super learner will be fit on simulated curves based only on prior seasons. Default is NULL to avoid interfering with the specification of tasks in the original main and sensitivity analyses.
+#' @param holdout A digit from 1-15, indicating which tmeplate's curves to holdout from training. Like `prosp`, default is NULL to avoid interfering with task specifications in the main and sensitivity analyses.
 #' @return A list containing the sl3 tasks for each week of the flu season.
 #'
 #' @describeIn super_learner_proc Specify learning tasks for each week.
@@ -14,7 +15,7 @@
 #' @import origami sl3 stringr
 #' @export fhp_make_task
 
-fhp_make_task <- function(target, current_week, lambda_type, prosp = NULL) {
+fhp_make_task <- function(target, current_week, lambda_type, prosp = NULL, holdout = NULL) {
 
   clndir <- here::here("data", "cleaned")
 
@@ -39,6 +40,12 @@ fhp_make_task <- function(target, current_week, lambda_type, prosp = NULL) {
     curr <- curr[template_numeric < which(levels(curr$template) == prosp)]
   }
 
+  # subset to training data if holdout training task specified
+  if (!is.null(holdout)) {
+    stopifnot(is.null(prosp))
+    curr <- curr[template_numeric != holdout]
+  }
+
   covar_exclude_pat <- "pkrate|pkweek|cumhosp$|template|cid"
   covars <- names(curr)[!grepl(covar_exclude_pat, names(curr))]
 
@@ -48,8 +55,10 @@ fhp_make_task <- function(target, current_week, lambda_type, prosp = NULL) {
     V = 15
   )
 
-  # reassign the fold task if prospective aim specified
-  if(!is.null(prosp)) {
+  # reassign the fold task if prospective aim or holdout specified
+  # NOTE rule for specifying the fold task is the same after curr data
+  #      set is subsetted appropriately
+  if(!is.null(prosp) | !is.null(holdout)) {
     fold_scheme <- make_folds(
       cluster_ids = curr$template,
       V = length(unique(curr$template))

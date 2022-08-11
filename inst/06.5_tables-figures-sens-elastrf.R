@@ -317,3 +317,22 @@ fwrite(
   cumhosp_lrnr_sel_erf,
   file.path(paper_output, paste0(Sys.Date(), "_cumhosp_lrnr_selection_erf.csv"))
 )
+
+
+################################################################################
+## REFERENCE: SAVE DATA SET WITH NAIVE AND CV ENSEMBLE RISKS##
+################################################################################
+
+ensemble_risk_compare <- rbindlist(
+  list(
+    PeakRate = rbindlist(sl_pkrate_risktables_erf),
+    PeakWeek = rbindlist(sl_pkweek_risktables_erf),
+    CumHosp  = rbindlist(sl_cumhosp_risktables_erf)
+  ), idcol = "target"
+)[learner %like% "^SuperLearner"
+  ][, -c("coefficients")][, analysis := "ElastNetRF"]
+
+fwrite(
+  ensemble_risk_compare,
+  file.path(resdir, "Ensemble-Optimism-ElastNetRF.csv")
+)

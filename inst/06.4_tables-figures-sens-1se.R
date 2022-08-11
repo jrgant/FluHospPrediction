@@ -321,11 +321,11 @@ fwrite(
 
 plot_weight_coef <- function(data, titleslug) {
   ggplot(
-    data[learner != "SuperLearner"],
+    data[!(learner %like% "SuperLearner$|SuperLearnerCV")],
     aes(x = mean_risk, coefficients)
   ) +
     geom_vline(
-      data = data[learner == "SuperLearner"],
+      data = data[learner == "SuperLearnerCV"],
       aes(xintercept = mean_risk, color = "Ensemble risk"),
       linetype = "dashed"
     ) +
@@ -372,4 +372,23 @@ plotsave(
   plot = ch_scatter_1se,
   width = 12,
   height = 10
+)
+
+
+################################################################################
+## REFERENCE: SAVE DATA SET WITH NAIVE AND CV ENSEMBLE RISKS##
+################################################################################
+
+ensemble_risk_compare <- rbindlist(
+  list(
+    PeakRate = rbindlist(sl_pkrate_risktables_1se),
+    PeakWeek = rbindlist(sl_pkweek_risktables_1se),
+    CumHosp  = rbindlist(sl_cumhosp_risktables_1se)
+  ), idcol = "target"
+)[learner %like% "^SuperLearner"
+  ][, -c("coefficients")][, analysis := "LambdaSE"]
+
+fwrite(
+  ensemble_risk_compare,
+  file.path(resdir, "Ensemble-Optimism-LambdaSE.csv")
 )

@@ -7,7 +7,7 @@
 \alias{get_week}
 \title{Super Learner Procedure}
 \usage{
-fhp_make_task(target, current_week, lambda_type, prosp = NULL)
+fhp_make_task(target, current_week, lambda_type, prosp = NULL, holdout = NULL)
 
 fhp_spec_learners(learner_pat = "^lrnr_", currtask, verbose = FALSE)
 
@@ -32,6 +32,8 @@ get_week(w = NULL, slurm = TRUE)
 \item{lambda_type}{Pick the curves simulated based on trendfilter lambda. Should be one of "lambda-min" or "lambda-1se".}
 
 \item{prosp}{A character string naming an observed season to predict on, example "2015-16". The super learner will be fit on simulated curves based only on prior seasons. Default is NULL to avoid interfering with the specification of tasks in the original main and sensitivity analyses.}
+
+\item{holdout}{A digit from 1-15, indicating which tmeplate's curves to holdout from training. Like `prosp`, default is NULL to avoid interfering with task specifications in the main and sensitivity analyses.}
 
 \item{learner_pat}{Regular expression specifying which learners to include in
 the learner stack. Defaults to "^lrnr_", which adds any object whose name
@@ -66,7 +68,7 @@ stack. Defaults to FALSE.}
 A list containing the sl3 tasks for each week of the flu season.
 }
 \description{
-Functions used to specify and execute the enesemble learning procedure.
+Functions used to specify and execute the ensemble learning procedure.
 }
 \section{Functions}{
 \itemize{

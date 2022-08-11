@@ -4,8 +4,7 @@
 
 pacman::p_load(
   FluHospPrediction,
-  data.table,
-  extrafont
+  data.table
 )
 
 ## Data directories.
@@ -27,34 +26,53 @@ nicefile <- function(slug, description, ext, date = Sys.Date(),
 }
 
 ## Load font database.
-loadfonts(device = "pdf")
-global_plot_font <- "Gentium Book Basic"
+## If a 'font not available' warning is thrown when saving plots:
+##   1) Change font (if font not installed on system), or
+##   2) run extrafont::font_import() and then load fonts again
+extrafont::loadfonts(device = "pdf")
+extrafont::loadfonts(device = "postscript")
+global_plot_font <- "Arial"
 
 ## Universal breaks for week labeling in plots.
 week_breaks <- c("01", "05", "10", "15", "20", "25", "30")
 
 ## This function saves plots in pdf and png formats.
-plotsave <- function(name, plot, width, height) {
+plotsave <- function(name, plot, width, height,
+                     pdf = TRUE, png = TRUE, eps = FALSE) {
 
-  ggsave(
-    nicefile(figslug, name, "pdf"),
-    plot,
-    width = width,
-    height = height,
-    units = "in",
-    device = cairo_pdf
-  )
+  if (pdf == TRUE) {
+    ggsave(
+      nicefile(figslug, name, "pdf"),
+      plot,
+      width = width,
+      height = height,
+      units = "in",
+      device = cairo_pdf
+    )
+  }
 
-  ggsave(
-    nicefile(figslug, name, "png"),
-    plot,
-    width = width,
-    height = height,
-    units = "in",
-    device = "png",
-    dpi = 1200
-  )
+  if (png == TRUE) {
+    ggsave(
+      nicefile(figslug, name, "png"),
+      plot,
+      width = width,
+      height = height,
+      units = "in",
+      device = "png",
+      dpi = 300
+    )
+  }
 
+  if (eps == TRUE) {
+    ggsave(
+      nicefile(figslug, name, "eps"),
+      plot,
+      width = width,
+      height = height,
+      units = "in",
+      device = cairo_ps
+    )
+  }
 }
 
 
@@ -208,3 +226,74 @@ lmin_1se <-
 pr_medrisk_1se <- est_cv_risk_naive(lmin_1se, "pkrate", "abs")
 pw_medrisk_1se <- est_cv_risk_naive(lmin_1se, "pkweek", "abs")
 ch_medrisk_1se <- est_cv_risk_naive(lmin_1se, "cumhosp", "abs")
+
+
+################################################################################
+## Import and Check Cross-validated Ensemble Prediction Data ##
+################################################################################
+
+# NOTE Risks presented in tables and figures are processed initially
+# in the fmt_risk_table() function. This section is for checking only.
+
+aresults <- list.files("results", pattern = "(Peak|CumHosp)")
+aresults <- aresults[!grepl("ProspObs", aresults)]
+
+cvfiles <- lapply(
+  setNames(aresults, aresults),
+  function(.x) {
+    lf <- list.files(here::here("results", .x, "EnsembleCV"))
+    lapply(
+      setNames(lf, lf),
+      function(.y) {
+        readRDS(here::here("results", .x, "EnsembleCV", .y))
+      }
+    )
+  }
+)
+
+cvens_dat <- rbindlist(
+  lapply(cvfiles, function(.x) {
+    xnames <- names(.x)
+    rbindlist(
+      lapply(xnames, function(.y) {
+        data.table(
+          hseason     = .x[[.y]]$holdout_season$template,
+          hseason_num = .x[[.y]]$holdout_season$template_numeric,
+          week        = stringr::str_extract(.y, "(?<=week\\-)[0-9]{2}"),
+          outcome     = .x[[.y]]$holdout_outcome,
+          enspred     = .x[[.y]]$sl_pred,
+          prederr     = .x[[.y]]$sl_pred_abserr
+        )
+      })
+    )
+  }), idcol = "analysis"
+)
+
+cvens_dat[, errtype := ifelse(analysis %like% "SqErr", "sqerr", "absolute")]
+
+## Check to make sure the number of predictions produced is correct
+## for each holdout fold. If not, produce a warning.
+check_simnum <- dcast(
+  cvens_dat[, .N, .(analysis, hseason, week)
+        ][, .(numsims = sum(N)), .(analysis, hseason)],
+  analysis ~ hseason,
+  value.var = "numsims"
+)
+
+check_simnum[, aset := stringr::str_extract(analysis, "(?<=\\-).*")]
+
+snames <- c(
+  names(check_simnum)[grepl("20[0-9]{2}\\-[0-9]{2}", names(check_simnum))],
+  "aset"
+)
+
+bad_jobs <- check_simnum[, .N, c(snames)][, .N, aset][N != 1, aset]
+
+if (length(bad_jobs) > 0) {
+  warning(
+    paste(
+      "The following analyses may have been run on incorrect simulated data:",
+      paste(bad_jobs, collapse = ", ")
+    )
+  )
+}
