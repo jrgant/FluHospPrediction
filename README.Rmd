@@ -4,9 +4,14 @@ output: github_document
 
 # Predicting Flu Hospitalizations Paper
 
-## Installation
+## Installation 
 
-Before installing this package, users will need to install the `sl3` package from Github. All other dependencies should be installed automatically.
+1. Download R-3.6.3 from [CRAN](https://cran.r-project.org/index.html).
+2. Download a .zip file of this repository from the GitHub *Clone* tab and unzip the archive into a location of your choice.
+   a. Another option would be to clone this repository to your computer. However, cloning takes a long time due to large file sizes and large version control history.
+3. Navigate to the root of the unzipped repository on your computer and start an R session using R-3.6.3. You should see messages related to the `renv` package.
+4. Once `renv` has installed itself, run `r renv::restore()` to install all the packages required.
+5. If you receive an error message stating that R could not install `FluHospPrediction`, run `r devtools::install(quick = T, build = F, dependencies = F)`
 
 ```{r, eval = F}
 library(remotes)
@@ -18,21 +23,7 @@ Please post an issue if you have trouble installing.
 
 # Abstract
 
-## Background
-
-Accurate forecasts can inform response to outbreaks. Most efforts in influenza forecasting have focused on predicting influenza-like activity, but fewer on influenza-related hospitalizations. We conducted a simulation study to evaluate a super learner's predictions of three seasonal measures of influenza hospitalizations in the United States: peak hospitalization rate, peak hospitalization week, and cumulative hospitalization rate. 
-
-## Methods 
-
-We trained an ensemble machine learning algorithm on 15,000 simulated hospitalization curves and generated weekly predictions. We compared the performance of the ensemble (weighted combination of predictions from multiple prediction algorithms), the best-performing individual prediction algorithm, and a naive prediction (median of a simulated outcome distribution). 
-
-## Results
-
-Ensemble predictions performed similarly to the naive predictions early in the season but consistently improved as the season progressed for all prediction targets. The best-performing prediction algorithm in each week typically had similar predictive accuracy compared to the ensemble, but the specific prediction algorithm selected varied by week. 
-
-## Conclusions
-
-An ensemble super learner improved predictions of influenza-related hospitalizations, relative to a naive prediction. Future work should examine the super learner's performance using additional empirical data on influenza-related predictors (e.g., influenza-like-illness). The algorithm should also be tailored to produce prospective probabilistic forecasts of selected prediction targets.
+Accurate forecasts can inform response to outbreaks. Most efforts in influenza forecasting have focused on predicting influenza-like activity, but fewer on influenza-related hospitalizations. We conducted a simulation study to evaluate a super learner's predictions of three seasonal measures of influenza hospitalizations in the United States: peak hospitalization rate, peak hospitalization week, and cumulative hospitalization rate. We trained an ensemble machine learning algorithm on 15,000 simulated hospitalization curves and generated weekly predictions. We compared the performance of the ensemble (weighted combination of predictions from multiple prediction algorithms), the best-performing individual prediction algorithm, and a naive prediction (median of a simulated outcome distribution). Ensemble predictions performed similarly to the naive predictions early in the season but consistently improved as the season progressed for all prediction targets. The best-performing prediction algorithm in each week typically had similar predictive accuracy compared to the ensemble, but the specific prediction algorithm selected varied by week. An ensemble super learner improved predictions of influenza-related hospitalizations, relative to a naive prediction. Future work should examine the super learner's performance using additional empirical data on influenza-related predictors (e.g., influenza-like illness). The algorithm should also be tailored to produce prospective probabilistic forecasts of selected prediction targets.
 
 
 ## Package directory (one level deep):
