@@ -191,7 +191,7 @@ plot.tf <- function(data, title) {
       x = "Week of season",
       y = "Hospitalizations (per 100,000 population)"
     ) +
-    theme_base(base_family = "Noto Serif", base_size = 12) +
+    theme_base(base_family = "Times New Roman", base_size = 12) +
     theme(
       legend.position = "top",
       plot.background = element_blank(),
