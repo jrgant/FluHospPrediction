@@ -33,6 +33,10 @@ extrafont::loadfonts(device = "pdf")
 extrafont::loadfonts(device = "postscript")
 global_plot_font <- "Arial"
 
+## Risktile title sizes
+theme_risktile_titles <- theme(axis.title = element_text(size = 16),
+                               plot.title = element_text(size = 20))
+
 ## Universal breaks for week labeling in plots.
 week_breaks <- c("01", "05", "10", "15", "20", "25", "30")
 

@@ -51,7 +51,7 @@ apply_rf_relabel(pkrate_rwsum_erf)
 prt_pr_erf <- plot_risktiles(
   pkrate_rwsum_erf,
   titlestring = paste("Peak rate:", erfslug)
-)
+) + theme_risktile_titles
 
 prt_pr_erf_out <- prt_pr_erf +
   guides(alpha = FALSE) +
@@ -150,7 +150,7 @@ apply_rf_relabel(pkweek_rwsum_erf)
 prt_pw_erf <- plot_risktiles(
   pkweek_rwsum_erf,
   titlestring = paste("Peak week:", erfslug)
-)
+) + theme_risktile_titles
 
 prt_pw_erf_out <- prt_pw_erf +
   guides(alpha = FALSE) +
@@ -253,7 +253,7 @@ apply_rf_relabel(cumhosp_rwsum_erf)
 prt_ch_erf <- plot_risktiles(
   cumhosp_rwsum_erf,
   titlestring = paste("Cumulative hospitalizations:", erfslug)
-)
+) + theme_risktile_titles
 
 prt_ch_erf_out <- prt_ch_erf +
   guides(alpha = FALSE) +

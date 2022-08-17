@@ -51,7 +51,7 @@ apply_rf_relabel(pkrate_rwsum_sqe)
 prt_pr_sqe <- plot_risktiles(
   pkrate_rwsum_sqe,
   titlestring = paste("Peak rate:", sqeslug)
-)
+) + theme_risktile_titles
 
 prt_pr_sqe_out <- prt_pr_sqe +
   guides(alpha = FALSE) +
@@ -152,7 +152,7 @@ apply_rf_relabel(pkweek_rwsum_sqe)
 prt_pw_sqe <- plot_risktiles(
   pkweek_rwsum_sqe,
   titlestring = paste("Peak week:", sqeslug)
-)
+) + theme_risktile_titles
 
 prt_pw_sqe_out <- prt_pw_sqe +
   guides(alpha = FALSE) +
@@ -246,7 +246,7 @@ apply_rf_relabel(cumhosp_rwsum_sqe)
 prt_ch_sqe <- plot_risktiles(
   cumhosp_rwsum_sqe,
   titlestring = paste("Cumulative hospitalizations:", sqeslug)
-)
+) + theme_risktile_titles
 
 prt_ch_sqe_out <- prt_ch_sqe +
   guides(alpha = FALSE) +

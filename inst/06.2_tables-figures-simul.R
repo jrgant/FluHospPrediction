@@ -263,16 +263,18 @@ tempsim_randcrv <- crvsub %>%
     name = "Curve type",
     values = c("black", "gray90")
   ) +
-  theme_base(base_family = "Times New Roman") +
+  labs(x = "Week", y = "Hospitalizations (per 100,000 population)") +
+  theme_base(base_family = "Times New Roman", base_size = 16) +
   theme(
     axis.text.x = element_text(size = 8),
-    legend.position = "bottom"
+    legend.position = "bottom",
+    plot.background = element_blank()
   )
 
 plotsave(
   plot = tempsim_randcrv,
   width = 8,
-  height = 7,
+  height = 10,
   name = "Simulation-Curves-by-Template-Rand10"
 )
 
