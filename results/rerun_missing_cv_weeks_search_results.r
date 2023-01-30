@@ -1,4 +1,4 @@
-pacman::p_load(data.table, stringr)
+pacman::p_load(data.table, stringr, magrittr)
 
 jobs <- as.data.table(
   expand.grid(
@@ -34,7 +34,7 @@ jobs[analysis == "SqErrLoss" & target == "cumhosp", folder := "CumHosp-SqErrLoss
 filetab <- lapply(setNames(jobs$folder, jobs$folder), function(.x) {
   lf <- list.files(here::here("results", .x, "EnsembleCV"), pattern = "Rds")
   data.table(fn = lf)
-}) |> rbindlist(idcol = "analysis")
+}) %>% rbindlist(idcol = "analysis")
 
 filetab[, ":=" (
   holdout = as.numeric(str_extract(fn, "(?<=holdout-)[0-9]{2}")),
@@ -52,7 +52,7 @@ checkref <- lapply(unique(filetab$analysis), function(.x) {
     out <- expand.grid(analysis = acurr, holdout = 1:15, week = 1:30)
   }
   as.data.table(out)
-}) |> rbindlist()
+}) %>% rbindlist()
 
 if (nrow(checkref) == nrow(filetab)) stop("All jobs present.")
 
