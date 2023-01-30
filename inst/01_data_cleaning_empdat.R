@@ -40,7 +40,7 @@ whsp_fsn_rt <- fread(hsp_fsn_rates,
 
 print(whsp_fsn_rt, topn = 50)
 
-dfSummary(whsp_fsn_rt, graph.col = F)
+summarytools::dfSummary(whsp_fsn_rt, graph.col = F)
 
 # %% Empirical Hospitalization Rates (EIP) -------------------------------------
 
