@@ -102,10 +102,10 @@ format_empirical_season <- function(week, predict_on, origtask = task) {
     ch_ixnames <- paste0("ch", week, "xdhrl", 1:length(hr_diff))
 
     fmtdat[, (hr_ixnames) :=
-               lapply(hr_diff, function(x) get(x) * get(ch_diff))]
+               lapply(hr_diff, function(x) get(x) * get(ch_curr))]
 
     fmtdat[, (ch_ixnames) :=
-               lapply(ch_diff, function(x) get(x) * get(hr_diff))]
+               lapply(ch_diff, function(x) get(x) * get(hr_curr))]
   }
 
   # predicting on new data requires that new data to be fed to

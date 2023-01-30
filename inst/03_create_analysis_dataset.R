@@ -174,6 +174,7 @@ make_analytic_dataset <- function(sim, lambda_type) {
     curr <- dat_wide_list[[x]]
 
     if (x > 1) {
+      #browser()
       currnames <- names(curr)
 
       # get all variable names beginning with "hosprate" and save
@@ -194,10 +195,10 @@ make_analytic_dataset <- function(sim, lambda_type) {
       ch_ixnames <- paste0("ch", x, "xdhrl", 1:length(hr_diff))
 
       curr[, (hr_ixnames) :=
-               lapply(hr_diff, function(x) get(x) * get(ch_diff))]
+               lapply(hr_diff, function(x) get(x) * get(ch_curr))]
 
       curr[, (ch_ixnames) :=
-               lapply(ch_diff, function(x) get(x) * get(hr_diff))]
+               lapply(ch_diff, function(x) get(x) * get(hr_curr))]
     }
 
     return(curr)
