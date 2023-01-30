@@ -31,7 +31,7 @@ nicefile <- function(slug, description, ext, date = Sys.Date(),
 ##   2) run extrafont::font_import() and then load fonts again
 extrafont::loadfonts(device = "pdf")
 extrafont::loadfonts(device = "postscript")
-global_plot_font <- "Arial"
+global_plot_font <- "Liberation Sans"
 
 ## Risktile title sizes
 theme_risktile_titles <- theme(axis.title = element_text(size = 16),
@@ -245,7 +245,7 @@ aresults <- aresults[!grepl("ProspObs", aresults)]
 cvfiles <- lapply(
   setNames(aresults, aresults),
   function(.x) {
-    lf <- list.files(here::here("results", .x, "EnsembleCV"))
+    lf <- list.files(here::here("results", .x, "EnsembleCV"), pattern = "Rds")
     lapply(
       setNames(lf, lf),
       function(.y) {
