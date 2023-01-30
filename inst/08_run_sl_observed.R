@@ -103,10 +103,10 @@ format_empirical_season <- function(week, predict_on,
     ch_ixnames <- paste0("ch", week, "xdhrl", 1:length(hr_diff))
 
     fmtdat[, (hr_ixnames) :=
-               lapply(hr_diff, function(x) get(x) * get(ch_curr))]
+               lapply(ch_diff, function(x) get(x) * get(hr_curr))]
 
     fmtdat[, (ch_ixnames) :=
-               lapply(ch_diff, function(x) get(x) * get(hr_curr))]
+               lapply(hr_diff, function(x) get(x) * get(ch_curr))]
   }
 
   if (training == TRUE) {
