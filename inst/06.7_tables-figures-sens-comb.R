@@ -18,8 +18,6 @@ fmt_risk_table(dir = resch_erf, slug = "sl_cumhosp", altslug = "erf")
 ## SENSITIVITY ANALYSIS: COMBINED FIGURE ##
 ################################################################################
 
-written_tabs_date <- "2022-08-09"
-
 ## Need to run prior 06.X files first to create the CSV files referenced here.
 risktabs <- list.files(
   here::here("results", "00_paper_output"),

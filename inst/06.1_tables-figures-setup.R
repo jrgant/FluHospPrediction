@@ -16,7 +16,11 @@ figslug <- "FIG"
 tabslug <- "TAB"
 valslug <- "VAL"
 
-## This function formats filenames during save operations, using both the
+## Used by 06.7_tables-figures_sens-comb.r:
+##   specify the date the most recent output tables were generated
+written_tabs_date <- "2023-03-04"
+
+# This function formats filenames during save operations, using both the
 ## slugs above and the current date. If one file is updated, make sure to
 ## update all files, as the manuscript Rmd selects files to use based on
 ## a global date string.
@@ -240,7 +244,7 @@ ch_medrisk_1se <- est_cv_risk_naive(lmin_1se, "cumhosp", "abs")
 # in the fmt_risk_table() function. This section is for checking only.
 
 aresults <- list.files("results", pattern = "(Peak|CumHosp)")
-aresults <- aresults[!grepl("ProspObs", aresults)]
+aresults <- aresults[!grepl("ProspObs|ObsAllSeasons", aresults)]
 
 cvfiles <- lapply(
   setNames(aresults, aresults),
