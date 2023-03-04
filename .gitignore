@@ -18,3 +18,4 @@ DailySourceData/*
 interim-reports/*
 **/*graveyard/*
 /.quick-stats.Rmd
+results/*Prosp*/ProspSim/*compfits*
