@@ -67,6 +67,7 @@ plots[[3]]
 
 lapply(anlabs, function(x) {
   if (x %like% "Main") slug <- "main"
+  if (x %like% "1SE") slug <- "1se"
   if (x %like% "Elastic") slug <- "elastnetrf"
   if (x %like% "Squared") slug <- "sqerrloss"
   ggsave(
