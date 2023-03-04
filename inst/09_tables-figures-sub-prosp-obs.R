@@ -483,7 +483,7 @@ make_pl_pobs_panel <- function(targ = c("pkrate", "pkweek", "cumhosp"),
 
   plot +
     theme_tufte(
-      base_family = "sans",
+      base_family = global_plot_font,
       base_size = base_font_size
     ) +
     theme(
@@ -672,7 +672,7 @@ p_abserr <- abserrw %>%
     aes(x = Observed, y = Simulated, label = label),
     size = 7,
     color = "gray40",
-    family = "IBM Plex Sans",
+    family = global_plot_font,
     lineheight = 1
   ) +
   geom_point(aes(fill = week, shape = obs_season), size = 7) +
@@ -698,7 +698,7 @@ p_abserr <- abserrw %>%
     fill = guide_legend(override.aes = list(shape = 21, size = 9)),
     shape = guide_legend(override.aes = list(size = 9))
   ) +
-  theme_minimal(base_size = 25, base_family = "IBM Plex Sans") +
+  theme_minimal(base_size = 25, base_family = global_plot_font) +
   theme(
     strip.text = element_text(size = 25, face = "bold"),
     legend.key.height = unit(1.5, "cm"),
