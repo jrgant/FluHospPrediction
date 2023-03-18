@@ -73,22 +73,22 @@ Functions to summarize, visualize, and analyze data
 }
 \section{Functions}{
 \itemize{
-\item \code{fmt_risk_table}: Formats risk tables that compare average risks of the ensemble super learner, discrete super learner, and mean prediction.
+\item \code{fmt_risk_table()}: Formats risk tables that compare average risks of the ensemble super learner, discrete super learner, and mean prediction.
 
-\item \code{get_risk_dist}: Outputs a summary of the distribution of cross-validated risks across all learners, by week of the flu season.
+\item \code{get_risk_dist()}: Outputs a summary of the distribution of cross-validated risks across all learners, by week of the flu season.
 
-\item \code{get_learner_weights}: Pulls the weights assigned to each learner by the metalearner.xm
+\item \code{get_learner_weights()}: Pulls the weights assigned to each learner by the metalearner.xm
 
-\item \code{join_learner_stats}: Generates a data.table that links each learner's mean cross-validated risk and the weight assigned to that learner based on the metalearner fit, for each week of the flu season.
+\item \code{join_learner_stats()}: Generates a data.table that links each learner's mean cross-validated risk and the weight assigned to that learner based on the metalearner fit, for each week of the flu season.
 
-\item \code{summarize_learner_selection}: Calculates the number of weeks during which a learner was assigned non-zero weight.
+\item \code{summarize_learner_selection()}: Calculates the number of weeks during which a learner was assigned non-zero weight.
 
-\item \code{relabel_rf}: Helper function for cleaning random forest learner names
+\item \code{relabel_rf()}: Helper function for cleaning random forest learner names
 
-\item \code{apply_rf_relabel}: Helper function to format results for plotting.
+\item \code{apply_rf_relabel()}: Helper function to format results for plotting.
 
-\item \code{plot_risktiles}: Produces a tile plot summarizing component risks and metalearner weights.
+\item \code{plot_risktiles()}: Produces a tile plot summarizing component risks and metalearner weights.
 
-\item \code{plot_ensemble_performance}: Produces a plot of the ensemble super learner's mean risk across all 30 weeks of the flu season against the mean prediction reference, as well as the distribution of cross-validated risks and ensemble weights assigned to each component learner.
+\item \code{plot_ensemble_performance()}: Produces a plot of the ensemble super learner's mean risk across all 30 weeks of the flu season against the mean prediction reference, as well as the distribution of cross-validated risks and ensemble weights assigned to each component learner.
+
 }}
-

@@ -22,9 +22,9 @@ Epiweeks are the same as MMWR Weeks:
 }
 \section{Functions}{
 \itemize{
-\item \code{assign_weekint}: Assign an integer label based on epiweek.
+\item \code{assign_weekint()}: Assign an integer label based on epiweek.
 
-\item \code{season_levels}: Return a vector of season labels. Standardizes the 
+\item \code{season_levels()}: Return a vector of season labels. Standardizes the 
 assignment of flu season labels (e.g., 2008-09).
-}}
 
+}}

@@ -72,13 +72,13 @@ Functions used to specify and execute the ensemble learning procedure.
 }
 \section{Functions}{
 \itemize{
-\item \code{fhp_make_task}: Specify learning tasks for each week.
+\item \code{fhp_make_task()}: Specify learning tasks for each week.
 
-\item \code{fhp_spec_learners}: Specify all the component learners and assign
+\item \code{fhp_spec_learners()}: Specify all the component learners and assign
 them to the global environment.
 
-\item \code{fhp_run_sl}: Runs the parallelized super learner procedure based on `fhp_make_tasks()` and `fhp_spec_learners()`.
+\item \code{fhp_run_sl()}: Runs the parallelized super learner procedure based on `fhp_make_tasks()` and `fhp_spec_learners()`.
 
-\item \code{get_week}: Specifies the week for which to run the super learner algorithm.
+\item \code{get_week()}: Specifies the week for which to run the super learner algorithm.
+
 }}
-

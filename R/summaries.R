@@ -39,7 +39,7 @@ fmt_risk_table <- function(dir,
   })
 
   # pull CV ensemble risk
-  cvfiles <- list.files(here::here(dir, "EnsembleCV"), full.names = T)
+  cvfiles <- list.files(here::here(dir, "EnsembleCV"), "Rds", full.names = TRUE)
 
   cvens_dat <- rbindlist(
     lapply(cvfiles, function(.x) {
