@@ -234,8 +234,10 @@ make_sens_normscale_panel <- function(targ, base_font_size = 14,
   ylimits <- data[target == targ, unlist(.(floor(min(mean_risk)),
                                            ceiling(max(mean_risk))))]
 
-  # set upper limit of cumhosp y-axis to 40 to get a label
-  if (targ == "cumhosp") ylimits[2] <- 40
+  # set upper limit of cumhosp y-axis to floor of highest upper 05% CL + 1
+  if (targ == "cumhosp") {
+    ylimits[2] <- data[target == "cumhosp", floor(max(ul95)) + 1]
+  }
 
   plot <- data[target == targ] %>%
     ggplot(aes(x = Week, y = mean_risk, group = analysis, color = analysis)) +
@@ -277,7 +279,7 @@ make_sens_normscale_panel <- function(targ, base_font_size = 14,
       )
   } else {
     plot <- plot +
-      guides(linetype = FALSE, color = FALSE)
+      guides(linetype = "none", color = "none")
   }
 
   plot <- plot +
