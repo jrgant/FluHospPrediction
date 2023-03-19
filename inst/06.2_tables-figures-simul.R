@@ -109,7 +109,7 @@ make_tempsim_panel <- function(season = NULL,
       "geom_line",
       data = tmp[crvtype == "Simulated"],
       alpha = 0.03,
-      size = 0.5,
+      linewidth = 0.5,
       color = "gray"
     ),
     boxplot = call(
@@ -131,7 +131,7 @@ make_tempsim_panel <- function(season = NULL,
     geom_line(
       data = tmp[crvtype == "Empirical"],
       alpha = 1,
-      size = 0.7,
+      linewidth = 0.7,
       aes(color = "Empirical")
     ) +
     scale_color_manual(name = "", values = "black") +
