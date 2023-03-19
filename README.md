@@ -1,3 +1,4 @@
+
 # Predicting Flu Hospitalizations Paper
 
 ## Installation
@@ -11,16 +12,22 @@
 3.  Navigate to the root of the unzipped repository on your computer and
     start an R session using R-3.6.3. You should see messages related to
     the `renv` package.
-4.  Once `renv` has installed itself, run to install all the packages
-    required.
-5.  If you receive an error message stating that R could not install
-    `FluHospPrediction`, run
+4.  Once `renv` has installed itself, run the code below. Ideally, the
+    user could run `renv::restore()` to install all dependencies, but
+    the `sl3` and `randomForest` versions required can’t be installed
+    automatically.
 
-<!-- -->
+<!-- end list -->
 
-    library(remotes)
-    remotes::install_github("tlverse/sl3")
-    remotes::install_github("jrgant/FluHospPrediction")
+``` r
+renv::install("./renv/cellar/randomForest_4.6-14.tar.gz")
+renv::install("devtools")
+devtools::install_local("./renv/cellar/sl3-1.3.7.tar.gz")
+renv::restore()
+
+## from the root directory of the project 
+devtools::install(quick = TRUE, build = FALSE, dependencies = FALSE)
+```
 
 Please post an issue if you have trouble installing.
 
@@ -92,6 +99,7 @@ forecasts of selected prediction targets.
     ## │   ├── 14_run_sl_observed_allseasons.R
     ## │   ├── 15_extract-obstrain-preds.R
     ## │   ├── 16_tables-figures-obstrain.R
+    ## │   ├── 17_figure-peakrate-week16.R
     ## │   ├── 99_test-script.R
     ## │   └── fmt_emp_season.R
     ## ├── man
@@ -104,15 +112,17 @@ forecasts of selected prediction targets.
     ## │   └── super_learner_proc.Rd
     ## ├── renv
     ## │   ├── activate.R
+    ## │   ├── cellar
     ## │   ├── library
     ## │   ├── settings.dcf
+    ## │   ├── settings.json
     ## │   └── staging
     ## └── renv.lock
 
 ## Code files
 
--   All analytic code files are stored in `/inst` directory.
--   Functions to handle calendar date management, curve simulation, and
+  - All analytic code files are stored in `/inst` directory.
+  - Functions to handle calendar date management, curve simulation, and
     risk table formatting located in `/R`
 
 ## Data Sources
