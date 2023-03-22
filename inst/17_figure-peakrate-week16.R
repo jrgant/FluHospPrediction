@@ -62,26 +62,61 @@ preds_means
 ## PLOTS ##
 ################################################################################
 
-ploterrs <- function(pat = "ORIG|[0-9]+", data = preds, datamn = preds_means) {
-  data[runid %like% pat] %>%
+ploterrs <- function(pat = "ORIG|[0-9]+", subset_gloss = "", legend = FALSE,
+                     mean_color = "steelblue",
+                     data = preds, datamn = preds_means) {
+  p <- data[runid %like% pat] %>%
     ggplot(aes(x = runid, y = abserr)) +
     geom_point(size = 0.1, color = "gray", alpha = 0.6, position = "jitter") +
     geom_boxplot(outlier.alpha = 0, fill = NA) +
     geom_point(data = datamn[runid %like% pat],
-               aes(y = mean_abserr),
+               aes(y = mean_abserr, fill = "Mean Absolute Error"),
                shape = 21,
                size = 2.5,
-               color = "black",
-               fill = "steelblue") +
-    labs(x = "Run ID", y = "Absolute Prediction Error") +
-    theme_few(base_size = 16)
+               color = "black") +
+    scale_fill_manual(name = "", values = mean_color) +
+    labs(x = "Replicate ID", y = "Absolute Prediction Error") +
+    ggtitle(subset_gloss) +
+    theme_few(base_size = 16) +
+    theme(
+      axis.title.x = element_text(margin = ggplot2::margin(t = 15)),
+      axis.title.y = element_text(margin = ggplot2::margin(r = 10))
+    )
+
+  if (legend) {
+    p <- p +
+      theme(legend.margin = ggplot2::margin(),
+            plot.margin = ggplot2::margin())
+    ## h/t ggpubr::get_legend():
+    ##  https://github.com/kassambara/ggpubr/blob/HEAD/R/get_legend.R
+    dummy <- ggplot_gtable(ggplot_build(p))
+    legend_row <- which(sapply(dummy$grobs, function(.x) .x$name) == "guide-box")
+    legend <- dummy$grobs[[legend_row]]
+    legend
+  } else {
+    p + guides(fill = "none")
+  }
 }
 
-h01w16_risks <- plot_grid(ploterrs(), ploterrs("[0-9]+"))
+h01w16_risks <- plot_grid(
+  plotlist = list(
+    plot_grid(
+      ploterrs(subset_gloss = "Original + Replicates"),
+      ploterrs("[0-9]+", subset_gloss = "Replicates only"),
+      nrow = 1
+    ),
+    ploterrs(legend = TRUE)
+  ),
+  nrow = 2,
+  axis = "y",
+  rel_heights = c(1, 0.1)
+)
+
+h01w16_risks
 
 plotsave(
-  name = "Boxplot_H01-W16-Risks_PeakRate_LambdaMin",
+  name = "Boxplot_H01-W16-Risks_PeakRate-LambdaMin",
   plot = h01w16_risks,
   width = 15,
-  height = 7.5
+  height = 7.75
 )
