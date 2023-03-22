@@ -109,7 +109,7 @@ make_tempsim_panel <- function(season = NULL,
       "geom_line",
       data = tmp[crvtype == "Simulated"],
       alpha = 0.03,
-      linewidth = 0.5,
+      size = 0.5,
       color = "gray"
     ),
     boxplot = call(
@@ -131,7 +131,7 @@ make_tempsim_panel <- function(season = NULL,
     geom_line(
       data = tmp[crvtype == "Empirical"],
       alpha = 1,
-      linewidth = 0.7,
+      size = 0.7,
       aes(color = "Empirical")
     ) +
     scale_color_manual(name = "", values = "black") +
@@ -478,7 +478,7 @@ make_simcompare_panel <- function(targ, base_font_size = 14, data = scdl) {
   scale_fill_viridis_d(option = "magma", begin = 0.8, end = 0.1) +
   scale_y_discrete(labels = typef_labels) +
   labs(
-    y = expression(underline(Data)),
+    y = "Data",
     x = c(
       "Peak Rate",
       "Peak Week",
@@ -501,7 +501,7 @@ make_simcompare_panel <- function(targ, base_font_size = 14, data = scdl) {
     axis.title.x = element_text(margin = ggplot2::margin(t = 0.2, unit = "in")),
     axis.title.y = element_text(margin = ggplot2::margin(r = 0.2, unit = "in")),
     axis.text = element_text(size = base_font_size),
-    axis.text.y = ggtext::element_markdown(angle = 90, vjust = 1, hjust = 0.5),
+    axis.text.y = ggtext::element_markdown(vjust = 0.5, hjust = 0.5),
     plot.background = element_blank()
   )
 }
@@ -519,8 +519,8 @@ simcompare <- cowplot::plot_grid(
   labels = paste0(LETTERS[1:3], ")"),
   label_fontface = "plain",
   label_size = simcompare_list[[1]]$theme$text$size,
-  hjust = 0.5
-) + theme(plot.margin = unit(c(0, 0, 0, 0.2), "in"))
+  hjust = 0
+) + theme(plot.margin = unit(c(0, 0.05, 0, 0), "in"))
 
 simcompare
 
