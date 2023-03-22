@@ -59,11 +59,11 @@ fitl <- lapply(pobs, function(.x) {
   )
 
   psim[, outcome := names(
-           match.arg(stringr::str_extract(.x, "[A-Za-z]+(?=-)"), fc)
+           match.arg(stringr::str_extract(.x, "[A-Za-z]+(?=-ProspObs)"), fc)
          )]
 
   pobs[, outcome := names(
-           match.arg(stringr::str_extract(.x, "[A-Za-z]+(?=-)"), fc)
+           match.arg(stringr::str_extract(.x, "[A-Za-z]+(?=-ProspObs)"), fc)
          )]
 
   out <- list(sim = psim, obs = pobs)
@@ -487,13 +487,13 @@ make_pl_pobs_panel <- function(targ = c("pkrate", "pkweek", "cumhosp"),
       base_size = base_font_size
     ) +
     theme(
-      legend.box = "vertical",
+      legend.box = "horizontal",
       legend.box.background = element_rect(),
-      legend.box.spacing = ggplot2::margin(0.1, unit = "in"),
-      legend.position = c(0.5, 0.65),
-      legend.title = element_text(size = base_font_size, hjust = 0.5),
-      legend.text = element_text(size = base_font_size),
-      axis.text = element_text(size = base_font_size),
+      legend.box.spacing = ggplot2::margin(0, unit = "in"),
+      legend.position = c(0.52, 0.2),
+      legend.title = element_text(size = base_font_size - 1, hjust = 0.5),
+      legend.text = element_text(size = base_font_size - 1),
+      axis.text = element_text(size = base_font_size - 1),
       axis.line = element_line(),
       axis.title.x = element_text(
         margin = ggplot2::margin(t = 0.125, unit = "in")
@@ -513,18 +513,18 @@ pgrid
 
 pgrid[, ":="(
   add_legend = fcase(
-    ptarg == "cumhosp" & pseas == "2018-19", TRUE,
+    ptarg == "pkweek" & pseas == "2018-19", TRUE,
     default = FALSE
   ),
   yll = fcase(
     ptarg == "pkrate", 0,
-    ptarg == "pkweek", -25,
+    ptarg == "pkweek", -30,
     ptarg == "cumhosp", 0
   ),
   yul = fcase(
-    ptarg == "pkrate", 50,
+    ptarg == "pkrate", 30,
     ptarg == "pkweek", 25,
-    ptarg == "cumhosp", 350
+    ptarg == "cumhosp", 115
   )
 )]
 
@@ -564,6 +564,7 @@ pl_pobs_list <- lapply(seq_len(nrow(pgrid)), function(x) {
 })
 
 relheights_cp <- c(peakrate = 1, peakweek = 1.4, cumhosp = 1.8)
+cowplot::set_null_device(cairo_pdf)
 pl_pobs <- cowplot::plot_grid(
   plotlist = pl_pobs_list,
   labels = paste0(LETTERS[seq_len(length(pl_pobs_list))], ")"),
@@ -573,8 +574,6 @@ pl_pobs <- cowplot::plot_grid(
   vjust = 0,
   rel_heights = relheights_cp
 ) + theme(plot.margin = unit(c(0.2, 0, 0, 0.2), "in"))
-
-pl_pobs
 
 pl_pobs_width <- 12
 pl_pobs_height <- 12
@@ -642,23 +641,24 @@ seclabs <- paste0(
 plotlabs <- data.table(
   outcome = c(rep("pkrate", 2), rep("pkweek", 2), rep("cumhosp", 2)),
   Observed = c(
-    mean(c(0, 0, 32)),   # pkrate, label 1, x
-    mean(c(0, 32, 32)),  # pkrate, label 2, x
-    mean(c(0, 0, 21)),   # pkweek, label 1, x
-    mean(c(0, 21, 21)),  # pkweek, label 2, x
-    mean(c(0, 0, 205)),  # cumhosp, label 1, x
-    mean(c(0, 205, 205)) # cumhosp, label 2, x
+    22 / 2 / 2,  # pkrate, label 1, x
+    22 / 1.75,   # pkrate, label 2, x
+    14 / 2 / 2,  # pkweek, label 1, x
+    14 / 1.75,   # pkweek, label 2, x
+    55 / 2 / 2, # cumhosp, label 1, x
+    55 / 1.75   # cumhosp, label 2, x
   ),
   Simulated = c(
-    mean(c(0, 32, 32)),   # pkrate, label 1, y
-    mean(c(0, 0, 32)),    # pkrate, label 2, y
-    mean(c(0, 21, 21)),   # pkweek, label 1, y
-    mean(c(0, 0, 21)),    # pkweek, label 2, y
-    mean(c(0, 205, 205)), # cumhosp, label 1, y
-    mean(c(0, 0, 205))    # cumhosp, label 2, y
+    22 / 1.75,   # pkrate, label 1, y
+    22 / 2 / 2,  # pkrate, label 2, y
+    14 / 1.75,   # pkweek, label 1, y
+    14 / 2 / 2,  # pkweek, label 2, y
+    55 / 1.75,  # cumhosp, label 1, y
+    55 / 2 / 2  # cumhosp, label 2, y
   ),
   label = rep(seclabs, 3)
 )
+
 
 outorder <- c("pkrate", "pkweek", "cumhosp")
 plotlabs[, outcome := factor(outcome, outorder)]
@@ -711,6 +711,6 @@ p_abserr
 plotsave(
   plot = p_abserr,
   width = 27,
-  height = 8.4,
+  height = 8.8,
   name = "Prospective-Observed-Error"
 )
