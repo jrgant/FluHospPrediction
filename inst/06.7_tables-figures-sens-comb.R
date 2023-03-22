@@ -318,6 +318,7 @@ sens_normscale_list <- list(
   cumhosp = make_sens_normscale_panel("cumhosp", 20)
 )
 
+cowplot::set_null_device(cairo_pdf)
 sens_normscale <- cowplot::plot_grid(
   plotlist = sens_normscale_list,
   labels = paste0(LETTERS[1:3], ")"),

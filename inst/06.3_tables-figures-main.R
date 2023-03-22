@@ -1,6 +1,5 @@
 source(here::here("inst", "06.1_tables-figures-setup.R"))
 
-
 ################################################################################
 ## RISK TABLES ##
 ################################################################################
@@ -594,13 +593,15 @@ make_pep_main_all_panel <- function(targ, data = pep_main_wts_no_ch30,
       legend.spacing = unit(0.1, "in"),
       legend.position = c(0.27, 0.28),
       legend.title = element_text(hjust = 0.5),
-      legend.text = element_text(size = base_font_size, lineheight = 0),
+      legend.text = element_text(size = base_font_size - 2, lineheight = 0),
       legend.key.height = unit(10, "pt"),
       legend.box.background = element_rect(color = "black"),
-      legend.box.margin = ggplot2::margin(0.05, 0.05, 0.05, 0.05, "in")
+      legend.box.margin = ggplot2::margin(0.05, 0.05, 0.01, 0.05, "in")
     )
 }
 
+# h/t: https://stackoverflow.com/questions/63548647/using-extrafont-with-cowplot-font-width-unknown-for-character-error
+cowplot::set_null_device(cairo_pdf)
 pep_main_all_list <- list(
   peakrate = make_pep_main_all_panel("peakrate", base_font_size = 16),
   peakweek = make_pep_main_all_panel("peakweek", base_font_size = 16),
