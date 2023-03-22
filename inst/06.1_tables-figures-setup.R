@@ -18,7 +18,7 @@ valslug <- "VAL"
 
 ## Used by 06.7_tables-figures_sens-comb.r:
 ##   specify the date the most recent output tables were generated
-written_tabs_date <- "2023-03-04"
+written_tabs_date <- "2023-03-21"
 
 # This function formats filenames during save operations, using both the
 ## slugs above and the current date. If one file is updated, make sure to
