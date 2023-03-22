@@ -157,7 +157,7 @@ cnl <- compnuml %>%
   labs(x = "\nWeek", y = "log(risk)\n") +
   theme_minimal(base_size = 20) +
   theme(
-    strip.text = element_text(face = "bold", size = 15),
+    strip.text = element_text(face = "bold", size = 20),
     panel.grid = element_line(color = "whitesmoke")
   )
 
