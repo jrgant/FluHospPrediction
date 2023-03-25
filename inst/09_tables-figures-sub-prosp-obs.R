@@ -344,7 +344,7 @@ dslpred <- lapply(
 ## CHECK DSL/ESL MATCHES ##
 ################################################################################
 
-## making sure the DSL, ESL, and median predictions are matched properly
+## making sure the DSL and ESL predictions are matched properly
 ## by week, season, and prediction target
 
 dsl_esl_match <- merge(
@@ -377,6 +377,41 @@ setcolorder(
 )
 
 ddatl
+
+
+################################################################################
+## RETRIEVE MEDIAN PREDICTIONS FROM PAST SEASONS ##
+################################################################################
+
+targets <- fread(nicefile(
+  tabslug, "Prediction-Targets", "csv",
+  date = written_tabs_date
+))
+
+targets[, Season := factor(Season, levels = unique(Season))]
+setkey(targets, "Season")
+
+targets[, season_num := as.numeric(Season)]
+setnames(
+  targets,
+  c("Peak rate", "Peak week", "Cumulative hospitalizations"),
+  c("pkrate", "pkweek", "cumhosp")
+)
+
+target_seasons <- c("2016-17", "2017-18", "2018-19")
+
+prior_medians <- lapply(target_seasons,
+       function(.x) {
+         tmp <- targets[season_num < season_num[Season == .x],
+                 .(pkrate = median(pkrate),
+                   pkweek = median(pkweek),
+                   cumhosp = median(cumhosp))]
+         tmp[, obs_season := .x]
+         melt(tmp,
+              id.vars = "obs_season",
+              variable.name = "target",
+              value.name = "median_pred")
+       }) %>% rbindlist()
 
 
 ################################################################################
@@ -416,6 +451,7 @@ make_pl_pobs_panel <- function(targ = c("pkrate", "pkweek", "cumhosp"),
                                season = c("2016-17", "2017-18", "2018-19"),
                                base_font_size = 14,
                                data = sll,
+                               median_preds = prior_medians,
                                legend = FALSE) {
 
   plot <- data[outcome == targ & obs_season == season] %>%
@@ -429,11 +465,18 @@ make_pl_pobs_panel <- function(targ = c("pkrate", "pkweek", "cumhosp"),
       ),
       position = position_dodge(width = 0.75),
       linetype = "dashed",
+      size = 0,
       color = "gray50"
     ) +
     geom_hline(
       data = obsout[outcome == targ & obs_season == season],
       aes(yintercept = obs_outcome, linetype = "Target")
+    ) +
+    geom_hline(
+      data = median_preds[target == targ & obs_season == season],
+      aes(yintercept = median_pred),
+      linetype = "dashed",
+      color = "gray50"
     ) +
     geom_point(
       data = data.table(
@@ -459,7 +502,7 @@ make_pl_pobs_panel <- function(targ = c("pkrate", "pkweek", "cumhosp"),
       breaks = 1:5,
       labels = c("05", "10", "15", "20", "25")
     ) +
-    scale_linetype_manual(name = "", values = "solid") +
+    scale_linetype_manual(name = "", values = c("solid")) +
     scale_shape_manual(
       name = expression(underline(SuperLearner)),
       values = c(22, 21)
